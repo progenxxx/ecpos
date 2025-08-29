@@ -14,7 +14,7 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-    
+
     NAME:{
             type: [String, Number],
             required: true,
@@ -127,7 +127,7 @@ onMounted(() => {
                     <InputLabel for="ROUTES" value="ROUTES" class="pt-4"/>
                         <Select
                             id="ROUTES"
-                            v-model="form.ROUTES" 
+                            v-model="form.ROUTES"
                             :is-error="form.errors.ROUTES ? true : false"
                             class="select select-bordered w-full max-w-xs"
                             >
@@ -145,9 +145,9 @@ onMounted(() => {
 
                 <div class="col-span-6 mt-2 sm:col-span-4">
                                 <InputLabel for="BLOCKED" value="BLOCKED" />
-                                <SelectOption 
+                                <SelectOption
                                     id="BLOCKED"
-                                    v-model="form.BLOCKED" 
+                                    v-model="form.BLOCKED"
                                     :is-error="form.errors.BLOCKED ? true : false"
                                     class="mt-1 block w-full !bg-gray-100"
                                     >
@@ -160,9 +160,9 @@ onMounted(() => {
 
                 <div class="col-span-6 mt-2 sm:col-span-4">
                                 <InputLabel for="ROUTES" value="ROUTES" />
-                                <SelectOption 
+                                <SelectOption
                                     id="ROUTES"
-                                    v-model="form.ROUTES" 
+                                    v-model="form.ROUTES"
                                     :is-error="form.errors.ROUTES ? true : false"
                                     class="mt-1 block w-full !bg-gray-100"
                                     >
@@ -180,9 +180,9 @@ onMounted(() => {
 
                             <div class="col-span-6 mt-2 sm:col-span-4">
                                 <InputLabel for="TYPES" value="TYPES" />
-                                <SelectOption 
+                                <SelectOption
                                     id="TYPES"
-                                    v-model="form.TYPES" 
+                                    v-model="form.TYPES"
                                     :is-error="form.errors.TYPES ? true : false"
                                     class="mt-1 block w-full !bg-gray-100"
                                     >
@@ -192,7 +192,7 @@ onMounted(() => {
                                 </SelectOption>
                                 <InputError :message="form.errors.TYPES" class="mt-2" />
                             </div>
-                
+
             </FormComponent>
         </template>
         <template #buttons>

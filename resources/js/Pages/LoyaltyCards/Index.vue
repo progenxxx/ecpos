@@ -1,4 +1,4 @@
-//resources/js/Pages/LoyaltyCards/Index.vue
+
 
 <template>
   <Head title="Loyalty Cards">
@@ -14,7 +14,7 @@
           <form @submit.prevent="submitCreate">
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700">Card Number</label>
-              <input 
+              <input
                 v-model="form.card_number"
                 type="text"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
@@ -26,15 +26,15 @@
             </div>
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700">Customer</label>
-              <select 
+              <select
                 v-model="form.customer_id"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                 required
               >
                 <option value="">Select a customer</option>
-                <option 
-                  v-for="customer in customers" 
-                  :key="customer.id" 
+                <option
+                  v-for="customer in customers"
+                  :key="customer.id"
                   :value="customer.id"
                 >
                   {{ customer.name }} ({{ customer.account }})
@@ -46,7 +46,7 @@
             </div>
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700">Status</label>
-              <select 
+              <select
                 v-model="form.status"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                 required
@@ -60,14 +60,14 @@
               </p>
             </div>
             <div class="flex justify-end gap-2">
-              <button 
+              <button
                 type="button"
                 @click="closeCreateModal"
                 class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="submit"
                 class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                 :disabled="form.processing"
@@ -86,7 +86,7 @@
           <form @submit.prevent="submitEdit">
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700">Status</label>
-              <select 
+              <select
                 v-model="editForm.status"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                 required
@@ -100,14 +100,14 @@
               </p>
             </div>
             <div class="flex justify-end gap-2">
-              <button 
+              <button
                 type="button"
                 @click="closeEditModal"
                 class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="submit"
                 class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                 :disabled="editForm.processing"
@@ -134,7 +134,7 @@
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
               />
             </div>
-            <button 
+            <button
               @click="showCreateModal = true"
               class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 whitespace-nowrap"
             >
@@ -175,19 +175,19 @@
                   <td class="px-6 py-4 whitespace-nowrap">{{ formatDate(card.expiry_date) }}</td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex gap-2">
-                      <Link 
+                      <Link
                         :href="`/loyalty-cards/${card.customer_id}`"
                         class="text-indigo-600 hover:text-indigo-900"
                       >
                         View
                       </Link>
-                      <button 
+                      <button
                         @click="editCard(card)"
                         class="text-green-600 hover:text-green-900"
                       >
                         Edit
                       </button>
-                      <button 
+                      <button
                         @click="confirmDelete(card)"
                         class="text-red-600 hover:text-red-900"
                       >
@@ -236,15 +236,13 @@ const props = defineProps({
   },
 })
 
-// Search functionality
 const search = ref(props.filters.search)
 
-// Debounced search function
 const debouncedSearch = debounce((value) => {
   router.get(
     '/loyalty-cards',
     { search: value },
-    { 
+    {
       preserveState: true,
       preserveScroll: true,
       replace: true
@@ -252,12 +250,10 @@ const debouncedSearch = debounce((value) => {
   )
 }, 300)
 
-// Watch for changes in search input
 watch(search, (value) => {
   debouncedSearch(value)
 })
 
-// Toast Configuration
 const Toast = Swal.mixin({
   toast: true,
   position: 'top-end',
@@ -286,7 +282,7 @@ const editForm = useForm({
 
 const getStatusClass = (status) => {
   if (!status) return ''
-  
+
   const classes = {
     active: 'bg-green-100 text-green-800',
     inactive: 'bg-gray-100 text-gray-800',
@@ -297,7 +293,7 @@ const getStatusClass = (status) => {
 
 const getTierClass = (tier) => {
   if (!tier) return ''
-  
+
   const classes = {
     bronze: 'bg-yellow-100 text-yellow-800',
     silver: 'bg-gray-100 text-gray-800',
@@ -410,12 +406,11 @@ const closeEditModal = () => {
 </script>
 
 <style scoped>
-/* Add any component-specific styles here */
+
 .modal-overlay {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-/* Responsive adjustments */
 @media (max-width: 640px) {
   .container {
     padding: 1rem;

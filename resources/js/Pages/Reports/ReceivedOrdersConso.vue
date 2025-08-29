@@ -40,11 +40,9 @@ const props = defineProps({
 });
 
 const layoutComponent = computed(() => {
-    console.log('userRole value:', props.userRole);
-    console.log('Is Store?:', props.userRole.toUpperCase() === 'STORE');
+
     return props.userRole.toUpperCase() === 'STORE' ? StorePanel : Main;
 });
-
 
 const form = useForm({
   StartDate: '',
@@ -65,7 +63,6 @@ const groupedOrders = computed(() => {
     const { STORENAME, ITEMID, ITEMNAME, CATEGORY, COUNTED, STOREID, stocks, movementstocks } = order;
     const counted = parseInt((COUNTED ?? '').trim(), 10) || 0;
 
-    // Skip this order if ITEMID is null or undefined
     if (ITEMID == null) return acc;
 
     if (!acc[ITEMID]) {
@@ -92,21 +89,18 @@ const groupedOrders = computed(() => {
 
   const groupedArray = Object.values(grouped);
 
-  // Custom sorting function
   const customSort = (a, b) => {
     const aID = a.ITEMID || '';
     const bID = b.ITEMID || '';
-    
-    // Check if both IDs start with "BW"
+
     if (aID.startsWith("BW") && bID.startsWith("BW")) {
       const aNum = parseInt(aID.slice(2));
       const bNum = parseInt(bID.slice(2));
-      
-      // If both numbers are less than or equal to 10, sort numerically
+
       if (aNum <= 10 && bNum <= 10) {
         return aNum - bNum;
       }
-      // If one is less than or equal to 10 and the other isn't, the smaller one comes first
+
       else if (aNum <= 10) {
         return -1;
       }
@@ -114,12 +108,10 @@ const groupedOrders = computed(() => {
         return 1;
       }
     }
-    
-    // For all other cases, use default string comparison
+
     return aID.localeCompare(bID);
   };
 
-  // Sort the array
   return groupedArray.sort(customSort);
 });
 
@@ -168,23 +160,23 @@ const columnTotals = computed(() => {
 
 const columns = computed(() => {
   const baseColumns = [
-    { 
-      title: 'ITEMID', 
+    {
+      title: 'ITEMID',
       data: 'ITEMID',
       className: 'frozen-column',
       footer: () => columnTotals.value.ITEMID,
       width: '120px'
     },
-    { 
-      title: 'ITEMS', 
+    {
+      title: 'ITEMS',
       data: 'ITEMNAME',
       className: 'frozen-column',
       footer: () => '',
       orderable: true,
       width: '200px'
     },
-    { 
-      title: 'CATEGORY', 
+    {
+      title: 'CATEGORY',
       data: 'CATEGORY',
       className: 'frozen-column',
       footer: () => '',
@@ -233,17 +225,16 @@ const columns = computed(() => {
   return [...baseColumns, ...storeColumns];
 });
 
-
 const options = {
   paging: false,
   scrollX: true,
   scrollY: "60vh",
   scrollCollapse: true,
   fixedColumns: {
-    start: 3, 
+    start: 3,
   },
   error: function (xhr, error, thrown) {
-    console.error("DataTables error:", error);
+
   },
   footerCallback: function(tfoot, data, start, end, display) {
     const api = this.api();
@@ -316,7 +307,6 @@ const content = generateTextFileContent(flattenedOrders, columns);
 downloadTextFile(filename, content);
 }
 
-
 const showResetModal = ref(false);
 
 const toggleResetModal = () => {
@@ -337,7 +327,7 @@ const SYNCFG = () => {
     if (userConfirmed) {
         window.location.href = '/getcurrentstocks';
     } else {
-        console.log('User cancelled the post operation.');
+
     }
 };
 
@@ -347,7 +337,7 @@ const FIXED = () => {
     if (userConfirmed) {
         window.location.href = '/autopost';
     } else {
-        console.log('User cancelled the post operation.');
+
     }
 };
 </script>
@@ -366,13 +356,13 @@ const FIXED = () => {
       <div class="absolute adjust">
 
         <div class="flex justify-start items-center">
-         
+
           <form @submit.prevent="submitForm"   class="px-2 py-3 max-h-[50vh] lg:max-h-[70vh] overflow-y-auto">
               <input type="hidden" name="_token" :value="$page.props.csrf_token">
               <div date-rangepicker  class="flex items-center">
               <div class="relative ml-5 ">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
+                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
                   </div>
 
               <input
@@ -391,7 +381,7 @@ const FIXED = () => {
 
               <div class="relative">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
+                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
                   </div>
 
                   <input
@@ -419,7 +409,7 @@ const FIXED = () => {
               <li><a href="/receivedwarehouseconso">WAREHOUSE</a></li>
             </ul>
           </details>
-              
+
           <details className="dropdown">
             <summary className="btn m-1 !bg-navy !text-white">RECENT</summary>
             <ul className="menu dropdown-content !bg-gray-100 rounded-box z-[1] w-52 p-2 shadow">
@@ -445,10 +435,10 @@ const FIXED = () => {
               >
                  <Refresh class="h-4" />
           </PrimaryButton>
-          
+
         </div>
       </div>
-      
+
       <div class="custom-datatable">
         <DataTable :data="flattenedOrders" :columns="columns" class="w-full relative display" :options="options">
         <template #action="data">
@@ -457,7 +447,7 @@ const FIXED = () => {
         </template>
       </DataTable>
       </div>
-      
+
     </TableContainer>
   </template>
 </component>
@@ -470,7 +460,6 @@ div.dt-scroll-foot{
   color: #ddd;
 }
 </style>
-
 
 <!-- <script>
 import ExcelJS from 'exceljs';
@@ -495,17 +484,15 @@ computed: {
 
 methods: {
   calculateFlattenedOrders(orders) {
-    console.log('Calculating flattenedOrders');
-    console.log('Input orders:', orders);
 
     if (!orders || !Array.isArray(orders)) {
-      console.error('Invalid orders data');
+
       return [];
     }
 
     function compareSTOREID(a, b) {
       if (!a.STOREID || !b.STOREID) {
-        console.warn('Missing STOREID:', a, b);
+
         return 0;
       }
 
@@ -523,7 +510,7 @@ methods: {
 
     const groupedOrders = orders.reduce((acc, order) => {
       if (order && typeof order === 'object') {
-        const STORENAME = `${order.STOREID} - ${order.STORENAME}`; 
+        const STORENAME = `${order.STOREID} - ${order.STORENAME}`;
         const itemName = order.ITEMNAME || '';
         const ITEMID = order.ITEMID || '';
         const CATEGORY = order.CATEGORY || '';
@@ -565,17 +552,14 @@ methods: {
       return { ...sortedItem, TOTAL: total };
     });
 
-    console.log('Calculated flattenedOrders:', result);
     return result;
   },
 
   async exportToExcel() {
-  console.log('Starting exportToExcel');
-  console.log('flattenedOrders:', this.flattenedOrders);
 
   try {
     if (!this.flattenedOrders || !Array.isArray(this.flattenedOrders) || this.flattenedOrders.length === 0) {
-      console.error('No data to export');
+
       return;
     }
 
@@ -602,11 +586,11 @@ methods: {
     const sortedStoreNames = Array.from(storeNames).sort((a, b) => {
       const aId = a.split(' - ')[0];
       const bId = b.split(' - ')[0];
-      
+
       if (!isNaN(aId) && !isNaN(bId)) {
         return parseInt(aId) - parseInt(bId);
       }
-      
+
       return aId.localeCompare(bId, undefined, {numeric: true, sensitivity: 'base'});
     });
 
@@ -662,10 +646,9 @@ methods: {
     const buffer = await workbook.xlsx.writeBuffer();
     this.saveExcelFile(buffer, filename);
   } catch (error) {
-    console.error('Error exporting to Excel:', error);
+
   }
 },
-  
 
   saveExcelFile(buffer, filename) {
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -681,7 +664,6 @@ const mgcount = () => {
 window.location.href = '/mgcount';
 };
 </script> -->
-
 
 <script>
 import ExcelJS from 'exceljs';
@@ -706,18 +688,15 @@ computed: {
 
 methods: {
   calculateFlattenedOrders(orders) {
-    console.log('Calculating flattenedOrders');
-    console.log('Input orders:', orders);
 
     if (!orders || !Array.isArray(orders)) {
-      console.error('Invalid orders data');
+
       return [];
     }
 
-    // Improved sorting function
     function compareSTOREID(a, b) {
       if (!a.STOREID || !b.STOREID) {
-        console.warn('Missing STOREID:', a, b);
+
         return 0;
       }
 
@@ -731,12 +710,11 @@ methods: {
       return aId.localeCompare(bId, undefined, {numeric: true, sensitivity: 'base'});
     }
 
-    // Sort orders by STOREID
     orders.sort(compareSTOREID);
 
     const groupedOrders = orders.reduce((acc, order) => {
       if (order && typeof order === 'object') {
-        const STORENAME = `${order.STOREID} - ${order.STORENAME}`; 
+        const STORENAME = `${order.STOREID} - ${order.STORENAME}`;
         const itemName = order.ITEMNAME || '';
         const ITEMID = order.ITEMID || '';
         const CATEGORY = order.CATEGORY || '';
@@ -778,18 +756,14 @@ methods: {
       return { ...sortedItem, TOTAL: total };
     });
 
-    console.log('Calculated flattenedOrders:', result);
     return result;
   },
 
   async exportToExcel() {
-    console.log('Starting exportToExcel');
-    console.log('flattenedOrders:', this.flattenedOrders);
 
     try {
       if (!this.flattenedOrders || !Array.isArray(this.flattenedOrders) || this.flattenedOrders.length === 0) {
-        console.error('No data to export');
-        // You might want to show a message to the user here
+
         return;
       }
 
@@ -814,15 +788,14 @@ methods: {
         }
       });
 
-      // Improved store names sorting
       const sortedStoreNames = Array.from(storeNames).sort((a, b) => {
         const aId = a.split(' - ')[0];
         const bId = b.split(' - ')[0];
-        
+
         if (!isNaN(aId) && !isNaN(bId)) {
           return parseInt(aId) - parseInt(bId);
         }
-        
+
         return aId.localeCompare(bId, undefined, {numeric: true, sensitivity: 'base'});
       });
 
@@ -852,8 +825,7 @@ methods: {
       const buffer = await workbook.xlsx.writeBuffer();
       this.saveExcelFile(buffer, filename);
     } catch (error) {
-      console.error('Error exporting to Excel:', error);
-      // You might want to show an error message to the user here
+
     }
   },
 

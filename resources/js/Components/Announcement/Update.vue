@@ -13,7 +13,7 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-    
+
     SUBJECT:{
             type: [String, Number],
             required: true,
@@ -110,9 +110,6 @@ onMounted(() => {
                     <InputError :message="form.errors.DESCRIPTION" class="mt-2" :rows="10" />  <!-- Pass rows prop to InputError component -->
                 </div>
 
-                
-
-                
             </FormComponent>
         </template>
         <template #buttons>

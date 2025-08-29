@@ -37,7 +37,7 @@ const props = defineProps({
             selectedStores: []
         })
     },
-    url: {  // Add the url prop to handle the Inertia error
+    url: {
         type: String,
         default: () => route('reports.inventory')
     }
@@ -52,7 +52,6 @@ const startDate = ref(props.filters.startDate || '');
 const endDate = ref(props.filters.endDate || '');
 const isTableLoading = ref(true);
 
-// Compute totals efficiently with memoization
 const totals = computed(() => {
     if (!props.inventory?.length) return {
         beginning: 0,
@@ -70,11 +69,11 @@ const totals = computed(() => {
         ratBites: 0,
         antBites: 0
     };
-    
+
     return props.inventory.reduce((acc, item) => {
         const safeNum = (val) => Number(val || 0);
-        const itemWaste = safeNum(item.throw_away) + safeNum(item.early_molds) + 
-                         safeNum(item.pull_out) + safeNum(item.rat_bites) + 
+        const itemWaste = safeNum(item.throw_away) + safeNum(item.early_molds) +
+                         safeNum(item.pull_out) + safeNum(item.rat_bites) +
                          safeNum(item.ant_bites);
 
         return {
@@ -126,7 +125,7 @@ const totalPositiveVariance = computed(() => {
 });
 
 const columns = [
-    { 
+    {
         data: 'itemname',
         title: 'Item Name',
         className: 'min-w-[200px]'
@@ -215,7 +214,6 @@ const columns = [
     }
 ];
 
-// DataTable options
 const options = {
     responsive: true,
     order: [[0, 'asc']],
@@ -223,7 +221,7 @@ const options = {
     dom: 'Bfrtip',
     deferRender: true,
     buttons: [
-        'copy', 
+        'copy',
         {
             extend: 'csv',
             title: 'Inventory Report'
@@ -243,20 +241,19 @@ const options = {
     }
 };
 
-// Handle filter changes with validation
 const handleFilterChange = () => {
     if (startDate.value && endDate.value) {
         const start = new Date(startDate.value);
         const end = new Date(endDate.value);
-        
+
         if (start > end) {
             alert('Start date cannot be later than end date');
             return;
         }
     }
-    
+
     isTableLoading.value = true;
-    
+
     router.get(
         route('reports.inventory'),
         {
@@ -271,14 +268,13 @@ const handleFilterChange = () => {
                 isTableLoading.value = false;
             },
             onError: (errors) => {
-                console.error('Filter update failed:', errors);
+
                 isTableLoading.value = false;
             }
         }
     );
 };
 
-// Clear all filters
 const clearFilters = () => {
     selectedStores.value = [];
     startDate.value = '';
@@ -286,28 +282,21 @@ const clearFilters = () => {
     handleFilterChange();
 };
 
-// Debounced filter handling
 let filterTimeout;
 watch([selectedStores, startDate, endDate], () => {
     clearTimeout(filterTimeout);
     filterTimeout = setTimeout(handleFilterChange, 500);
 }, { deep: true });
 
-// Cleanup
 onUnmounted(() => {
     clearTimeout(filterTimeout);
 });
 
-// Initialize component
 onMounted(() => {
     selectedStores.value = props.filters.selectedStores || [];
     startDate.value = props.filters.startDate || '';
     endDate.value = props.filters.endDate || '';
-    
-    // Log inventory data for debugging
-    console.log("Inventory data:", props.inventory);
-    
-    // Set loading to false after initialization
+
     setTimeout(() => {
         isTableLoading.value = false;
     }, 500);
@@ -319,8 +308,8 @@ onMounted(() => {
         <template v-slot:main>
             <!-- Filters Section -->
             <div class="mb-4 flex flex-wrap gap-4 p-4 bg-white rounded-lg shadow z-[999]">
-                <div 
-                    v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'" 
+                <div
+                    v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'"
                     class="flex-1 min-w-[200px]"
                 >
                     <MultiSelectDropdown
@@ -338,7 +327,7 @@ onMounted(() => {
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
                 </div>
-                
+
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
                     <input
@@ -466,10 +455,10 @@ onMounted(() => {
                     <span class="ml-4 text-lg">Loading inventory data...</span>
                 </div>
                 <TableContainer v-else>
-                    <DataTable 
-                        :data="inventory" 
-                        :columns="columns" 
-                        class="w-full relative display" 
+                    <DataTable
+                        :data="inventory"
+                        :columns="columns"
+                        class="w-full relative display"
                         :options="options"
                     />
                 </TableContainer>
@@ -480,16 +469,16 @@ onMounted(() => {
 
 <style>
 .dt-buttons {
-    display: flex;               
+    display: flex;
     justify-content: flex-end;
-    align-items: center;    
+    align-items: center;
     position: absolute;
     z-index: 1;
     margin: 10px;
     right: 0;
 }
 
-.dt-button, 
+.dt-button,
 .dt-buttons .buttons-copy,
 .dt-buttons .buttons-print {
     padding: 8px 12px;
@@ -503,7 +492,7 @@ onMounted(() => {
     font-size: 14px;
 }
 
-.dt-button:hover, 
+.dt-button:hover,
 .dt-buttons .buttons-copy:hover,
 .dt-buttons .buttons-print:hover {
     background-color: #2563eb;
@@ -578,7 +567,7 @@ table.dataTable tbody tr:hover {
         margin-bottom: 20px;
         right: auto;
     }
-    
+
     .dataTables_filter {
         float: none;
         text-align: center;

@@ -47,7 +47,6 @@ const selectedStores = ref(props.filters.selectedStores || []);
 const startDate = ref(props.filters.startDate || '');
 const endDate = ref(props.filters.endDate || '');
 
-// Initialize totals with default values
 const defaultTotals = {
     beginning: 0,
     receivedDelivery: 0,
@@ -66,11 +65,11 @@ const defaultTotals = {
 
 const totals = computed(() => {
     if (!props.inventory?.length) return defaultTotals;
-    
+
     return props.inventory.reduce((acc, item) => {
         const safeNum = (val) => Number(val || 0);
-        const itemWaste = safeNum(item.throw_away) + safeNum(item.early_molds) + 
-                         safeNum(item.pull_out) + safeNum(item.rat_bites) + 
+        const itemWaste = safeNum(item.throw_away) + safeNum(item.early_molds) +
+                         safeNum(item.pull_out) + safeNum(item.rat_bites) +
                          safeNum(item.ant_bites);
 
         return {
@@ -106,7 +105,7 @@ const totalPositiveVariance = computed(() => {
 });
 
 const columns = [
-    { 
+    {
         data: 'itemname',
         title: 'Item Name',
         className: 'min-w-[200px]'
@@ -195,7 +194,7 @@ const options = {
     ajax: {
         url: '/api/inventory',
         data: function(d) {
-            // Add custom filters
+
             return {
                 ...d,
                 startDate: startDate.value,
@@ -205,20 +204,20 @@ const options = {
         }
     },
     pageLength: 25,
-    // Enable lazy loading for better performance
+
     deferRender: true,
-    // Optimize column rendering
+
     columns: columns.map(col => ({
         ...col,
-        // Only sort/search on visible columns
+
         orderable: !col.render,
         searchable: !col.render
     })),
-    // Enable caching for better performance
+
     stateSave: true,
-    // Optimize DOM structure
+
     dom: '<"top"Bfr>t<"bottom"lip>',
-    // Enable virtual scrolling for large datasets
+
     scroller: true,
     scrollY: '50vh',
     scrollCollapse: true
@@ -230,8 +229,8 @@ const options = {
         <template v-slot:main>
             <!-- Filters Section -->
             <div class="mb-4 flex flex-wrap gap-4 p-4 bg-white rounded-lg shadow z-[999]">
-                <div 
-                    v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'" 
+                <div
+                    v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'"
                     class="flex-1 min-w-[200px]"
                 >
                     <MultiSelectDropdown
@@ -249,7 +248,7 @@ const options = {
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
                 </div>
-                
+
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
                     <input
@@ -359,10 +358,10 @@ const options = {
             <!-- DataTable -->
             <div class="bg-white rounded-lg shadow">
                 <TableContainer>
-                    <DataTable 
-                        :data="inventory" 
-                        :columns="columns" 
-                        class="w-full relative display" 
+                    <DataTable
+                        :data="inventory"
+                        :columns="columns"
+                        class="w-full relative display"
                         :options="options"
                     />
                 </TableContainer>
@@ -373,15 +372,15 @@ const options = {
 
 <style>
 .dt-buttons {
-    display: flex;               
-    justify-content: flex-start; 
-    align-items: center;    
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
     position: absolute;
     z-index: 1;
     margin: 10px;
 }
 
-.dt-button, 
+.dt-button,
 .dt-buttons .buttons-copy,
 .dt-buttons .buttons-print {
     padding: 10px;
@@ -392,7 +391,7 @@ const options = {
     transition: background-color 0.2s;
 }
 
-.dt-button:hover, 
+.dt-button:hover,
 .dt-buttons .buttons-copy:hover,
 .dt-buttons .buttons-print:hover {
     background-color: #2563eb;
@@ -441,7 +440,7 @@ table.dataTable tbody tr:hover {
         justify-content: center;
         margin-bottom: 20px;
     }
-    
+
     .dataTables_filter {
         float: none;
         text-align: center;

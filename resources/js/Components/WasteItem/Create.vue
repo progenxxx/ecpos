@@ -8,7 +8,7 @@ import TextInput from '@/Components/Inputs/TextInput.vue';
 import InputError from '@/Components/Inputs/InputError.vue';
 import SelectOption from '@/Components/SelectOption/SelectOption.vue';
 
-const emit = defineEmits(['toggleActive']); 
+const emit = defineEmits(['toggleActive']);
 
 const props = defineProps({
     showModal: Boolean,
@@ -39,9 +39,9 @@ const filteredItems = computed(() => {
 
 function selectItem(item) {
     selectedItem.value = item;
-    searchQuery.value = item.itemname; // Show the selected item name in the input
-    form.itemname = item.itemid; // Set the form itemname to the item ID
-    form.unitid = item.unitid; // Assuming you have unitid in item
+    searchQuery.value = item.itemname;
+    form.itemname = item.itemid;
+    form.unitid = item.unitid;
     isOpen.value = false;
 }
 
@@ -91,7 +91,7 @@ onMounted(() => {
                             disabled
                         />
                         <InputError :message="form.errors.JOURNALID" class="mt-2" />
-                    </div>  
+                    </div>
 
                     <div class="col-span-3">
                         <InputLabel for="itemname" value="ITEMNAME" />
@@ -118,9 +118,9 @@ onMounted(() => {
 
                     <div class="col-span-3">
                                 <InputLabel for="Waste Type" value="Waste Type" />
-                                <SelectOption 
+                                <SelectOption
                                     id="reason"
-                                    v-model="form.reason" 
+                                    v-model="form.reason"
                                     :is-error="form.errors.reason ? true : false"
                                     class="mt-1 block w-full !bg-white"
                                     >
@@ -133,8 +133,6 @@ onMounted(() => {
                                 </SelectOption>
                                 <InputError :message="form.errors.reason" class="mt-2" />
                             </div>
-
-
 
                     <div class="col-span-3">
                         <InputLabel for="qty" value="QTY" />
@@ -160,5 +158,5 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Scoped styles here */
+
 </style>

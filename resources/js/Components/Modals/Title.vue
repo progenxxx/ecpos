@@ -1,14 +1,12 @@
 
 <script setup>
 
-
 const props = defineProps({
     title: {
         type: String,
         default: "Modal Title"
     }
 });
-
 
 </script>
 

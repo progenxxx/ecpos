@@ -12,7 +12,7 @@ import Excel from "@/Components/Exports/Excel.vue";
 import TxtFile from "@/Components/Svgs/TxtFile.vue";
 import Send from "@/Components/Svgs/Send.vue";
 
-import Add from "@/Components/Svgs/Add.vue";    
+import Add from "@/Components/Svgs/Add.vue";
 import editblue from "@/Components/Svgs/editblue.vue";
 import moreblue from "@/Components/Svgs/moreblue.vue";
 import PostIcon from "@/Components/Svgs/Post.vue";
@@ -29,7 +29,6 @@ const journalid = ref('');
 const description = ref('');
 const createddatetime = ref('');
 const storeid = ref('');
-
 
 const showModalUpdate = ref(false);
 const showCreateModal = ref(false);
@@ -49,12 +48,12 @@ const props = defineProps({
 });
 const txtfilecolumns = [
     { data: 'STOREID', title: 'STOREID' },
-    { 
-        data: 'POSTEDDATETIME', 
+    {
+        data: 'POSTEDDATETIME',
         title: 'POSTEDDATETIME',
         render: function(data, type, row) {
             const date = new Date(data);
-            return date.toLocaleDateString(); 
+            return date.toLocaleDateString();
         }
     },
     { data: 'ITEMID', title: 'ITEMID' },
@@ -66,7 +65,7 @@ const columns = [
     { data: 'sent', title: 'SENT' },
     { data: 'description', title: 'TR #' },
     { data: 'qty', title: 'QTY' },
-    /* { data: 'amount', title: 'AMOUNT' }, */
+
     { data: 'createddatetime', title: 'DATE' },
     {
         data: null,
@@ -87,9 +86,8 @@ const togglePostModal = (newJOURNALID,) => {
     showPostModal.value = true;
 };
 
-
 const toggleUpdateModal = (newJOURNALID, newDESCRIPTION) => {
-    
+
     journalid.value = newJOURNALID;
     description.value = newDESCRIPTION;
     showModalUpdate.value = true;
@@ -108,7 +106,6 @@ const toggleMoreModal = (newJOURNALID) => {
     showModalMore.value = true;
 };
 
-
 const updateModalHandler = () => {
     showModalUpdate.value = false;
 };
@@ -116,7 +113,7 @@ const createModalHandler = () => {
     showCreateModal.value = false;
 };
 const sendModalHandler = () => {
-    showSendModal.value = false;  
+    showSendModal.value = false;
 };
 const MoreModalHandler = () => {
     showModalMore.value = false;
@@ -128,13 +125,9 @@ const postModalHandler = () => {
 const router = useRouter()
 
 const navigateToOrder = (journalid) => {
-  console.log('Redirecting to Item Order Entries for account:', journalid);
+
   window.location.href = `/ItemOrders/${journalid}`;
 };
-
-/* const toggleReceivedModal = () => {
-    window.location.href = `/Received/`;
-}; */
 
 const currentDate = computed(() => {
     const now = new Date();
@@ -151,7 +144,7 @@ function generateTextFileContent(orders, columns) {
                 const date = new Date(order[column.data]);
                 return date.toLocaleDateString();
             } else if (column.data === 'COUNTED') {
-                return Math.floor(order[column.data]) || ''; 
+                return Math.floor(order[column.data]) || '';
             } else {
                 return order[column.data] || '';
             }
@@ -174,70 +167,12 @@ function downloadTextFile(filename, content) {
     URL.revokeObjectURL(url);
 }
 
-/* async function generateAndDownloadTextFile() {
-    if (!props.orders || props.orders.length === 0) {
-        alert("No orders available to generate file.");
-        return;
-    }
-
-    const storeID = props.orders[0].STOREID;
-    if (!storeID) {
-        alert("Store ID is missing from the order data.");
-        return;
-    }
-
-    const postedDate = new Date(props.orders[0].POSTEDDATETIME);
-    if (isNaN(postedDate.getTime())) {
-        alert("Invalid posted date in the order data.");
-        return;
-    }
-
-    const formattedPostedDate = `${postedDate.getFullYear()}${(postedDate.getMonth() + 1).toString().padStart(2, '0')}${postedDate.getDate().toString().padStart(2, '0')}`;
-    const filename = `${storeID}${formattedPostedDate}.txt`;
-    const header = `${storeID}|${postedDate.toLocaleDateString()}`;
-    
-    const dataRows = props.orders
-        .filter(order => order.COUNTED > 0)
-        .map(order => `${order.ITEMID}|${Math.floor(order.COUNTED)}`);
-
-    if (dataRows.length === 0) {
-        alert("No items with non-zero counts to report.");
-        return;
-    }
-
-    const content = [header, ...dataRows].join('\n');
-
-    const folderName = formattedPostedDate;
-
-    try {
-        const response = await fetch('/save-file', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({ content, filename, folderName })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            alert(`Your order has been successfully sent to the head office!`);
-        } else {
-            alert('Error saving file: ' + (data.message || 'Unknown error'));
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error saving file: ' + error.message);
-    }
-} */
-
 const postAndSend = async (journalId) => {
   try {
     await generateAndDownloadTextFile();
 
     location.reload();
-    
+
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
     if (!csrfToken) {
       throw new Error('CSRF token not found');
@@ -255,11 +190,10 @@ const postAndSend = async (journalId) => {
     alert('Order has been successfully posted!');
     location.reload();
   } catch (error) {
-    console.error('Error:', error);
+
     alert('Error posting and sending order: ' + error.message);
   }
 };
-
 
 async function generateAndDownloadTextFile() {
     if (!props.orders || props.orders.length === 0) {
@@ -282,7 +216,7 @@ async function generateAndDownloadTextFile() {
     const formattedPostedDate = `${postedDate.getFullYear()}${(postedDate.getMonth() + 1).toString().padStart(2, '0')}${postedDate.getDate().toString().padStart(2, '0')}`;
     const filename = `${storeID}${formattedPostedDate}.txt`;
     const header = `${storeID}|${postedDate.toLocaleDateString()}`;
-    
+
     const dataRows = props.orders
         .filter(order => order.COUNTED > 0)
         .map(order => `${order.ITEMID}|${Math.floor(order.COUNTED)}`);
@@ -307,13 +241,12 @@ async function generateAndDownloadTextFile() {
         });
 
         const responseText = await response.text();
-        console.log('Full server response:', responseText);
 
         let data;
         try {
             data = JSON.parse(responseText);
         } catch (error) {
-            console.error('Error parsing JSON:', error);
+
             alert('Error: Server returned an invalid response. Please clear your cache!');
             return;
         }
@@ -325,11 +258,10 @@ async function generateAndDownloadTextFile() {
             alert('Error saving file: ' + (data.message || 'Unknown error'));
         }
     } catch (error) {
-        console.error('Error:', error);
+
         alert('Error saving file: ' + error.message);
     }
 }
-
 
 function saveFileToPublicDirectory(filePath, content) {
     const url = `${window.location.origin}/${filePath}`;
@@ -342,27 +274,21 @@ function saveFileToPublicDirectory(filePath, content) {
     document.body.removeChild(link);
 }
 
-/* const postAndSend = (journalId) => {
-  togglePostModal(journalId)
-  
-  generateAndDownloadTextFile()
-} */
-
 const showWarning = ref(false);
 const currentTime = ref('');
 
 let audio;
 
 const startWarningSound = () => {
-  console.log('Starting warning sound');
+
   if (!audio) {
     audio = new Audio('/audio/warning.ogg');
     audio.loop = true;
   }
   audio.play().then(() => {
-    console.log('Audio started playing');
+
   }).catch(error => {
-    console.error('Error playing audio:', error);
+
   });
 };
 
@@ -373,16 +299,13 @@ const stopWarningSound = () => {
   }
 };
 
-
 const checkTime = () => {
   const now = new Date();
   const hours = now.getHours();
   const minutes = now.getMinutes();
-  
-  console.log(`Checking time: ${hours}:${minutes}`);
-  
+
   if ((hours === 13 && minutes === 32) || (hours === 16 && minutes === 40)) {
-    console.log('Warning condition met!');
+
     showWarning.value = true;
     currentTime.value = now.toLocaleTimeString();
     startWarningSound();
@@ -426,7 +349,6 @@ onUnmounted(() => {
             <SendModal :show-modal="showSendModal" item-name="inventjournaltables" :journalid="journalid" @toggle-active="sendModalHandler"  />
             <Post :show-modal="showPostModal" item-name="inventjournaltrans" :journalid="journalid" @toggle-active="postModalHandler"  />
 
-
             <More
             :show-modal="showModalMore"
             :accountnum="accountnum"
@@ -437,7 +359,7 @@ onUnmounted(() => {
         <template v-slot:main>
 
             <TableContainer>
-                
+
                 <div class="absolute adjust">
                     <div class="flex justify-start items-center">
 
@@ -501,16 +423,12 @@ onUnmounted(() => {
 
             </TableContainer>
 
-
-
                 <TableContainer class="hidden">
                     <div class="absolute adjust">
 
                         <div class="flex justify-start items-center">
-                        
 
                             &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<button @click="generateAndDownloadTextFile">Generate and Download Text File</button>
-                                
 
                             <SuccessButton
                                 type="button"
@@ -520,10 +438,9 @@ onUnmounted(() => {
                                 <ExcelIcon class="h-4" />
                             </SuccessButton>
 
-                            
                         </div>
                     </div>
-                
+
                     <DataTable :data="orders" :columns="txtfilecolumns" class="w-full relative display" :options="options">
                         <template #action="data">
                             <div class="flex justify-start">
@@ -539,7 +456,4 @@ onUnmounted(() => {
     </Main>
 
 </template>
-
-
-
 

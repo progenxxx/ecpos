@@ -27,69 +27,62 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-    
+
     blocked: {
         type: [String, Number],
         required: true,
     },
-    
+
     creditmax: {
         type: [String, Number],
         required: true,
     },
-    
-    
+
     country: {
         type: [String, Number],
         required: true,
     },
-    
+
     zipcode: {
         type: [String, Number],
         required: true,
     },
-    
+
     state: {
         type: [String, Number],
         required: true,
     },
-    
+
     county: {
         type: [String, Number],
         required: true,
     },
 
-    
     email: {
         type: [String, Number],
         required: true,
     },
-    
+
     cellularphone: {
         type: [String, Number],
         required: true,
     },
-    
 
-    
     dataareaid: {
         type: [String, Number],
         required: true,
     },
-    
-    
+
     gender: {
         type: [String, Number],
         required: true,
     },
-    
-    
+
     showModal: {
         type: Boolean,
         default: false,
     }
 });
-
 
 const form = useForm({
     accountnum: '',

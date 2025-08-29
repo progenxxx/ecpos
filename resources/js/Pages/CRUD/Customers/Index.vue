@@ -12,7 +12,7 @@ import DangerButton from "@/Components/Buttons/DangerButton.vue";
 import Main from "@/Layouts/AdminPanel.vue";
 import Excel from "@/Components/Exports/Excel.vue";
 
-import Add from "@/Components/Svgs/Add.vue";    
+import Add from "@/Components/Svgs/Add.vue";
 import editblue from "@/Components/Svgs/editblue.vue";
 import moreblue from "@/Components/Svgs/moreblue.vue";
 import Import from "@/Components/Svgs/Import.vue";
@@ -20,9 +20,8 @@ import ExcelIcon from "@/Components/Svgs/Excel.vue";
 import Back from "@/Components/Svgs/Back.vue";
 
 import TableContainer from "@/Components/Tables/TableContainer.vue";
-/* import Main from "@/Layouts/Main.vue"; */
-import { ref } from "vue";
 
+import { ref } from "vue";
 
 import DataTable from 'datatables.net-vue3';
 import DataTablesCore from 'datatables.net';
@@ -42,7 +41,6 @@ const email = ref('');
 const cellularphone = ref('');
 const gender = ref('');
 
-
 const showModalUpdate = ref(false);
 const showCreateModal = ref(false);
 const showDeleteModal = ref(false);
@@ -60,15 +58,9 @@ const columns = [
     { data: 'name', title: 'NAME' },
     { data: 'address', title: 'ADDRESS' },
     { data: 'phone', title: 'PHONE' },
-    /* { data: 'currency', title: 'CURRENCY' },
-    { data: 'blocked', title: 'BLOCKED' },
-    { data: 'creditmax', title: 'CREDITMAX' },
-    { data: 'country', title: 'COUNTRY' },
-    { data: 'zipcode', title: 'ZIPCODE' },
-    { data: 'county', title: 'COUNTY' }, */
+
     { data: 'email', title: 'EMAIL' },
-    /* { data: 'cellularphone', title: 'CELLULARPHONE' }, */
-    /* { data: 'dataareaid', title: 'DATAAREAID' }, */
+
     { data: 'gender', title: 'GENDER' },
     {
         data: null,
@@ -84,9 +76,8 @@ const options = {
     scrollCollapse: true,
 };
 
-
 const toggleUpdateModal = (newACCOUNTNUM, newNAME, newADDRESS, newPHONE, newCURRENCY, newBLOCKED, newCREDITMAX, newCOUNTRY, newZIPCODE, newSTATE, newEMAIL, newCELLULARPHONE, newGENDER) => {
-    
+
     accountnum.value = newACCOUNTNUM;
     name.value = newNAME;
     address.value = newADDRESS;
@@ -99,7 +90,7 @@ const toggleUpdateModal = (newACCOUNTNUM, newNAME, newADDRESS, newPHONE, newCURR
     state.value = newSTATE;
     email.value = newEMAIL;
     cellularphone.value = newCELLULARPHONE;
-    /* dataareaid.value = newDATAAREAID; */
+
     gender.value = newGENDER;
     showModalUpdate.value = true;
 };
@@ -117,7 +108,6 @@ const toggleMoreModal = (newACCOUNTNUM) => {
     showModalMore.value = true;
 };
 
-
 const updateModalHandler = () => {
     showModalUpdate.value = false;
 };
@@ -125,7 +115,7 @@ const createModalHandler = () => {
     showCreateModal.value = false;
 };
 const deleteModalHandler = () => {
-    showDeleteModal.value = false;  
+    showDeleteModal.value = false;
 };
 const MoreModalHandler = () => {
     showModalMore.value = false;
@@ -133,28 +123,8 @@ const MoreModalHandler = () => {
 
 const router = useRouter()
 
-/* const accountNumber = computed(() => {
-  return props.data && props.data.cellData ? props.data.cellData.accountnum : ''
-})
-
-const redirectToLedger = (accountnum) => {
-  if (accountnum) {
-    router.push({ name: 'ledger', params: { accountnum } })
-  }
-} */
-
-/* const navigateToCustomerLedger = () => {
-  window.alert('You are Redirecting to Customer Ledger Entries');
-  window.location.href = '/ledger/$accountnum';
-}; */
-
-/* const navigateToCustomerLedger = (accountnum) => {
-  console.log('Redirecting to Customer Ledger Entries for account:', accountnum);
-  window.location.href = `/ledger/${accountnum}`;
-}; */
-
 const navigateToCustomerLedger = (accountnum) => {
-  console.log('Redirecting to Customer Ledger Entries for account:', accountnum);
+
   window.location.href = `/ledger/${accountnum}`;
 };
 
@@ -178,7 +148,7 @@ const navigateToCustomerLedger = (accountnum) => {
         <template v-slot:main>
 
             <TableContainer>
-                
+
                 <div class="absolute adjust">
                     <div class="flex justify-start items-center">
 
@@ -238,7 +208,6 @@ const navigateToCustomerLedger = (accountnum) => {
                                 </TransparentButton>
                             </div>
 
-
                         <!-- <DangerButton type="button" @click="toggleDeleteModal(data.cellData.accountnum)">
                             Delete
                         </DangerButton> -->
@@ -247,10 +216,9 @@ const navigateToCustomerLedger = (accountnum) => {
 
                     </template>
                 </DataTable>
-                
+
             </TableContainer>
         </template>
     </Main>
 </template>
-
 

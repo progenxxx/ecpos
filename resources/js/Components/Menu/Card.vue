@@ -4,10 +4,10 @@
             <figure><img src="" alt="Coffee" /></figure>
         </span>
 
-        <span class="text-xs text-gray-400 font-thin">LP203242</span> 
-        <span class="text-xs text-gray-600 font-bold">Butterworld Coffee</span> 
+        <span class="text-xs text-gray-400 font-thin">LP203242</span>
+        <span class="text-xs text-gray-600 font-bold">Butterworld Coffee</span>
         <span class="text-end text-sm text-gray-600 font-bold">Php 22</span>
-        
+
         <span class="absolute top-0 right-0 h-9 w-9 bg-blue-400 rounded-full flex items-center justify-center">
             <div class="text-sm text-white">10</div>
         </span>

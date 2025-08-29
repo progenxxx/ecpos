@@ -28,10 +28,6 @@ const props = defineProps({
     },
 });
 
-/* const user = props.auth ? toRefs(props.auth).user : null;
-const userRole = ref(user ? user.value.role : 'ADMIN');
-const isAdmin = computed(() => userRole.value === 'ADMIN'); */
-
 const emit = defineEmits();
 
 const logout = () => {
@@ -40,7 +36,6 @@ const logout = () => {
 </script>
 
 <template>
-
 
         <div :class="[
             'rounded-tr-3xl rounded-br-3xl p-4 bg-navy top-0 bottom-0 left-0 w-28  text-black font-bold absolute z-20 pt-12 pb-2 flex flex-col justify-between transition-all duration-500 ease-in-out px-2',
@@ -67,7 +62,7 @@ const logout = () => {
 
             <div class="tooltip tooltip-right tooltip-primary" data-tip="Order">
                 <List :active-tab="activeTab" tabName="ORDER" url="/order" v-if="$page.props.auth.user.role === 'STORE'">
-                    <Order class="h-6 lg:h-8"/> 
+                    <Order class="h-6 lg:h-8"/>
                 </List>
             </div>
 
@@ -105,8 +100,7 @@ const logout = () => {
                 </List>
             </div>
 
-
         </ul>
-        
+
     </div>
 </template>

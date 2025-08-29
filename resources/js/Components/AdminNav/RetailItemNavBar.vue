@@ -10,8 +10,6 @@ import Reports from "@/Components/Svgs/Reports.vue";
 import Setting from "@/Components/Svgs/Setting.vue";
 import Logout from "@/Components/Svgs/Logout.vue";
 import List from "@/Components/Nav/List.vue";
-/* import RetailItems from "../Svgs/RetailItems.vue";
-import Customers from "../Svgs/Customers.vue"; */
 
 const props = defineProps({
     isSidebarOpen: {
@@ -73,13 +71,12 @@ const logout = () => {
                 </List>
             </div>
 
-
         </ul>
         <!-- <div class="tooltip tooltip-right tooltip-primary" data-tip="Logout">
             <button class="flex justify-center flex-col items-center p-3 text-black hover:bg-navy rounded-md w-full max-w-5x font-light text-xs hover:text-white gap-1" @click="logout">
             <Logout />
         </button>
         </div> -->
-        
+
     </div>
 </template>

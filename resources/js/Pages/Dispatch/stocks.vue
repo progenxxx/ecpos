@@ -39,7 +39,7 @@ const props = defineProps({
     },
     items: {
         type: Array,
-        required: true, 
+        required: true,
     },
 });
 
@@ -47,8 +47,8 @@ const columns = [
     { data: 'ITEMID', title: 'ITEMID' },
     { data: 'itemname', title: 'ITEMNAME' },
     { data: 'itemgroup', title: 'CATEGORY' },
-    { 
-        data: 'COUNTED', 
+    {
+        data: 'COUNTED',
         title: 'COUNTED',
         render: function(data, type, row) {
             if (type === 'display') {
@@ -81,19 +81,19 @@ const toggleCreateModal = (journalid, newLINENUM) => {
     JOURNALID.value = journalid;
     LINENUM.value = newLINENUM;
     showCreateModal.value = true;
-    console.log(JOURNALID.value);
+
 };
 
 const toggleGetBWModal = (journalid) => {
     JOURNALID.value = journalid;
     showGetBWModal.value = true;
-    console.log(JOURNALID.value);
+
 };
 
 const toggleGetCFModal = (journalid) => {
     JOURNALID.value = journalid;
     showGetCFModal.value = true;
-    console.log(JOURNALID.value);
+
 };
 
 const createModalHandler = () => {
@@ -122,18 +122,16 @@ const ViewOrders = (journalid) => {
 };
 
 const handleSelectedItem = (item) => {
-    console.log('Selected Item:', item);
+
 };
 
-// Reactive state
 const tableData = ref([]);
 const updatedValues = reactive({});
 const message = reactive({
     text: '',
-    type: '' // 'success', 'error', or 'info'
+    type: ''
 });
 
-// Methods
 const handleCountedChange = (event, item) => {
     const newValue = event.target.value;
     updatedValues[item.ITEMID] = newValue;
@@ -143,14 +141,14 @@ const updateAllCountedValues = async () => {
     try {
         message.text = 'Updating counted values...';
         message.type = 'info';
-        
+
         const response = await axios.post('/api/dispatch/update-all-counted-values', {
             journalId: props.journalid,
             updatedValues: updatedValues,
         });
-        
+
         if (response.data.success) {
-            console.log('All values updated successfully');
+
             for (const [itemId, newValue] of Object.entries(updatedValues)) {
                 const item = tableData.value.find(row => row.ITEMID === itemId);
                 if (item) {
@@ -158,7 +156,7 @@ const updateAllCountedValues = async () => {
                 }
             }
             Object.keys(updatedValues).forEach(key => delete updatedValues[key]);
-            
+
             message.text = 'All counted values updated successfully';
             message.type = 'success';
 
@@ -167,7 +165,7 @@ const updateAllCountedValues = async () => {
             throw new Error('Update failed');
         }
     } catch (error) {
-        console.error(`You don't have any changes!`, error);
+
         message.text = `You don't have any changes!`;
         message.type = 'error';
     }
@@ -178,17 +176,13 @@ const clearMessage = () => {
     setTimeout(() => {
         message.text = '';
         message.type = '';
-    }, 5000); 
+    }, 5000);
 };
-
 
 const navigateToOrder = (journalid) => {
   window.location.href = `/warehouse/orders/${journalid}`;
 };
 
-/* const ViewOrders = (journalid) => {
-    window.location.href = `/ViewOrders/${journalid}`;
-}; */
 </script>
 
 <template>
@@ -197,7 +191,7 @@ const navigateToOrder = (journalid) => {
             <Create
                 :show-modal="showCreateModal"
                 :JOURNALID="JOURNALID"
-                :items="props.items" 
+                :items="props.items"
                 @toggle-active="createModalHandler"
                 @select-item="handleSelectedItem"
             />
@@ -216,10 +210,10 @@ const navigateToOrder = (journalid) => {
         <template v-slot:main>
     <TableContainer>
         <!-- Message display area -->
-        <div v-if="message.text" 
-             :class="['p-4 mb-4 rounded-md', 
-                      message.type === 'success' ? 'bg-green-100 text-green-700' : 
-                      message.type === 'error' ? 'bg-red-100 text-red-700' : 
+        <div v-if="message.text"
+             :class="['p-4 mb-4 rounded-md',
+                      message.type === 'success' ? 'bg-green-100 text-green-700' :
+                      message.type === 'error' ? 'bg-red-100 text-red-700' :
                       'bg-blue-100 text-blue-700']">
             {{ message.text }}
         </div>
@@ -275,10 +269,10 @@ const navigateToOrder = (journalid) => {
             </div>
         </div>
 
-        <DataTable 
-            :data="inventjournaltrans" 
-            :columns="columns" 
-            class="w-full relative display" 
+        <DataTable
+            :data="inventjournaltrans"
+            :columns="columns"
+            class="w-full relative display"
             :options="options"
         >
             <template #action="data">

@@ -23,42 +23,27 @@ const form = useForm({
     JOURNALID: ''
 });
 
-// Watch for changes in props
 watch(() => props.JOURNALID, (newVal) => {
     if (newVal !== undefined) {
         form.JOURNALID = newVal.toString();
-        console.log('JOURNALID updated:', form.JOURNALID);
+
     }
 }, { immediate: true });
 
 watch(() => props.showModal, (newVal) => {
-    console.log('Modal visibility changed:', newVal);
+
 }, { immediate: true });
 
-/* const submit = () => {
-    if (!form.JOURNALID) {
-        console.warn('Cannot submit: Journal ID is missing');
-        return;
-    }
-
-    console.log('Submitting with JOURNALID:', form.JOURNALID);
-    form.post(route('getbwproducts'), {
-        onSuccess: () => {
-            emit('toggleActive');
-        },
-    });
-}; */
-
 const submit = () => {
-    console.log('Submitting form...');
+
     form.patch("/StockTransferLine/getbwproducts", {
         preserveScroll: true,
         onSuccess: () => {
-            console.log('Form submission successful.');
+
             toggleActive();
         },
         onError: (error) => {
-            console.error('Form submission error:', error);
+
         }
     });
 };
@@ -70,13 +55,13 @@ const closeModal = () => {
 onMounted(() => {
     if (props.JOURNALID) {
         form.JOURNALID = props.JOURNALID.toString();
-        console.log('Form initialized with JOURNALID:', form.JOURNALID);
+
     }
 });
 </script>
 
 <template>
-    <Modal 
+    <Modal
         :show="showModal"
         @close="closeModal"
     >
@@ -120,12 +105,11 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Button Styles */
+
 .bg-navy {
     @apply bg-blue-900 hover:bg-blue-800 text-white;
 }
 
-/* Form Styles */
 .input {
     @apply border-gray-300 rounded-md shadow-sm;
 }

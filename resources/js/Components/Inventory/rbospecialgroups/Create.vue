@@ -16,7 +16,7 @@ const props = defineProps({
 const form = useForm({
     GROUPID: (''),
     NAME: (''),
-    
+
 });
 
 const submitForm = () => {
@@ -50,8 +50,8 @@ const toggleActive = () => {
                         autofocus
                     />
                     <InputError :message="form.errors.GROUPID" class="mt-2" />
-                    </div>  --> 
-                    
+                    </div>  -->
+
                     <div class="col-span-3">
                         <InputLabel for="SPECIAL GROUP" value="SPECIAL GROUP" />
                     <TextInput

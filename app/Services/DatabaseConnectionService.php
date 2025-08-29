@@ -9,9 +9,6 @@ use Exception;
 
 class DatabaseConnectionService
 {
-    /**
-     * Default connection configuration
-     */
     private array $defaultConnection = [
         'driver' => 'mysql',
         'host' => null,
@@ -25,9 +22,6 @@ class DatabaseConnectionService
         'engine' => null,
     ];
 
-    /**
-     * Switch database connection
-     */
     public function switchDatabase(string $storeId): ConnectionInterface
     {
         try {
@@ -43,18 +37,13 @@ class DatabaseConnectionService
         }
     }
 
-    /**
-     * Get connection configuration
-     */
     public function getConnectionConfig(string $storeId): array
     {
-        // Check if it's HQ2 (main database)
         if ($storeId === 'HQ2') {
             return $this->getMainConnection();
         }
 
         try {
-            // For all other connections, try to get from store_connections table
             $storeConnection = StoreConnection::where('store_id', $storeId)
                 ->where('is_active', true)
                 ->first();
@@ -69,9 +58,6 @@ class DatabaseConnectionService
         }
     }
 
-    /**
-     * Get main (HQ2) connection
-     */
     protected function getMainConnection(): array
     {
         return array_merge($this->defaultConnection, [
@@ -82,9 +68,6 @@ class DatabaseConnectionService
         ]);
     }
 
-    /**
-     * Build connection config from StoreConnection model
-     */
     protected function buildConnectionFromModel(StoreConnection $connection): array
     {
         return array_merge($this->defaultConnection, [
@@ -95,9 +78,6 @@ class DatabaseConnectionService
         ]);
     }
 
-    /**
-     * Add or update a custom database connection
-     */
     public function setCustomConnection(array $connectionDetails): void
     {
         if ($connectionDetails['store_id'] === 'HQ2') {
@@ -116,9 +96,6 @@ class DatabaseConnectionService
         );
     }
 
-    /**
-     * Remove a custom database connection
-     */
     public function removeCustomConnection(string $storeId): void
     {
         if ($storeId === 'HQ2') {
@@ -128,9 +105,6 @@ class DatabaseConnectionService
         StoreConnection::where('store_id', $storeId)->delete();
     }
 
-    /**
-     * Get all custom database connections
-     */
     public function getCustomConnections(): array
     {
         return StoreConnection::where('is_active', true)->get()->toArray();

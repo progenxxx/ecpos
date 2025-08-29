@@ -72,7 +72,7 @@ onMounted(() => {
     form.BLOCKED = props.BLOCKED;
     form.STOREID = props.STOREID;
     form.CANBEDELETED = props.CANBEDELETED;
-    
+
     watch(() => props.NUMBERSEQUENCE, (newValue) => {
         form.NUMBERSEQUENCE = newValue;
     });
@@ -114,7 +114,7 @@ onMounted(() => {
                         autofocus
                     />
                     <InputError :message="form.errors.NUMBERSEQUENCE" class="mt-2" />
-                    </div>  
+                    </div>
 
                     <div class="col-span-2">
                     <InputLabel for="TXT" value="TXT" />
@@ -188,7 +188,7 @@ onMounted(() => {
                     />
                     <InputError :message="form.errors.CANBEDELETED" class="mt-2" />
                     </div>
-                    
+
                 </div>
             </form>
         </template>

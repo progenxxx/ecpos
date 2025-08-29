@@ -1,4 +1,4 @@
-//resources/js/Components/Items/Links/Update.vue
+
 <template>
     <TransitionRoot appear :show="showModal" as="template">
         <Dialog as="div" @close="closeModal" class="relative z-50">
@@ -147,23 +147,21 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'updated']);
 
-// Form
 const form = useForm({
     link_type: props.link.link_type,
     quantity: props.link.quantity,
     active: props.link.active
 });
 
-// Methods
 const getLinkedItemName = () => {
-    return props.link.is_parent 
-        ? props.link.child_item?.itemname 
+    return props.link.is_parent
+        ? props.link.child_item?.itemname
         : props.link.parent_item?.itemname;
 };
 
 const getLinkedItemId = () => {
-    return props.link.is_parent 
-        ? props.link.child_item?.itemid 
+    return props.link.is_parent
+        ? props.link.child_item?.itemid
         : props.link.parent_item?.itemid;
 };
 

@@ -16,5 +16,5 @@ const props = defineProps({
         'font-bold p-2 my-2 shadow-sm shadow-gray-100 h-70vh hover:bg-gray-200 hover:text-black rounded-md  min-w-12 text-sm tracking-widest lg:min-w-64',
         (showThis ? 'bg-transparent text-black' : 'bg-transparent text-gray-800')]">
         <slot></slot>
-    </button>   
+    </button>
 </template>

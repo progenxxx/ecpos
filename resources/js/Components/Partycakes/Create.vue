@@ -9,7 +9,6 @@ import SelectOption from '@/Components/SelectOption/SelectOption.vue';
 import InputError from '@/Components/Inputs/InputError.vue';
 import FormComponent from '@/Components/Form/FormComponent.vue';
 
-
 const props = defineProps({
     showModal: {
         type: Boolean,
@@ -24,10 +23,6 @@ const props = defineProps({
 const selectStore = (selectStore) => {
     form.storeid = selectStore;
 };
-
-/* const initialStoreId = computed(() => {
-  return $page.props.auth.user.storeid;
-}); */
 
 const form = useForm({
     storeid: '',
@@ -56,26 +51,18 @@ const handleFileUpload = (event) => {
   form.file_path = event.target.files[0];
 };
 
-/* const submitForm = () => {
-    form.post("/partycakes", {
-        preserveScroll: true,
-        onSuccess: () => form.reset(),
-    });
-}; */
-
 const submitForm = () => {
     let formData = new FormData();
     for (let key in form) {
         formData.append(key, form[key]);
     }
-    
+
     form.post("/partycakes", {
         preserveScroll: true,
         onSuccess: () => form.reset(),
         data: formData,
     });
 
-    /* location.reload(); */
 };
 
 const emit = defineEmits();
@@ -90,7 +77,7 @@ const toggleActive = () => {
     <Modal title="ORDER PARTYCAKE" @toggle-active="toggleActive" :show-modal="showModal">
         <template #content >
             <FormComponent @submit.prevent="submitForm" enctype="multipart/form-data">
-                
+
                 <div class="grid grid-cols-1">
                     <div class="col-span-5">
                         <div class="grid gap-4">
@@ -159,76 +146,76 @@ const toggleActive = () => {
                                 <InputLabel for="Datepickup" value="Date Pick Up" />
                                 <div class="relative">
                                     <div class="absolute inset-y-0 end-0 top-0 flex items-center pe-3.5 pointer-events-none">
-                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http:
                                         <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
                                         </svg>
                                     </div>
-                                    <input 
+                                    <input
                                         type="date"
-                                        id="datepickedup" 
+                                        id="datepickedup"
                                         v-model="form.datepickedup"
                                         :is-error="form.errors.datepickedup ? true : false"
-                                        class="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                                        class="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                         required />
                                     <InputError :message="form.errors.datepickedup" class="mt-2" />
-                                </div> 
+                                </div>
                             </div>
 
                             <div class="col-span-1">
                                 <InputLabel for="Timepickup" value="Time Pick Up" />
                                 <div class="relative">
                                     <div class="absolute inset-y-0 end-0 top-0 flex items-center pe-3.5 pointer-events-none">
-                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http:
                                         <path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4a1 1 0 1 0-2 0v4a1 1 0 0 0 .293.707l3 3a1 1 0 0 0 1.414-1.414L13 11.586V8Z" clip-rule="evenodd"/>
                                         </svg>
                                     </div>
-                                    <input 
+                                    <input
                                         type="time"
-                                        id="timepickedup" 
+                                        id="timepickedup"
                                         v-model="form.timepickedup"
                                         :is-error="form.errors.timepickedup ? true : false"
-                                        class="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                                        class="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                         required />
                                     <InputError :message="form.errors.timepickedup" class="mt-2" />
-                                </div> 
+                                </div>
                             </div>
 
                             <!-- <div class="col-span-11">
                                 <InputLabel for="Delivered" value="Delivered" />
                                 <div class="relative">
                                     <div class="absolute inset-y-0 end-0 top-0 flex items-center pe-3.5 pointer-events-none">
-                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http:
                                         <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
                                         </svg>
                                     </div>
-                                    <input 
+                                    <input
                                         type="date"
-                                        id="delivered" 
+                                        id="delivered"
                                         v-model="form.delivered"
                                         :is-error="form.errors.delivered ? true : false"
-                                        class="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                                        class="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                         required />
                                     <InputError :message="form.errors.delivered" class="mt-2" />
-                                </div> 
+                                </div>
                             </div> -->
 
                             <!-- <div class="col-span-1">
                                 <InputLabel for="Timedelivered" value="Time Delivered" />
                                 <div class="relative">
                                     <div class="absolute inset-y-0 end-0 top-0 flex items-center pe-3.5 pointer-events-none">
-                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http:
                                         <path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4a1 1 0 1 0-2 0v4a1 1 0 0 0 .293.707l3 3a1 1 0 0 0 1.414-1.414L13 11.586V8Z" clip-rule="evenodd"/>
                                         </svg>
                                     </div>
-                                    <input 
+                                    <input
                                         type="time"
-                                        id="timedelivered" 
+                                        id="timedelivered"
                                         v-model="form.timedelivered"
                                         :is-error="form.errors.timedelivered ? true : false"
-                                        class="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                                        class="bg-gray-50 border leading-none border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                         required />
                                     <InputError :message="form.errors.timedelivered" class="mt-2" />
-                                </div> 
+                                </div>
                             </div> -->
 
                             <div class="col-span-12">
@@ -362,12 +349,11 @@ const toggleActive = () => {
                                 />
                                 <InputError :message="form.errors.balanceamount" class="mt-2" />
                             </div>
-                            
 
                         </div>
                     </div>
                 </div>
-                
+
             </FormComponent>
         </template>
         <template #buttons>

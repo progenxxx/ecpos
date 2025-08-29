@@ -15,7 +15,6 @@ DataTable.use(DataTablesCore);
 const REASONID = ref('');
 const REASONTEXT = ref('');
 
-
 const showModalUpdate = ref(false);
 const showCreateModal = ref(false);
 const showDeleteModal = ref(false);
@@ -30,7 +29,7 @@ const props = defineProps({
 const columns = [
     { data: 'REASONID', title: 'REASONID' },
     { data: 'REASONTEXT', title: 'REASONTEXT' },
-   
+
     {
         data: null,
         render: '#action',
@@ -45,11 +44,10 @@ const options = {
     scrollCollapse: true,
 };
 
-
 const toggleUpdateModal = (newREASONID, newREASONTEXT) => {
     REASONID.value = newREASONID;
     REASONTEXT.value = newREASONTEXT;
-  
+
     showModalUpdate.value = true;
 };
 const toggleDeleteModal = (newREASONID) => {
@@ -60,7 +58,6 @@ const toggleDeleteModal = (newREASONID) => {
 const toggleCreateModal = () => {
     showCreateModal.value = true;
 };
-
 
 const updateModalHandler = () => {
     showModalUpdate.value = false;

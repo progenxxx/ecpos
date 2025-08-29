@@ -46,81 +46,9 @@ const options = {
   scrollY: "60vh",
   scrollCollapse: true,
   error: function (xhr, error, thrown) {
-    console.error("DataTables error:", error);
+
   }
 };
-
-/* const groupedOrders = props.orders.reduce((acc, order) => {
-const STORENAME = order.STORENAME;
-const ITEMID = order.ITEMID;
-const itemName = order.ITEMNAME;
-const counted = parseInt(order.COUNTED.trim()) || 0;
-
-if (!acc[ITEMID]) {
-  acc[ITEMID] = {};
-}
-
-if (!acc[ITEMID][STORENAME]) {
-  acc[ITEMID][STORENAME] = {};
-}
-
-if (!acc[ITEMID][STORENAME][ITEMID]) {
-  acc[ITEMID][STORENAME][ITEMID] = 0;
-}
-
-acc[ITEMID][STORENAME][ITEMID] += counted;
-return acc;
-}, {});
-
-const flattenedOrders = Object.entries(groupedOrders).map(([ITEMID, storeCount]) => ({
-ITEMID: ITEMID,
-ITEMNAME: props.orders.find(order => order.ITEMID === ITEMID)?.ITEMNAME || '',
-...Object.entries(storeCount).reduce((acc, [STORENAME, count]) => {
-  acc[STORENAME] = count[ITEMID] || 0;
-  return acc;
-}, {}),
-}));
-
-const columns = [
-{
-  title: 'ITEMID',
-  data: 'ITEMID',
-},
-{
-  title: 'ITEMS',
-  data: 'ITEMNAME',
-},
-];
-
-const STORENAME = new Set();
-flattenedOrders.forEach(order => {
-Object.keys(order).forEach(key => {
-  if (key !== 'ITEMID' && key !== 'ITEMNAME') {
-    STORENAME.add(key);
-  }
-});
-});
-
-STORENAME.forEach(STORENAME => {
-columns.push({
-  title: STORENAME,
-  data: STORENAME,
-});
-});
-
-// Check if all columns have data in flattenedOrders
-columns.forEach(column => {
-if (!flattenedOrders.every(order => order.hasOwnProperty(column.data))) {
-  // Handle missing data here, such as setting a default value or skipping the column
-  console.warn(`Column '${column.data}' does not exist in all objects of flattenedOrders.`);
-  // Example: Set a default value
-  flattenedOrders.forEach(order => {
-    if (!order.hasOwnProperty(column.data)) {
-      order[column.data] = '0'; // or any default value you prefer
-    }
-  });
-}
-}); */
 
 const groupedOrders = computed(() => {
   return props.orders.reduce((acc, order) => {
@@ -185,7 +113,6 @@ const columns = computed(() => {
 
   return [...baseColumns, ...storeColumns];
 });
-
 
 const StartDate = ref(null);
 const formattedDate1 = computed(() => {
@@ -258,13 +185,13 @@ downloadTextFile(filename, content);
       <div class="absolute adjust">
 
         <div class="flex justify-start items-center">
-         
+
           <form @submit.prevent="submitForm"   class="px-2 py-3 max-h-[50vh] lg:max-h-[70vh] overflow-y-auto">
               <input type="hidden" name="_token" :value="$page.props.csrf_token">
               <div date-rangepicker  class="flex items-center">
               <div class="relative ml-5 ">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
+                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
                   </div>
 
               <input
@@ -283,7 +210,7 @@ downloadTextFile(filename, content);
 
               <div class="relative">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
+                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
                   </div>
 
                   <input
@@ -311,7 +238,7 @@ downloadTextFile(filename, content);
               <li><a href="/lastweek">Last Week</a></li>
               <li><a href="/yesterday">Yesterday</a></li>
             </ul>
-          </details>               
+          </details>
 
          <SuccessButton
                 type="button"
@@ -322,10 +249,10 @@ downloadTextFile(filename, content);
           </SuccessButton>
 
           <p class="font-bold text:navy font-xs">{{ startDate }} | {{ endDate }}</p>
-          
+
         </div>
       </div>
-      
+
       <DataTable :data="flattenedOrders" :columns="columns" class="w-full relative display" :options="options">
         <template #action="data">
           <div class="flex justify-start">
@@ -336,7 +263,6 @@ downloadTextFile(filename, content);
   </template>
 </Main>
 </template>
-
 
 <script>
 import ExcelJS from 'exceljs';
@@ -354,7 +280,7 @@ export default {
     }
   },
   methods: {
-    
+
     async exportToExcel() {
       try {
         const workbook = new ExcelJS.Workbook();
@@ -400,7 +326,7 @@ export default {
         const buffer = await workbook.xlsx.writeBuffer();
         this.saveExcelFile(buffer, filename);
       } catch (error) {
-        console.error('Error exporting to Excel:', error);
+
       }
     },
     saveExcelFile(buffer, filename) {

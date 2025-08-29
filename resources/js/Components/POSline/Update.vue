@@ -72,7 +72,7 @@ onMounted(() => {
     form.dealpriceordiscpct = props.dealpriceordiscpct;
     form.linegroup = props.linegroup;
     form.disctype = props.disctype;
-    
+
     watch(() => props.offerid, (newValue) => {
         form.offerid = newValue;
     });
@@ -113,7 +113,7 @@ onMounted(() => {
                             autofocus
                         />
                         <InputError :message="form.errors.offerid" class="mt-2" />
-                    </div>  
+                    </div>
 
                     <div class="col-span-2">
                         <InputLabel for="lineid" value="lineid" />
@@ -187,7 +187,7 @@ onMounted(() => {
                         />
                         <InputError :message="form.errors.disctype" class="mt-2" />
                     </div>
-                    
+
                 </div>
             </form>
         </template>

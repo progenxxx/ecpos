@@ -200,12 +200,12 @@ const submitForm = () => {
 }
 
 const handleSelectedCategory = (category) => {
-    console.log('Selected Category:', category);
+
 };
 
 onMounted(() => {
   const dataTable = ref(null);
-  
+
   nextTick(() => {
     if (isAdmin.value) {
       const selectAllCheckbox = document.getElementById('selectAll');
@@ -234,9 +234,9 @@ const ClickEnable = () => {
     alert(response.data.message);
     location.reload();
   })
-  
+
   .catch(error => {
-    console.error('Error updating items:', error);
+
     alert('An error occurred while updating items.');
   });
 };
@@ -313,7 +313,6 @@ const nonproducts = () => {
 
       </template>
 
-
       <template v-slot:main>
 
         <TableContainer>
@@ -339,7 +338,6 @@ const nonproducts = () => {
                   >
                     <Enabled class="h-4" />
                   </PrimaryButton>
-                  
 
                   <form @submit.prevent="submitForm" id="importproduct" class="flex items-center">
                     <Excel
@@ -349,7 +347,7 @@ const nonproducts = () => {
                       class="relative display"
                       v-if="isAdmin"
                     />
-                    
+
                     <PrimaryButton class="m-2 bg-navy" @click.prevent="submitForm" v-if="isAdmin">
                       <Import class="h-4" />
                     </PrimaryButton>
@@ -366,13 +364,13 @@ const nonproducts = () => {
                   /> -->
                 </div>
               </div>
-            </div> 
+            </div>
           </div>
 
             <div class="hidden md:block">
               <div class="absolute adjust">
               <div class="flex flex-col sm:flex-row justify-start items-center" id="panel" v-show="showPanel">
-                
+
                 <div class="flex flex-wrap justify-center sm:justify-start w-full sm:w-auto">
                   <PrimaryButton
                     v-if="isOpic"
@@ -401,7 +399,7 @@ const nonproducts = () => {
                   class="mt-4 sm:mt-0 sm:ml-4 relative display"
                   v-if="isAdmin"
                   />
-                  
+
                   <PrimaryButton class="m-2 sm:m-6 bg-navy" @click.prevent="submitForm" v-if="isOpic">
                       <Import class="h-4" />
                   </PrimaryButton>
@@ -434,7 +432,7 @@ const nonproducts = () => {
               </div>
             </div>
           </div>
-          
+
           <DataTable
           :data="items"
           :columns="columns"
@@ -496,7 +494,6 @@ const nonproducts = () => {
     </Main>
   </template>
 
-
 <script>
 import RetailPanel from "@/Layouts/RetailPanel.vue";
 
@@ -506,7 +503,7 @@ export default {
   },
   data() {
     return {
-      showPanel: true 
+      showPanel: true
     };
   },
 

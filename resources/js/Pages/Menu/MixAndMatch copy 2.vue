@@ -18,7 +18,7 @@ const selectDiscount = (discount) => {
 
 const groupedItems = computed(() => {
   if (!selectedDiscount.value) return [];
-  
+
   return selectedDiscount.value.line_groups.map(group => ({
     ...group,
     items: group.discount_lines || [],
@@ -43,16 +43,16 @@ const selectItem = (item, group) => {
   if (!selectedItemsByGroup.value[group.linegroup]) {
     selectedItemsByGroup.value[group.linegroup] = [];
   }
-  
+
   const groupItems = selectedItemsByGroup.value[group.linegroup];
   const itemIndex = groupItems.findIndex(i => i.id === item.id);
-  
+
   if (itemIndex > -1) {
     groupItems.splice(itemIndex, 1);
   } else if (groupItems.length < group.noofitemsneeded) {
     groupItems.push(item);
   }
-  
+
   if (isSelectionComplete.value) {
     step.value = 3;
   }
@@ -92,7 +92,7 @@ const resetSelection = () => {
 const submitOrder = async () => {
   loading.value = true;
   error.value = null;
-  
+
   try {
     const orderData = {
       discountId: selectedDiscount.value.id,
@@ -108,13 +108,12 @@ const submitOrder = async () => {
     };
 
     const response = await axios.post('/mix-match/submit-order', orderData);
-    
+
     if (response.data.status === 'success') {
-      // Reset the modal state
+
       isOpen.value = false;
       resetSelection();
-      
-      // Show success message
+
       const toast = document.createElement('div');
       toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
       toast.innerHTML = `
@@ -124,8 +123,7 @@ const submitOrder = async () => {
         <span>Order completed successfully!</span>
       `;
       document.body.appendChild(toast);
-      
-      // Remove toast after 3 seconds
+
       setTimeout(() => {
         toast.remove();
       }, 3000);
@@ -134,7 +132,7 @@ const submitOrder = async () => {
     }
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to submit order. Please try again.';
-    // Show error in UI
+
     const errorMessage = document.createElement('div');
     errorMessage.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
     errorMessage.innerHTML = `
@@ -144,8 +142,7 @@ const submitOrder = async () => {
       <span>${error.value}</span>
     `;
     document.body.appendChild(errorMessage);
-    
-    // Remove error message after 3 seconds
+
     setTimeout(() => {
       errorMessage.remove();
     }, 3000);
@@ -154,15 +151,13 @@ const submitOrder = async () => {
   }
 };
 
-
-
 onMounted(fetchDiscounts);
 </script>
 
 <template>
   <div class="p-4">
     <!-- Trigger Button -->
-    <button 
+    <button
       @click="isOpen = true"
       class="group relative inline-flex items-center justify-center px-6 py-3 overflow-hidden font-bold text-white rounded-lg shadow-2xl bg-gradient-to-br from-purple-600 to-blue-500 hover:from-purple-500 hover:to-blue-400 transition-all duration-300 ease-out hover:scale-105"
     >
@@ -182,7 +177,7 @@ onMounted(fetchDiscounts);
           <div class="bg-gradient-to-r from-purple-600 to-blue-500 p-6">
             <div class="flex justify-between items-center">
               <h2 class="text-2xl font-bold text-white">Mix & Match Menu</h2>
-              <button 
+              <button
                 @click="isOpen = false; resetSelection();"
                 class="text-white hover:text-gray-200 transition-colors"
               >
@@ -193,22 +188,22 @@ onMounted(fetchDiscounts);
             </div>
             <!-- Progress Steps -->
             <div class="flex items-center justify-center space-x-4 mt-6">
-              <div 
-                v-for="i in 3" 
+              <div
+                v-for="i in 3"
                 :key="i"
                 class="flex items-center"
               >
-                <div 
+                <div
                   :class="[
                     'w-8 h-8 rounded-full flex items-center justify-center border-2 font-bold',
-                    step >= i 
-                      ? 'bg-white text-purple-600 border-white' 
+                    step >= i
+                      ? 'bg-white text-purple-600 border-white'
                       : 'border-white/50 text-white/50'
                   ]"
                 >
                   {{ i }}
                 </div>
-                <div 
+                <div
                   v-if="i < 3"
                   :class="[
                     'w-16 h-0.5 mx-2',
@@ -305,8 +300,8 @@ onMounted(fetchDiscounts);
             <div v-if="step === 3" class="space-y-6">
               <h3 class="text-xl font-bold text-gray-800">Review Your Selection</h3>
               <div class="space-y-6">
-                <div 
-                  v-for="group in groupedItems" 
+                <div
+                  v-for="group in groupedItems"
                   :key="group.linegroup"
                   class="p-6 rounded-xl bg-gray-50 space-y-4"
                 >
@@ -331,13 +326,13 @@ onMounted(fetchDiscounts);
           <!-- Footer -->
           <div class="border-t bg-gray-50 p-6">
             <div class="flex justify-between items-center">
-              <button 
+              <button
                 @click="step > 1 ? step-- : resetSelection()"
                 class="px-6 py-2 border-2 border-gray-300 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-colors"
               >
                 {{ step > 1 ? 'Back' : 'Cancel' }}
               </button>
-              
+
               <div class="flex space-x-4">
                 <button
                   v-if="step < 3"
@@ -358,16 +353,16 @@ onMounted(fetchDiscounts);
                   class="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-medium hover:from-green-400 hover:to-emerald-500 transition-all duration-300">
                   <span class="relative inline-flex items-center">
                     <span>Complete Order</span>
-                    <svg 
-                      class="w-5 h-5 ml-2" 
-                      fill="none" 
-                      stroke="currentColor" 
+                    <svg
+                      class="w-5 h-5 ml-2"
+                      fill="none"
+                      stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path 
-                        stroke-linecap="round" 
-                        stroke-linejoin="round" 
-                        stroke-width="2" 
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
@@ -387,16 +382,16 @@ onMounted(fetchDiscounts);
       :class="isOpen ? 'translate-y-20 opacity-0' : 'translate-y-0 opacity-100'"
     >
       <div class="flex items-center space-x-2">
-        <svg 
-          class="w-6 h-6" 
-          fill="none" 
-          stroke="currentColor" 
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path 
-            stroke-linecap="round" 
-            stroke-linejoin="round" 
-            stroke-width="2" 
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
             d="M5 13l4 4L19 7"
           />
         </svg>
@@ -421,7 +416,6 @@ onMounted(fetchDiscounts);
   animation: spin 1s linear infinite;
 }
 
-/* Custom transitions */
 .modal-enter-active,
 .modal-leave-active {
   transition: all 0.3s ease-out;

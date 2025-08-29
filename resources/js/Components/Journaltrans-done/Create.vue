@@ -62,7 +62,7 @@ const toggleActive = () => {
                         autofocus
                     />
                     <InputError :message="form.errors.JOURNALID" class="mt-2" />
-                    </div>  
+                    </div>
                     <div class="col-span-2">
                     <InputLabel for="LINENUM" value="LINENUM" />
                     <TextInput
@@ -135,7 +135,7 @@ const toggleActive = () => {
                     />
                     <InputError :message="form.errors.PRICEUNIT" class="mt-2" />
                     </div>
-                    
+
                     <div class="col-span-1 ml-4">
                         <InputLabel for="SALESAMOUNT" value="SALESAMOUNT" />
                     <TextInput
@@ -220,7 +220,6 @@ const toggleActive = () => {
                     <InputError :message="form.errors.POSTEDDATETIME" class="mt-2" />
                     </div>
 
-                    
                     <div class="col-span-1 ml-4">
                         <InputLabel for="UNITID" value="UNITID" />
                     <TextInput

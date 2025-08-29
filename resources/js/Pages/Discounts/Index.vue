@@ -22,14 +22,12 @@ const props = defineProps({
     }
 });
 
-// Reactive state
 const searchQuery = ref('');
 const selectedDiscountType = ref('');
 const showConfirmDelete = ref(false);
 const discountToDelete = ref(null);
 const showFloatingMenu = ref(false);
 
-// Computed properties
 const user = computed(() => props.auth?.user || {});
 const userRole = computed(() => user.value?.role || '');
 const layoutComponent = computed(() => {
@@ -46,19 +44,17 @@ const discountTypes = computed(() => {
 
 const filteredDiscounts = computed(() => {
     if (!props.discounts || !Array.isArray(props.discounts)) return [];
-    
+
     let filtered = [...props.discounts];
 
-    // Search filter
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
-        filtered = filtered.filter(discount => 
+        filtered = filtered.filter(discount =>
             discount?.DISCOFFERNAME?.toLowerCase().includes(query) ||
             discount?.DISCOUNTTYPE?.toLowerCase().includes(query)
         );
     }
 
-    // Type filter
     if (selectedDiscountType.value) {
         filtered = filtered.filter(discount => discount?.DISCOUNTTYPE === selectedDiscountType.value);
     }
@@ -66,10 +62,9 @@ const filteredDiscounts = computed(() => {
     return filtered;
 });
 
-// Methods
 const formatDiscountValue = (discount) => {
     if (!discount) return '';
-    
+
     switch (discount.DISCOUNTTYPE) {
         case 'PERCENTAGE':
             return `${discount.PARAMETER}%`;
@@ -112,11 +107,9 @@ const confirmDelete = (discount) => {
     showConfirmDelete.value = true;
 };
 
-// FIXED: Delete function with proper route and method
 const deleteDiscount = () => {
     if (!discountToDelete.value) return;
-    
-    // Use Inertia's delete method with proper route
+
     router.delete(route('discountsv2.destroy', { discount: discountToDelete.value.id }), {
         preserveScroll: true,
         onSuccess: () => {
@@ -124,7 +117,7 @@ const deleteDiscount = () => {
             discountToDelete.value = null;
         },
         onError: (errors) => {
-            console.error('Delete failed:', errors);
+
             showConfirmDelete.value = false;
             discountToDelete.value = null;
         }
@@ -138,7 +131,7 @@ const cancelDelete = () => {
 
 const getExportData = () => {
     if (!props.discounts || !Array.isArray(props.discounts)) return [];
-    
+
     return props.discounts.map(discount => ({
         'DISCOUNT NAME': discount?.DISCOFFERNAME || '',
         'TYPE': discount?.DISCOUNTTYPE || '',
@@ -164,7 +157,7 @@ const closeFloatingMenu = () => {
         <template v-slot:main>
             <div class="min-h-screen bg-gray-50 p-2 sm:p-4 lg:p-6">
                 <!-- Flash Messages -->
-                <div v-if="flash.message" 
+                <div v-if="flash.message"
                      :class="[
                          'mb-4 px-4 py-2 rounded-md',
                          flash.isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -232,7 +225,7 @@ const closeFloatingMenu = () => {
                                     class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                             </div>
-                            
+
                             <!-- Type Filter -->
                             <div>
                                 <select
@@ -262,7 +255,7 @@ const closeFloatingMenu = () => {
                                 </p>
                             </div>
 
-                            <div v-for="discount in filteredDiscounts" :key="discount.id" 
+                            <div v-for="discount in filteredDiscounts" :key="discount.id"
                                  class="border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors">
                                 <div class="flex items-start justify-between mb-2">
                                     <div class="flex-1">
@@ -285,7 +278,7 @@ const closeFloatingMenu = () => {
                                         </p>
                                     </div>
                                 </div>
-                                
+
                                 <div v-if="isAdmin" class="flex justify-end space-x-3 mt-3 pt-3 border-t border-gray-100">
                                     <!-- FIXED: Proper route parameters -->
                                     <Link
@@ -350,8 +343,8 @@ const closeFloatingMenu = () => {
                                         </td>
                                     </tr>
 
-                                    <tr v-for="discount in filteredDiscounts" 
-                                        :key="discount.id" 
+                                    <tr v-for="discount in filteredDiscounts"
+                                        :key="discount.id"
                                         class="hover:bg-gray-50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900">
@@ -500,7 +493,7 @@ const closeFloatingMenu = () => {
 
                         <!-- Search & Filters for Mobile -->
                         <div class="border-t border-gray-200 my-2"></div>
-                        
+
                         <div class="px-4 py-2">
                             <p class="text-xs text-gray-500 mb-2">Quick Actions</p>
                             <button

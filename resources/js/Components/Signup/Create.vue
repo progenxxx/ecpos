@@ -9,7 +9,6 @@ import SelectOption from '@/Components/SelectOption/SelectOption.vue';
 import InputError from '@/Components/Inputs/InputError.vue';
 import FormComponent from '@/Components/Form/FormComponent.vue';
 
-
 const props = defineProps({
     showModal: {
         type: Boolean,
@@ -38,15 +37,14 @@ const submitForm = () => {
         preserveScroll: true,
         onSuccess: () => {
             form.reset();
-            // Perform any additional actions after successful form submission
+
         },
         onError: (errors) => {
-            // Handle form submission errors
-            console.error(errors);
+
         },
         data: {
             ...form.data,
-            selectStore: form.storeid, // Add the storeid value as selectStore
+            selectStore: form.storeid,
         },
     });
 
@@ -60,7 +58,6 @@ const submitForm = () => {
         <template #content >
             <FormComponent @submit.prevent="submitForm"  >
                 <div class="grid grid-cols-4 ">
-
 
                 <div class="col-span-2 ">
                 <InputLabel for="name" value="Name" />
@@ -119,7 +116,6 @@ const submitForm = () => {
                     <InputError class="mt-2" :message="form.errors.storeid" />
                 </div>
 
-
             <div class="col-span-2 ">
                 <InputLabel for="password" value="Password" />
                 <TextInput
@@ -145,7 +141,6 @@ const submitForm = () => {
                 />
                 <InputError class="mt-2" :message="form.errors.password_confirmation" />
             </div>
-
 
                 </div>
 

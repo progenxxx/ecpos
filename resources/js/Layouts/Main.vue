@@ -59,4 +59,3 @@ const logoutModalHandler = () => {
     </div>
 </template>
 
-

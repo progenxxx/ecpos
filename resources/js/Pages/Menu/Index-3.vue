@@ -15,7 +15,6 @@ import MenuDot from "@/Components/Svgs/MenuDot.vue";
 import ClearCart from "@/Components/Svgs/ClearCart.vue";
 import ModalDaisy from "@/Components/DaisyUI/Modal.vue";
 
-// Menu-related state
 const showThis = ref('Purchase');
 const selectedCategory = ref('');
 const searchQuery = ref('');
@@ -23,7 +22,6 @@ const selectedAR = ref('CASH');
 const selectedCustomer = ref('000000');
 const cartMessage = ref('');
 
-// Cart-related state
 const cartItems = ref([]);
 const total = ref(0);
 const selectedItems = ref([]);
@@ -57,22 +55,21 @@ const props = defineProps({
     }
 });
 
-// Menu-related methods
 const filteredItems = computed(() => {
     let filtered = props.items;
-    
+
     if (selectedCategory.value) {
         filtered = filtered.filter(item => item.itemgroup === selectedCategory.value);
     }
-    
+
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
-        filtered = filtered.filter(item => 
-            item.itemname.toLowerCase().includes(query) || 
+        filtered = filtered.filter(item =>
+            item.itemname.toLowerCase().includes(query) ||
             item.barcode.toLowerCase().includes(query)
         );
     }
-    
+
     return filtered.map(item => ({
         ...item,
         category: item.itemgroup || selectedCategory.value || ''
@@ -95,15 +92,14 @@ const addToCart = async (itemId) => {
         const data = await response.json();
         if (data.success) {
             cartMessage.value = data.message;
-            fetchCartData(); // Refresh cart data after adding an item
+            fetchCartData();
         }
     } catch (error) {
-        console.error('Error adding item to cart:', error);
+
         cartMessage.value = 'Failed to add item to cart. Please try again.';
     }
 };
 
-// Cart-related methods
 const fetchCartData = async () => {
   try {
     const response = await fetch('/api/cart');
@@ -115,7 +111,7 @@ const fetchCartData = async () => {
     }));
     calculateTotal();
   } catch (error) {
-    console.error('Error fetching cart data:', error);
+
   }
 };
 
@@ -131,7 +127,7 @@ const clearCart = async () => {
     selectAll.value = false;
     calculateTotal();
   } catch (error) {
-    console.error('Error clearing cart:', error);
+
   }
 };
 
@@ -153,7 +149,7 @@ const updateQuantity = async (itemName, newQuantity) => {
       calculateTotal();
     }
   } catch (error) {
-    console.error('Error updating quantity:', error);
+
   }
 };
 
@@ -166,17 +162,17 @@ const deleteSelectedItems = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items: selectedItems.value })
     });
-    
+
     if (response.ok) {
       cartItems.value = cartItems.value.filter(item => !selectedItems.value.includes(item.itemname));
       selectedItems.value = [];
       selectAll.value = false;
       calculateTotal();
     } else {
-      console.error('Failed to delete items');
+
     }
   } catch (error) {
-    console.error('Error deleting selected items:', error);
+
   }
 };
 
@@ -196,12 +192,12 @@ const formattedTotal = computed(() => formattedPrice(total.value));
 
 onMounted(() => {
   fetchCartData();
-  // Start polling for updates every 5 seconds
+
   pollingInterval = setInterval(fetchCartData, 5000);
 });
 
 onUnmounted(() => {
-  // Clear the polling interval when the component is unmounted
+
   clearInterval(pollingInterval);
 });
 </script>
@@ -214,7 +210,7 @@ onUnmounted(() => {
                     <div class="flex justify-between items-center gap-2">
                         <div class="flex items-center">
                             <!-- <Title class="text-sm font-bold lg:text-md">{{ windowDesc }}</Title>
-                            <span class="mx-2">|</span> --> 
+                            <span class="mx-2">|</span> -->
                             <div class="w-full lg:w-48 xl:w-64 mb-2 lg:mb-0">
                                 <select v-model="selectedAR" id="payment-options" class="block w-full p-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500">
                                     <option value="" disabled>Payment Method</option>
@@ -234,7 +230,7 @@ onUnmounted(() => {
 
                         <label class="input input-bordered flex items-center gap-2 w-3/5 lg:w-2/5">
                             <input v-model="searchQuery" type="text" class="grow text-sm" placeholder="Barcode / Item" />
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 opacity-70"><path fill-rule="evenodd" d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" clip-rule="evenodd" /></svg>
+                            <svg xmlns="http:
                         </label>
                     </div>
 
@@ -243,7 +239,7 @@ onUnmounted(() => {
                             <div class="flex flex-nowrap ml-10 text-xs w-[80%] lg:text-sm">
                                 <div v-for="cat in category" :key="cat.name">
                                     <div class="flex-none p-2 w-48">
-                                        <div 
+                                        <div
                                             @click="selectCategory(cat.name)"
                                             :class="{'bg-blue-500 text-white': selectedCategory === cat.name, 'bg-gray-200': selectedCategory !== cat.name}"
                                             class="flex items-center justify-center rounded-lg p-2 font-bold italic cursor-pointer transition-colors duration-300 h-full"
@@ -297,8 +293,8 @@ onUnmounted(() => {
                                     <ul class="grid grid-cols-4 text-md font-bold lg:grid-cols-4">
                                         <li class="p-2 flex justify-center">
                                             <label class="inline-flex items-center">
-                                                <input type="checkbox" 
-                                                    v-model="selectAll" 
+                                                <input type="checkbox"
+                                                    v-model="selectAll"
                                                     @change="toggleSelectAll"
                                                     class="form-checkbox h-4 w-4 text-blue-600 rounded-full"
                                                 />
@@ -313,9 +309,9 @@ onUnmounted(() => {
                                     <ul v-for="item in cartItems" :key="item.itemname" class="grid grid-cols-4 text-sm lg:grid-cols-4">
                                         <li class="p-2 flex justify-center">
                                             <label class="inline-flex items-center">
-                                                <input type="checkbox" 
-                                                    :value="item.itemname" 
-                                                    v-model="selectedItems" 
+                                                <input type="checkbox"
+                                                    :value="item.itemname"
+                                                    v-model="selectedItems"
                                                     class="form-checkbox h-4 w-4 text-blue-600 rounded-full"
                                                 />
                                             </label>
@@ -349,8 +345,6 @@ onUnmounted(() => {
                             </section>
                         </div>
 
-                        
-                        
                         <div class="absolute left-0 right-0 bottom-0 h-14 text-white bg-navy flex justify-between items-center border-t border-gray-900 shadow-sm shadow-gray-900">
                             <div class="flex flex-col justify-start ps-1 tracking-wider">
                                 <p class="font-thin text-xs text-white ml-2">TOTAL</p>

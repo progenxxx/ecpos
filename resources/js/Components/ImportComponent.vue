@@ -16,8 +16,7 @@ const form = useForm({
 const handleFileChange = (event) => {
   const file = event.target.files[0];
   form.file = file;
-  
-  // Reset messages
+
   errorMessage.value = '';
   successMessage.value = '';
 };
@@ -27,9 +26,9 @@ const submitForm = () => {
     errorMessage.value = 'Please select a file to import';
     return;
   }
-  
+
   isLoading.value = true;
-  
+
   form.post(route('products.import'), {
     preserveScroll: true,
     onSuccess: (response) => {
@@ -62,10 +61,10 @@ const submitForm = () => {
         Supported formats: .xlsx, .xls, .csv
       </p>
     </div>
-    
-    <PrimaryButton 
-      @click="submitForm" 
-      class="bg-navy" 
+
+    <PrimaryButton
+      @click="submitForm"
+      class="bg-navy"
       :disabled="isLoading || !form.file"
     >
       <Import v-if="!isLoading" class="h-4 mr-2" />
@@ -73,11 +72,11 @@ const submitForm = () => {
       {{ isLoading ? 'Importing...' : 'Import Products' }}
     </PrimaryButton>
   </div>
-  
+
   <div v-if="errorMessage" class="mt-4 p-3 bg-red-100 text-red-800 rounded">
     {{ errorMessage }}
   </div>
-  
+
   <div v-if="successMessage" class="mt-4 p-3 bg-green-100 text-green-800 rounded">
     {{ successMessage }}
   </div>

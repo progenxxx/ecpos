@@ -16,8 +16,7 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-    
-    
+
     showModal: {
         type: Boolean,
         default: false,
@@ -27,9 +26,8 @@ const props = defineProps({
 const form = useForm({
     GROUPID: (''),
     NAME: (''),
-    
-});
 
+});
 
 const submitForm = () => {
     form.patch("/rboinventitemretailgroups/patch", {
@@ -46,7 +44,6 @@ const toggleActive = () => {
 onMounted(() => {
     form.GROUPID = props.GROUPID;
     form.NAME = props.NAME;
-    
 
     watch(() => props.GROUPID, (newValue) => {
         form.GROUPID = newValue;
@@ -75,7 +72,7 @@ onMounted(() => {
                     />
                     <InputError :message="form.errors.GROUPID" class="mt-2" />
                     </div>   -->
-                    
+
                     <div class="col-span-3">
                         <InputLabel for="CATEGORY NAME" value="CATEGORY NAME" />
                     <TextInput

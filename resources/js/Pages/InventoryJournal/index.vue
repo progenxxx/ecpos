@@ -62,7 +62,6 @@ const options = {
     scrollCollapse: true,
 };
 
-
 const toggleUpdateModal = (newPOSTINGDATE, newITEMID, newSTOREID, newADJUSTMENT, newTYPE, newCOSTPRICEPERITEM, newSALESPRICEWITHOUTTAXPERITEM, newSALESPRICEWITHTAXPERITEM, newREASONCODE, newDISCOUNTAMOUNTPERITEM, newUNITID, newADJUSTMENTININVENTORYUNIT) => {
     POSTINGDATE.value = newPOSTINGDATE;
     ITEMID.value = newITEMID;
@@ -86,7 +85,6 @@ const toggleDeleteModal = (newPOSTINGDATE) => {
 const toggleCreateModal = () => {
     showCreateModal.value = true;
 };
-
 
 const updateModalHandler = () => {
     showModalUpdate.value = false;

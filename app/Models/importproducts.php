@@ -28,25 +28,16 @@ class ImportProducts extends Model
         'activestatus' => 'boolean',
     ];
 
-    /**
-     * Scope to get active products
-     */
     public function scopeActive($query)
     {
         return $query->where('activestatus', 1);
     }
 
-    /**
-     * Scope to get products by retail group
-     */
     public function scopeByRetailGroup($query, $group)
     {
         return $query->where('retailgroup', $group);
     }
 
-    /**
-     * Scope to get products with barcode
-     */
     public function scopeWithBarcode($query)
     {
         return $query->whereNotNull('barcode')->where('barcode', '!=', '');

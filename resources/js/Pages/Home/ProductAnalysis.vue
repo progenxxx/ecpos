@@ -3,7 +3,6 @@ import { ref, onMounted, watch,onUnmounted } from 'vue';
 import { Chart, registerables } from 'chart.js';
 import axios from 'axios';
 
-// Register Chart.js components
 Chart.register(...registerables);
 
 const props = defineProps({
@@ -17,7 +16,6 @@ const props = defineProps({
   }
 });
 
-// Add refs for component state
 const topProductsRef = ref(null);
 const bottomProductsRef = ref(null);
 const isLoading = ref(false);
@@ -40,18 +38,16 @@ const truncateLabel = (label, maxLength = 20) => {
 
 const createProductChart = (ctx, data, title, isTop = true) => {
   if (!ctx) {
-    console.error('Canvas context not available');
+
     return null;
   }
 
-  // Data validation
   if (!Array.isArray(data) || !data.length) {
-    console.warn(`No data available for ${title}`);
+
     data = [];
   }
 
-  // Sort data
-  const sortedData = [...data].sort((a, b) => 
+  const sortedData = [...data].sort((a, b) =>
     isTop ? b.total_sales - a.total_sales : a.total_sales - b.total_sales
   );
 
@@ -107,7 +103,7 @@ const createProductChart = (ctx, data, title, isTop = true) => {
           callbacks: {
             label: (context) => {
               const value = context.raw;
-              return context.datasetIndex === 0 
+              return context.datasetIndex === 0
                 ? `Quantity: ${Math.round(value).toLocaleString()} units`
                 : `Sales: ${formatCurrency(value)}`;
             }
@@ -164,29 +160,24 @@ const fetchProductData = async () => {
     const payload = {
       start_date: props.selectedDateRange.start_date,
       end_date: props.selectedDateRange.end_date,
-      stores: props.selectedStores.map(store => 
+      stores: props.selectedStores.map(store =>
         typeof store === 'object' ? store.NAME : store
       )
     };
 
-    console.log('Fetching product data with payload:', payload);
-
     const response = await axios.post(route('get.top.bottom.products'), payload);
-    
+
     if (response.data && !response.data.error) {
-      // Extract data from nested structure
+
       const topProducts = response.data.topProducts?.['Illuminate\\Support\\Collection'] || [];
       const bottomProducts = response.data.bottomProducts?.['Illuminate\\Support\\Collection'] || [];
-      
-      console.log('Received top products:', topProducts);
-      console.log('Received bottom products:', bottomProducts);
 
       initializeCharts(topProducts, bottomProducts);
     } else {
       throw new Error(response.data.error || 'Failed to fetch product data');
     }
   } catch (err) {
-    console.error('Error fetching product data:', err);
+
     error.value = 'Failed to load product data. Please try again.';
     initializeCharts([], []);
   } finally {
@@ -195,7 +186,7 @@ const fetchProductData = async () => {
 };
 
 const initializeCharts = (topProducts, bottomProducts) => {
-  // Cleanup existing charts
+
   if (topProductsChart) {
     topProductsChart.destroy();
   }
@@ -203,12 +194,11 @@ const initializeCharts = (topProducts, bottomProducts) => {
     bottomProductsChart.destroy();
   }
 
-  // Initialize new charts
   if (topProductsRef.value) {
     const topCtx = topProductsRef.value.getContext('2d');
     topProductsChart = createProductChart(
-      topCtx, 
-      topProducts, 
+      topCtx,
+      topProducts,
       'Top 10 Products by Sales',
       true
     );
@@ -217,15 +207,14 @@ const initializeCharts = (topProducts, bottomProducts) => {
   if (bottomProductsRef.value) {
     const bottomCtx = bottomProductsRef.value.getContext('2d');
     bottomProductsChart = createProductChart(
-      bottomCtx, 
-      bottomProducts, 
+      bottomCtx,
+      bottomProducts,
       'Bottom 10 Products by Sales',
       false
     );
   }
 };
 
-// Cleanup on component unmount
 onUnmounted(() => {
   if (topProductsChart) {
     topProductsChart.destroy();
@@ -235,7 +224,6 @@ onUnmounted(() => {
   }
 });
 
-// Watch for changes in props
 watch(
   [() => props.selectedDateRange, () => props.selectedStores],
   () => {
@@ -244,7 +232,6 @@ watch(
   { deep: true }
 );
 
-// Initialize on component mount
 onMounted(() => {
   fetchProductData();
 });
@@ -257,7 +244,7 @@ onMounted(() => {
       <div class="absolute inset-0 opacity-10 bg-green-100"></div>
       <div class="relative z-10">
         <div class="flex items-center mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http:
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
           </svg>
           <h3 class="text-xl font-bold text-gray-800">Top Performing Products</h3>
@@ -277,7 +264,7 @@ onMounted(() => {
       <div class="absolute inset-0 opacity-10 bg-red-100"></div>
       <div class="relative z-10">
         <div class="flex items-center mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http:
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
           </svg>
           <h3 class="text-xl font-bold text-gray-800">Products Under Monitoring</h3>

@@ -27,63 +27,57 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-    
+
     COSTPRICE: {
         type: [String, Number],
         required: true,
     },
-    
+
     PRICEUNIT: {
         type: [String, Number],
         required: true,
     },
-    
-    
+
     SALESAMOUNT: {
         type: [String, Number],
         required: true,
     },
-    
+
     INVENTONHAND: {
         type: [String, Number],
         required: true,
     },
-    
+
     COUNTED: {
         type: [String, Number],
         required: true,
     },
-    
+
     REASONREFRECID: {
         type: [String, Number],
         required: true,
     },
 
-    
     VARIANTID: {
         type: [String, Number],
         required: true,
     },
-    
+
     POSTED: {
         type: [String, Number],
         required: true,
     },
-    
 
-    
     POSTEDDATETIME: {
         type: [String, Number],
         required: true,
     },
-    
-    
+
     UNITID: {
         type: [String, Number],
         required: true,
     },
-    
-    
+
     showModal: {
         type: Boolean,
         default: false,

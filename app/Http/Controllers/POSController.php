@@ -40,13 +40,13 @@ class POSController extends Controller
             ->get();
 
 
-        /* dd($category); */
+        
 
         $items = DB::table('inventtablemodules as a')
           ->select(
               'a.ITEMID as itemid',
               'b.itemname as itemname',
-              /* 'a.quantity as quantity', */
+              
               DB::raw('CAST(a.quantity as int) as quantity'),
               'c.itemgroup as itemgroup',
               'c.itemdepartment as specialgroup',
@@ -62,47 +62,6 @@ class POSController extends Controller
         return Inertia::render('Menu/Index', ['items' => $items, 'category' => $category]);
     }
 
-    /* public function menu($id)
-    {
-
-        $category = DB::table('rboinventitemretailgroups')
-            ->select('groupid','name')   
-            ->get();
-
-        $utcDateTime = Carbon::now('UTC');
-        $currentDateTime = $utcDateTime->setTimezone('Asia/Manila')->toDateString();
-
-        $cashfund = DB::table('cashfunds')
-            ->select('AMOUNT')
-            ->whereDate('created_at', '=', $currentDateTime)
-            ->first();
-
-        $cashfundAmount = $cashfund ? $cashfund->AMOUNT : 0;
-
-        if($cashfundAmount >= 1){
-
-            $items = DB::table('inventtablemodules as a')
-          ->select(
-              'a.ITEMID as itemid',
-              'b.itemname as itemname',
-              DB::raw('CAST(a.quantity as int) as quantity'),
-              'c.itemgroup as itemgroup',
-              'c.itemdepartment as specialgroup',
-              DB::raw('ROUND(FORMAT(a.priceincltax, "N2"), 2) as price'),
-              DB::raw('ROUND(FORMAT(a.price, "N2"), 2) as cost'),
-              DB::raw("CASE WHEN d.ITEMBARCODE <> '' THEN d.itembarcode ELSE 'N/A' END as barcode")
-          )
-          ->leftJoin('inventtables as b', 'a.ITEMID', '=', 'b.itemid')
-          ->leftJoin('rboinventtables as c', 'b.itemid', '=', 'c.itemid')
-          ->leftJoin('inventitembarcodes as d', 'c.barcode', '=', 'd.ITEMBARCODE')
-          ->get();
-
-          return Inertia::render('Menu/Index', ['items' => $items, 'category' => $category]);
-
-        }else{
-            return Inertia::render('Cashfunds/cashfund');
-        }     
-    } */
 
     
 
@@ -509,7 +468,7 @@ class POSController extends Controller
     
             Log::info("Starting addToCart function", ['itemid' => $id, 'winid' => $winid]);
     
-            // Validate window ID
+            
             if (!$winid) {
                 Log::warning("Invalid window ID", ['winid' => $winid]);
                 DB::rollBack();
@@ -528,7 +487,7 @@ class POSController extends Controller
             $staff = Auth::user()->name;
             $currentDateTime = Carbon::now('Asia/Manila');
     
-            // Cast window ID to integer for consistent comparison
+            
             $winid = (int)$winid;
             
             $existingCart = $this->getExistingCartItem($id, $winid);
@@ -541,7 +500,7 @@ class POSController extends Controller
                 $message = 'Item added to cart successfully';
             }
     
-            /* $this->updateCartTables($store, $staff, $winid); */
+            
     
             DB::commit();
             Log::info("addToCart function completed successfully", ['message' => $message, 'winid' => $winid]);
@@ -604,13 +563,13 @@ class POSController extends Controller
     $costAmount = $netAmountNotInclTax;
     $netAmount = $grossAmount - ($existingCart->discamount ?? 0);
 
-    // Fetch discount type from the database
+    
     $disctyperesult = DB::table('carts')
         ->where('itemid', $existingCart->itemid)
         ->where('wintransid', $existingCart->wintransid)
         ->value('disctypes');
 
-    // Calculate discount based on type
+    
     $discountValue = $existingCart->discamount ?? 0;
     $discountParameter = $existingCart->discparameter ?? 0;
     switch ($disctyperesult) {
@@ -627,7 +586,7 @@ class POSController extends Controller
             $discountAmount = 0;
     }
 
-    // Update the cart item in the database
+    
     DB::table('carts')
         ->where('itemid', $existingCart->itemid)
         ->where('wintransid', $existingCart->wintransid)
@@ -657,7 +616,7 @@ class POSController extends Controller
         $userId = Auth::user()->id;
 
         $nextRec = DB::table('nubersequencevalues')
-            /* ->where('storeid', $storeId) */
+            
             ->lockForUpdate()
             ->value('cartnextrec');
 
@@ -694,9 +653,6 @@ class POSController extends Controller
             'updated_at' => $currentDateTime
         ]);
 
-        /* DB::table('nubersequencevalues')
-            ->where('storeid', $storeId)
-            ->update(['cartnextrec' => $cartNextRec]); */
     }
 
     private function updateCartTables($store, $staff, $winid)
@@ -804,8 +760,6 @@ class POSController extends Controller
 
         try {
             
-            /* $deletedCount = Carts::whereIn('itemname', $itemsToDelete)
-                ->delete(); */
 
                 $deletedCount = Carts::whereIn('itemname', $itemsToDelete)
                 ->where(function($query) {
@@ -1010,29 +964,29 @@ private function generateAndPrintReceipt($partialPaymentAmount, $windowDesc, $st
     try {
         $cartItems = Carts::all();
         $total = $cartItems->sum('netamount');
-        $vatRate = 0.12; // Assuming 12% VAT, adjust as needed
+        $vatRate = 0.12; 
         $vatAmount = $total * $vatRate / (1 + $vatRate);
         $vatableSales = $total - $vatAmount;
 
-        // Generate base receipt content
+        
         $baseReceiptContent = $this->generateReceiptHeader($staff, $currentDateTime);
         
-        // Get items and total discount
+        
         list($itemsContent, $totalDiscount) = $this->generateReceiptItems($cartItems);
         $baseReceiptContent .= $itemsContent;
         
         $baseReceiptContent .= $this->generateReceiptSummary($total, $vatAmount, $partialPaymentAmount, $vatableSales, $totalDiscount);
         $baseReceiptContent .= $this->generateReceiptFooter($windowDesc, $currentDateTime);
 
-        // Generate and print Customer Copy
+        
         $customerCopy = $this->addCopyLabel($baseReceiptContent, "Customer Copy");
         $this->printReceipt($customerCopy);
 
-        // Generate and print Staff Copy
+        
         $staffCopy = $this->addCopyLabel($baseReceiptContent, "Staff Copy");
         $this->printReceipt($staffCopy);
 
-        // Generate and print Window Number
+        
         $windowNumber = $this->generateWindowNumberPrint($windowDesc, $currentDateTime);
         $this->printReceipt($windowNumber);
 
@@ -1198,7 +1152,7 @@ public function cart($windowId)
                      DB::raw('CAST(taxinclinprice AS FLOAT) as taxinclinprice'),
                      DB::raw('CAST(netamountnotincltax AS FLOAT) as netamountnotincltax'),
                      DB::raw('CAST(discamount AS FLOAT) as discamount'))
-                     /* ->where('wintransid', $windowId) */
+                     
             ->get();
         
         return response()->json([
@@ -1229,7 +1183,7 @@ public function cart($windowId)
                 'cartItems.*.unit' => 'nullable|string',
                 'cartItems.*.taxinclinprice' => 'nullable|numeric|min:0',
                 'cartItems.*.netamountnotincltax' => 'nullable|numeric|min:0',
-                /* 'cartItems.*.wintransid' => 'nullable|string', */
+                
                 'totalAmount' => 'required|numeric|min:0',
                 'partialpayment' => 'required|numeric|min:0',
                 'selectedAR' => 'required|string',
@@ -1244,7 +1198,7 @@ public function cart($windowId)
             $name = Auth::user()->name;
     
             $nextRec = DB::table('nubersequencevalues')
-                /* ->where('storeid', $storeId) */
+                
                 ->lockForUpdate()
                 ->value('cartnextrec');
     
@@ -1257,7 +1211,7 @@ public function cart($windowId)
             $receiptId = $receiptno;
             $now = $currentDateTime = Carbon::now('Asia/Manila');
     
-            // Create sales transaction records
+            
             $salesTransactions = [];
             foreach ($validated['cartItems'] as $index => $item) {
                 $netPrice = $item['price'] - ($item['discamount'] ?? 0);
@@ -1294,15 +1248,10 @@ public function cart($windowId)
                     'netamountnotincltax' => $item['netamountnotincltax'] ?? 0,
                     'createddate' => $now,
                     'wintransid' => $item['wintransid'] ?? null,
-                    /* 'remarks' => json_encode([
-                        'cashAmount' => $validated['cashAmount'],
-                        'changeAmount' => $validated['cashAmount'] - $validated['totalAmount'],
-                        'partialPayment' => $item['partial_payment'] ?? 0,
-                    ]), */
                 ];
             }
     
-            // Bulk insert sales transactions
+            
             RboTransactionSalesTrans::insert($salesTransactions);
 
             $paymentMethod = strtolower($validated['selectedAR']);
@@ -1317,13 +1266,13 @@ public function cart($windowId)
                 'grabfood' => 0,
             ];
 
-        // Set the amount for the selected payment method
+        
         $paymentAmounts[$paymentMethod] = $validated['totalAmount'];
 
-        // Calculate change amount (only applicable for cash payments)
+        
         $changeAmount = $paymentMethod === 'cash' ? ($validated['cashAmount'] - $validated['totalAmount']) : 0;
 
-        // Create summary record
+        
         RboTransactionTables::create([
             'transactionid' => $transactionId,
             'linenum' => count($validated['cartItems']) + 1,
@@ -1361,9 +1310,9 @@ public function cart($windowId)
             ]),
         ]);
     
-            // Update sequence number
+            
             DB::table('nubersequencevalues')
-                /* ->where('storeid', $storeId) */
+                
                 ->update(['cartnextrec' => $nextRec]);
     
             DB::commit();
@@ -1431,7 +1380,7 @@ public function cart($windowId)
         $connector = new WindowsPrintConnector("POS-80C");
         $printer = new Printer($connector);
 
-        // Header
+        
         $printer->setJustification(Printer::JUSTIFY_CENTER);
         $printer->setEmphasis(true);
         $printer->text("ELJIN CORP\n");
@@ -1445,31 +1394,22 @@ public function cart($windowId)
         $printer->text("Contact #: Your Contact Number\n");
         $printer->text(str_repeat("-", 40) . "\n");
 
-        // Transaction details
+        
         $printer->setJustification(Printer::JUSTIFY_CENTER);
         $printer->text("Date: " . $currentDateTime->format('Y-m-d H:i:s') . "\n");
         $printer->text("Receipt #: " . str_pad($transactionSummary->receiptid, 9, '0', STR_PAD_LEFT) . "\n");
         $printer->text("Cashier: " . $transactionSummary->staff . "\n");
         $printer->text(str_repeat("-", 40) . "\n");
 
-        // Items
+        
         $printer->text(sprintf("%-20s %8s %3s %8s\n", "Item Name", "Price", "Qty", "Total"));
-        /* foreach ($cartItems as $item) {
-            $printer->text(sprintf("%-20s %8.2f %3d %8.2f\n", 
-                substr($item['itemname'], 0, 20), 
-                $item['price'], 
-                $item['total_qty'], 
-                $item['total_price']
-            ));
-        }
-        $printer->text(str_repeat("-", 40) . "\n"); */
 
-        // Print items with discounts and partial payments
+        
         $totalDiscount = 0;
         $totalPartialPayment = 0;
         
         foreach ($cartItems as $item) {
-            // Print item details
+            
             $printer->text(sprintf("%-20s %8.2f %3d %8.2f\n", 
                 substr($item['itemname'], 0, 20), 
                 $item['price'], 
@@ -1477,55 +1417,53 @@ public function cart($windowId)
                 $item['total_price']
             ));
             
-            // If item has discount, print it with the discount name
+            
             if (isset($item['discamount']) && $item['discamount'] > 0) {
-                // Display discount name (discofferid) and amount
+                
                 $printer->text(sprintf(" %-20s -%8.2f\n", 
-                    substr($item['discofferid'], 0, 20),  // Display discount name
+                    substr($item['discofferid'], 0, 20),  
                     $item['discamount']
                 ));
                 $totalDiscount += $item['discamount'];
             }
     
-                // If item has partial payment, track it
+                
                 if (isset($item['partialpayment']) && $item['partialpayment'] > 0) {
                     $totalPartialPayment += $item['partialpayment'];
                 }
             }
             $printer->text(str_repeat("-", 40) . "\n");
     
-            // Print summary
+            
             $printer->text(sprintf("Gross Amount:%28.2f\n", $transactionSummary->grossamount));
             if ($totalDiscount > 0) {
                 $printer->text(sprintf("Total Discount: %26.2f\n", $totalDiscount));
             }
             $printer->text(sprintf("Net Amount:%30.2f\n", $transactionSummary->netamount));
-            /* $printer->text(sprintf("VAT Amount:%30.2f\n", $transactionSummary->grossamount * 0.12)); */
             
-            // Partial Payment Section
+            
+            
             $printer->text(str_repeat("-", 40) . "\n");
             $printer->text("PAYMENT DETAILS\n");
 
             $previouspayment = $transactionSummary->partialpayment;
             $printer->text(sprintf("Previous Payment:%26.2f\n", $previouspayment));
             
-            // Current payment
+            
             $currentPayment = $transactionSummary->cashamount;
             $printer->text(sprintf("Current Payment:%26.2f\n", $currentPayment));
             
-            // Calculate remaining balance
+            
             $remainingBalance = $transactionSummary->netamount - ($totalPartialPayment + $currentPayment);
             
-            // Show total paid amount
-            /* $totalPaidAmount = $totalPartialPayment + $currentPayment;
-            $printer->text(sprintf("Total Paid Amount:%24.2f\n", $totalPaidAmount)); */
             
-            // Show remaining balance if any
+            
+            
             if ($remainingBalance > 0) {
                 $printer->text(sprintf("Remaining Balance:%24.2f\n", $remainingBalance));
             }
             
-            // Only show change if this payment completes the transaction
+            
             if ($remainingBalance <= 0 && $currentPayment > ($transactionSummary->netamount - $totalPartialPayment)) {
                 $change = $currentPayment - ($transactionSummary->netamount - $totalPartialPayment);
                 $printer->text(sprintf("Change:%34.2f\n", $change));
@@ -1533,7 +1471,7 @@ public function cart($windowId)
             
             $printer->text(str_repeat("-", 40) . "\n");
     
-            // Payment Method
+            
             $printer->text("Payment Method:\n");
             $paymentMethods = [
                 'cash' => 'Cash',
@@ -1555,39 +1493,37 @@ public function cart($windowId)
     
             $printer->text(str_repeat("-", 40) . "\n");
     
-            // VAT Details
-            /* $vatableSales = $transactionSummary->netamount / 1.12; */
-            /* $printer->text(sprintf("Vatable Sales:%28.2f\n", $vatableSales));
-            $printer->text(sprintf("VAT Amount:%30.2f\n", $vatableSales * 0.12)); */
+            
+            
             $printer->text(sprintf("Vatable Sales:%28.2f\n", $transactionSummary->netamountnotincltax));
             $printer->text(sprintf("VAT Amount:%30.2f\n", $transactionSummary->taxinclinprice));
             $printer->text(str_repeat("-", 40) . "\n");
 
-            // Print cart note if it exists
+            
             if (!empty($transactionSummary->note)) {
                 $printer->text("Note: " . $transactionSummary->note . "\n");
                 $printer->text(str_repeat("-", 40) . "\n");
             }
 
-            // Print cart customer if it exists
+            
             if (($transactionSummary->custaccount != 000000)) {
                 $printer->text("Customer: " . $transactionSummary->custaccount . "\n");
                 $printer->text(str_repeat("-", 40) . "\n");
             }
             
-            // Payment Status
+            
             $printer->text("Payment Status: " . 
                 ($remainingBalance > 0 ? "PARTIAL PAYMENT\n" : "FULLY PAID\n"));
             
             $printer->text(str_repeat("-", 40) . "\n");
     
-            // ID Section
+            
             $printer->text("ID/OSCA/PWD:\n");
             $printer->text("NAME:\n");
             $printer->text("Signature:\n");
             $printer->text(str_repeat("-", 40) . "\n");
     
-            // Footer
+            
             $printer->text("This serves as your official receipt\n");
             $printer->text("This invoice/receipt shall be valid for\n");
             $printer->text("five (5) years from the date of the\n");
@@ -1599,7 +1535,7 @@ public function cart($windowId)
             $printer->text("ADDRESS\n");
             $printer->text(str_repeat("-", 40) . "\n");
     
-            // Additional note for partial payments
+            
             if ($remainingBalance > 0) {
                 $printer->text("*** PARTIAL PAYMENT RECEIPT ***\n");
                 $printer->text("Please keep this receipt for your\n");
@@ -1662,8 +1598,6 @@ public function generateXRead()
         try {
             $printerName = env('POS_PRINTER_NAME', 'POS-80C');
             $connector = new WindowsPrintConnector($printerName);
-            /* $bluetoothAddress = env('POS_BLUETOOTH_ADDRESS', 'DC:0D:30:70:09:19');
-            $connector = new BluetoothPrintConnector($bluetoothAddress); */
             $printer = new Printer($connector);
 
             $this->printXReadHeader($printer, $storeId, $name);
@@ -1693,7 +1627,7 @@ public function generateXRead()
     $printer->text("Contact #: Your Contact Number\n");
     $printer->text(str_repeat("-", 40) . "\n");
     $printer->text("Date: " . Carbon::now('Asia/Manila') . "\n");
-    /* $printer->text("Receipt #: " . str_pad(rand(1, 999999), 9, '0', STR_PAD_LEFT) . "\n"); */
+    
     $printer->text("Store: $name\n");
     $printer->text("Cashier: $name\n");
     $printer->text(str_repeat("-", 40) . "\n");
@@ -1708,12 +1642,8 @@ private function printXReadContent(Printer $printer, $xReadData)
     $printer->text(sprintf("%-20s %11s\n", "Gross Amount:", number_format($xReadData['grossSales'], 2)));
     $printer->text(sprintf("%-20s %11s\n", "Discount Amount:", number_format($xReadData['discount'], 2)));
     $printer->text(sprintf("%-20s %11s\n", "Net Amount:", number_format($xReadData['netSales'], 2)));
-    /* $printer->text(sprintf("%-20s %11s\n", "VAT Amount:", number_format($xReadData['totalVAT'], 2)));
-    $printer->text(sprintf("%-20s %11s\n", "Amount Paid:", number_format($xReadData['grossSales'], 2))); */
     $printer->text(str_repeat("-", 40) . "\n");
 
-    /* $printer->text(sprintf("%-20s %11s\n", "Partial Payment:", "_______________"));
-    $printer->text(str_repeat("-", 40) . "\n"); */
     
     $printer->text("Payment Method:\n");
     foreach ($xReadData['paymentBreakdown'] as $method => $amount) {
@@ -1751,7 +1681,7 @@ private function printXReadFooter(Printer $printer, $xReadData, $storeId, $name)
 
 public function getDailyJournal()
     {
-        // Fetch today's transactions
+        
         $transactions = rbotransactiontables::whereDate('createddate', today())->orderByDesc('receiptid')->get();
         return response()->json($transactions);
     }
@@ -1773,7 +1703,7 @@ public function getDailyJournal()
             $connector = new WindowsPrintConnector($printerName);
             $printer = new Printer($connector);
     
-            // Print receipt content
+            
             $this->printReceiptContent($printer, $transaction, $salesTransactions);
     
             $printer->cut();
@@ -1958,7 +1888,7 @@ public function returnTransaction(Request $request)
 
         DB::commit();
 
-        // Auto-printing
+        
         $this->printReturnReceipt($originalTransaction, $returnItems);
 
         return response()->json([
@@ -2001,9 +1931,6 @@ private function printReturnReceipt($transaction, $returnItems)
         }
         $printer->feed();
 
-        /* $printer->setEmphasis(true);
-        $printer->text("Total Return Amount: " . number_format($transaction->netamount, 2) . "\n");
-        $printer->setEmphasis(false); */
 
         $printer->feed(2);
         $printer->text("Thank you for your business!\n");
@@ -2011,31 +1938,25 @@ private function printReturnReceipt($transaction, $returnItems)
         $printer->cut();
         $printer->close();
     } catch (\Exception $e) {
-        // Log the error, but don't stop the transaction process
+        
         \Log::error("Printer error: " . $e->getMessage());
     }
 }
 
 public function tender(Request $request)
     {
-        // Validate incoming request
-        /* $request->validate([
-            'total' => 'required|numeric',
-            'bills' => 'array',
-            'coins' => 'array',
-            'ar' => 'array',
-        ]); */
+        
 
         $sumCash = DB::table('rbotransactiontables')
         ->whereDate('createddate', today())
         ->sum('cash');
 
-        // Extract data from the request
+        
         $tenderData = $request->only('total', 'bills', 'coins', 'ar');
 
-        // Here, you would typically save $tenderData to your database
+        
 
-        // Print the tender declaration
+        
         $this->printTenderDeclaration($tenderData, $sumCash);
 
         return response()->json(['success' => true, 'message' => 'Tender declaration submitted successfully!']);
@@ -2043,17 +1964,17 @@ public function tender(Request $request)
 
     private function printTenderDeclaration($tenderData, $sumCash)
     {
-    // Set the printer name (ensure this matches your printer configuration)
+    
     $connector = new WindowsPrintConnector("POS-80C");
     $printer = new Printer($connector);
 
-    // Initialize totals
+    
     $totalBills = 0;
     $totalCoins = 0;
     $totalCash = 0;
     $totalAR = 0;
 
-    // Print the receipt
+    
     try {
         $printer->setJustification(Printer::JUSTIFY_LEFT);
         $printer->text("Tender Declaration\n");
@@ -2062,7 +1983,7 @@ public function tender(Request $request)
         $printer->text("Total: " . number_format($tenderData['total'], 2) . "\n");
         $printer->text("CASH: Short/Over: " . number_format($tenderData['total'] - $sumCash, 2) . "\n");
         
-        // Print bills
+        
         $printer->text("================================\n");
         $printer->setJustification(Printer::JUSTIFY_LEFT);
         $printer->text("Bills:\n");
@@ -2071,11 +1992,11 @@ public function tender(Request $request)
             if ($count > 0) {
                 $subtotal = $amount * $count;
                 $printer->text("$amount x $count = " . number_format($subtotal, 2) . "\n");
-                $totalBills += $subtotal; // Calculate total bills
+                $totalBills += $subtotal; 
             }
         }
 
-        // Print coins
+        
         $printer->text("================================\n");
         $printer->setJustification(Printer::JUSTIFY_LEFT);
         $printer->text("Coins:\n");
@@ -2084,18 +2005,18 @@ public function tender(Request $request)
             if ($count > 0) {
                 $subtotal = $amount * $count;
                 $printer->text("$amount x $count = " . number_format($subtotal, 2) . "\n");
-                $totalCoins += $subtotal; // Calculate total coins
+                $totalCoins += $subtotal; 
             }
         }
 
-        // Print totals for bills and coins
+        
         $printer->text("================================\n");
         $printer->text("Total Bills: " . number_format($totalBills, 2) . "\n");
         $printer->text("Total Coins: " . number_format($totalCoins, 2) . "\n");
         $printer->text("================================\n");
         $printer->text("Total Cash: " . number_format($totalBills + $totalCoins, 2) . "\n");
         
-        // Print alternative methods
+        
         $printer->text("================================\n");
         $printer->setJustification(Printer::JUSTIFY_LEFT);
         $printer->text("Digital Transaction:\n");
@@ -2116,7 +2037,7 @@ public function tender(Request $request)
         $printer->cut();
         $printer->close();
     } catch (\Exception $e) {
-        // Handle any printing exceptions
+        
         error_log("Printing error: " . $e->getMessage());
     }
 }
@@ -2193,7 +2114,7 @@ public function generateZRead()
     $printer->text("Contact #: Your Contact Number\n");
     $printer->text(str_repeat("-", 40) . "\n");
     $printer->text("Date: " . Carbon::now('Asia/Manila') . "\n");
-    /* $printer->text("Receipt #: " . str_pad(rand(1, 999999), 9, '0', STR_PAD_LEFT) . "\n"); */
+    
     $printer->text("Store: $name\n");
     $printer->text("Cashier: $name\n");
     $printer->text(str_repeat("-", 40) . "\n");
@@ -2212,8 +2133,6 @@ private function printZReadContent(Printer $printer, $zReadData)
     $printer->text(sprintf("%-20s %11s\n", "Amount Paid:", number_format($zReadData['grossSales'], 2)));
     $printer->text(str_repeat("-", 40) . "\n");
 
-    /* $printer->text(sprintf("%-20s %11s\n", "Partial Payment:", "_______________"));
-    $printer->text(str_repeat("-", 40) . "\n"); */
     
     $printer->text("Payment Method:\n");
     foreach ($zReadData['paymentBreakdown'] as $method => $amount) {
@@ -2250,199 +2169,10 @@ private function printZReadFooter(Printer $printer, $zReadData, $storeId, $name)
     $printer->text("Thank you for your purchase!\n");
 }
 
-/* public function updatePriceAndQuantity(Request $request)
-{
-    try {
-        \Log::info('Update Price and Quantity Request:', $request->all());
 
-        $validator = Validator::make($request->all(), [
-            'items' => 'required|array',
-            'items.*.itemid' => 'required|string', 
-            'items.*.price' => 'required|numeric|min:0',
-            'items.*.qty' => 'required|integer|min:0'
-        ]);
-
-        if ($validator->fails()) {
-            \Log::warning('Validation failed:', $validator->errors()->toArray());
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        DB::beginTransaction();
-
-        $updatedItems = [];
-        foreach ($request->items as $itemData) {
-            \Log::info('Processing item:', $itemData);
-
-            try {
-                $cart = carts::where('itemid', $itemData['itemid'])->first();
-                
-                if (!$cart) {
-                    throw new \Exception("Cart item not found with ID: {$itemData['itemid']}");
-                }
-
-                $grossAmount = $itemData['price'] * $itemData['qty'];
-                $netAmountNotInclTax = $grossAmount / 1.12;
-                $taxAmount = $netAmountNotInclTax * 0.12;
-                $currentDiscount = $cart->discount ?? 0;
-
-                $cart->update([
-                    'price' => $itemData['price'],
-                    'qty' => $itemData['qty'],
-                    'costamount' => $netAmountNotInclTax,
-                    'grossamount' => $grossAmount,
-                    'netamount' => $grossAmount - $currentDiscount,
-                    'netamountnotincltax' => $netAmountNotInclTax,
-                    'taxinclinprice' => $taxAmount
-                ]);
-
-                $updatedItems[] = $cart->fresh();
-
-            } catch (\Exception $itemError) {
-                DB::rollBack();
-                \Log::error('Error processing item:', [
-                    'item' => $itemData,
-                    'error' => $itemError->getMessage(),
-                    'trace' => $itemError->getTraceAsString()
-                ]);
-                
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Error processing item: ' . $itemError->getMessage()
-                ], 500);
-            }
-        }
-
-        DB::commit();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Items updated successfully',
-            'updatedItems' => $updatedItems
-        ]);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        
-        \Log::error('Update failed:', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-            'request_data' => $request->all()
-        ]);
-        
-        return response()->json([
-            'status' => 'error',
-            'message' => $e->getMessage(),
-            'details' => [
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]
-        ], 500);
-    }
-} */
-
-    /* private const TAX_RATE = 0.12;
-    private const GROSS_DIVISOR = 1.12;
-
-    public function updatePriceAndQuantity(Request $request)
-    {
-        Log::info('Update Price and Quantity Request:', $request->all());
-
-        try {
-            $validator = $this->validateRequest($request);
-            
-            if ($validator->fails()) {
-                Log::warning('Validation failed:', $validator->errors()->toArray());
-                return $this->validationErrorResponse($validator);
-            }
-
-            return DB::transaction(function () use ($request) {
-                $updatedItems = $this->processItems($request->items);
-                
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Items updated successfully',
-                    'updatedItems' => $updatedItems
-                ]);
-            });
-
-        } catch (\Exception $e) {
-            Log::error('Update failed:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all()
-            ]);
-            
-            return $this->errorResponse($e);
-        }
-    }
-
-    private function validateRequest(Request $request)
-    {
-        return Validator::make($request->all(), [
-            'items' => 'required|array',
-            'items.*.itemid' => 'required|string',
-            'items.*.price' => 'required|numeric|min:0',
-            'items.*.qty' => 'required|integer|min:0'
-        ]);
-    }
-
-    private function processItems(array $items)
-    {
-        $updatedItems = [];
-
-        foreach ($items as $itemData) {
-            $cart = Carts::where('itemid', $itemData['itemid'])->firstOrFail();
-            
-            $calculations = $this->calculateAmounts(
-                $itemData['price'],
-                $itemData['qty'],
-                $cart->discount ?? 0
-            );
-            
-            $cart->update([
-                'price' => $itemData['price'],
-                'qty' => $itemData['qty'],
-                'costamount' => $calculations['netAmountNotInclTax'],
-                'grossamount' => $calculations['grossAmount'],
-                'netamount' => $calculations['netAmount'],
-                'netamountnotincltax' => $calculations['netAmountNotInclTax'],
-                'taxinclinprice' => $calculations['taxAmount']
-            ]);
-
-            $updatedItems[] = $cart->fresh();
-        }
-
-        return $updatedItems;
-    }
-
-    private function calculateAmounts(float $price, int $quantity, float $discount): array
-    {
-        $grossAmount = $price * $quantity;
-        $netAmountNotInclTax = $grossAmount / self::GROSS_DIVISOR;
-        
-        return [
-            'grossAmount' => $grossAmount,
-            'netAmountNotInclTax' => $netAmountNotInclTax,
-            'taxAmount' => $netAmountNotInclTax * self::TAX_RATE,
-            'netAmount' => $grossAmount - $discount
-        ];
-    }
-
-    private function validationErrorResponse($validator)
-    {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Validation failed',
-            'errors' => $validator->errors()
-        ], 422);
-    } */
 
 private const TAX_RATE = 0.12;
-private const GROSS_DIVISOR = 1.12; // If 1.12 is for gross-to-net ratio
+private const GROSS_DIVISOR = 1.12; 
 
 public function updatePriceAndQuantity(Request $request)
 {
@@ -2493,17 +2223,17 @@ private function processItems(array $items)
     foreach ($items as $itemData) {
         $cart = Carts::where('itemid', $itemData['itemid'])->firstOrFail();
         
-        // Set default values and validate discount parameters
+        
         $discType = $itemData['disctypes'] ?? 'NONE';
         $discParameter = isset($itemData['discparameter']) ? (float)$itemData['discparameter'] : 0;
         $price = (float)($itemData['price'] ?? 0);
         $quantity = (int)($itemData['qty'] ?? 0);
         
-        // Calculate gross amount first
+        
         $grossAmount = $price * $quantity;
         
-        // Calculate discount amount based on discount type
-        $discamount = 0; // Default to no discount
+        
+        $discamount = 0; 
         
         switch ($discType) {
             case 'FIXEDTOTAL':
@@ -2513,7 +2243,7 @@ private function processItems(array $items)
                 $discamount = min($grossAmount, $quantity * $discParameter);
                 break;
             case 'PERCENTAGE':
-                $percentage = $discParameter / 100; // Convert percentage to decimal
+                $percentage = $discParameter / 100; 
                 $discamount = $grossAmount * $percentage;
                 break;
             case 'NONE':
@@ -2521,10 +2251,10 @@ private function processItems(array $items)
                 $discamount = 0;
         }
         
-        // Ensure discount doesn't exceed gross amount
+        
         $discamount = min($discamount, $grossAmount);
         
-        // Calculate amounts after applying discount
+        
         $calculations = $this->calculateAmounts(
             $price,
             $quantity,

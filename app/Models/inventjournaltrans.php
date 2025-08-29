@@ -29,7 +29,6 @@ class inventjournaltrans extends Model
         'UNITID',
     ];
 
-    // This is necessary for composite keys
     protected function setKeysForSaveQuery($query)
     {
         $query

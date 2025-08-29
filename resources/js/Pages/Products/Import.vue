@@ -19,11 +19,11 @@ defineProps({
       <div class="container mx-auto py-8">
         <div class="bg-white shadow rounded-lg p-6">
           <h1 class="text-2xl font-bold mb-6">Import Products</h1>
-          
+
           <p class="mb-4">
             Upload an Excel file to import products to the system. Make sure your file contains the following columns:
           </p>
-          
+
           <div class="mb-6 p-4 bg-gray-100 rounded">
             <ul class="list-disc pl-5">
               <li>PRODUCTCODE - Product code/ID (required)</li>
@@ -34,7 +34,7 @@ defineProps({
               <li>SRP - Selling price</li>
             </ul>
           </div>
-          
+
           <ImportComponent />
         </div>
       </div>

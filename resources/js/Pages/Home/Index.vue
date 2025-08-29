@@ -13,7 +13,6 @@ import MultiSelectDropdown from "@/Components/MultiSelect/MultiSelectDropdown.vu
 import WasteAnalysis from '../Home/wasteanalysis.vue';
 import ProductAnalysis from '../Home/ProductAnalysis.vue';
 
-// Register Chart.js components
 Chart.register(...registerables);
 
 axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -71,13 +70,12 @@ const fetchStores = async () => {
   try {
     const response = await axios.get(route('get.stores'));
     stores.value = response.data;
-    selectedStores.value = response.data;  // By default, all stores are selected
+    selectedStores.value = response.data;
   } catch (error) {
-    console.error('Error fetching stores:', error);
+
   }
 };
 
-// State variables
 const hoveredCard = ref(null);
 const isVisible = ref(false);
 const chartRef = ref(null);
@@ -86,25 +84,22 @@ let paymentChart = null;
 let topBottomProductsChart = null;
 
 const selectedDateRange = ref({
-    start_date: new Date().toISOString().split('T')[0],  // Default start date
-    end_date: new Date().toISOString().split('T')[0]  // Today's date
+    start_date: new Date().toISOString().split('T')[0],
+    end_date: new Date().toISOString().split('T')[0]
 });
 
-// New: Date Range Validation Computed Property
 const isValidDateRange = computed(() => {
     const startDate = new Date(selectedDateRange.value.start_date);
     const endDate = new Date(selectedDateRange.value.end_date);
     const today = new Date();
 
     return (
-        startDate <= endDate && 
+        startDate <= endDate &&
         startDate <= today &&
         endDate <= today
     );
 });
 
-
-// Currency formatting utility
 const formatCurrency = (value) => {
     const numValue = Number(value);
     return new Intl.NumberFormat('en-PH', {
@@ -117,9 +112,8 @@ const formatNumber = (value) => {
     return new Intl.NumberFormat('en-US').format(value || 0);
 };
 
-// Metrics cards computation (continued)
 const metricsCards = computed(() => {
-    /* const metrics = props.metrics || {}; */
+
     const metrics = localMetrics.value || {};
     return [
         {
@@ -186,81 +180,19 @@ const metricsCards = computed(() => {
             bgColor: "bg-orange-100",
             description: "Total number of received deliveries"
         }
-        /* {
-            title: "TOTAL WASTE",
-            value: formatNumber(metrics.totalWaste),
-            icon: TrashIcon,
-            color: "text-red-600",
-            bgColor: "bg-red-100",
-            description: "Total number of waste declarations"
-        } */
+
     ];
 });
 
-/* const initializePaymentChart = () => {
-    if (!chartRef.value) return;
-    
-    const ctx = chartRef.value.getContext('2d');
-    
-    if (paymentChart) {
-        paymentChart.destroy();
-    }
-
-    // Use localMetrics instead of props.metrics
-    const paymentBreakdown = localMetrics.value?.paymentBreakdown || {};
-    const labels = Object.keys(paymentBreakdown).map(label => 
-        label.replace(/([A-Z])/g, ' $1').trim()
-    );
-    const data = Object.values(paymentBreakdown).map(value => 
-        Number(value) || 0
-    );
-
-    paymentChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels,
-            datasets: [{
-                data,
-                backgroundColor: [
-                    '#3B82F6', '#10B981', '#F43F5E', 
-                    '#6366F1', '#8B5CF6', '#EC4899', 
-                    '#F97316'
-                ],
-                hoverOffset: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const value = context.parsed;
-                            const percentage = ((value / total) * 100).toFixed(2);
-                            return `${context.label}: ${value.toFixed(2)} (${percentage}%)`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}; */
-
 const initializePaymentChart = () => {
     if (!chartRef.value) return;
-    
+
     const ctx = chartRef.value.getContext('2d');
-    
+
     if (paymentChart) {
         paymentChart.destroy();
     }
 
-    // Use localMetrics instead of props.metrics
     const paymentBreakdown = localMetrics.value?.paymentBreakdown || {};
     const labels = Object.keys(paymentBreakdown).map(label => {
         const value = paymentBreakdown[label];
@@ -268,7 +200,7 @@ const initializePaymentChart = () => {
         const formattedValue = formatCurrency(value);
         return `${formattedLabel} (${formattedValue})`;
     });
-    const data = Object.values(paymentBreakdown).map(value => 
+    const data = Object.values(paymentBreakdown).map(value =>
         Number(value) || 0
     );
 
@@ -279,8 +211,8 @@ const initializePaymentChart = () => {
             datasets: [{
                 data,
                 backgroundColor: [
-                    '#3B82F6', '#10B981', '#F43F5E', 
-                    '#6366F1', '#8B5CF6', '#EC4899', 
+                    '#3B82F6', '#10B981', '#F43F5E',
+                    '#6366F1', '#8B5CF6', '#EC4899',
                     '#F97316'
                 ],
                 hoverOffset: 4
@@ -311,42 +243,40 @@ const initializePaymentChart = () => {
 const fetchTopBottomProducts = async () => {
   try {
     const startDate = selectedDateRange.value.start_date || '2000-01-01';
-    
+
     const payload = {
       start_date: startDate,
       end_date: selectedDateRange.value.end_date,
-      stores: selectedStores.value.map(store => 
+      stores: selectedStores.value.map(store =>
           store.NAME || (typeof store === 'object' ? store.NAME : store)
       )
     };
 
     const response = await axios.post(route('get.top.bottom.products'), payload);
 
-    const topProducts = Array.isArray(response?.data?.topProducts) 
-      ? response.data.topProducts 
+    const topProducts = Array.isArray(response?.data?.topProducts)
+      ? response.data.topProducts
       : [];
-    const bottomProducts = Array.isArray(response?.data?.bottomProducts) 
-      ? response.data.bottomProducts 
+    const bottomProducts = Array.isArray(response?.data?.bottomProducts)
+      ? response.data.bottomProducts
       : [];
 
     initializeTopBottomProductsChart(topProducts, bottomProducts);
   } catch (error) {
-    console.error('Error fetching top/bottom products:', error);
+
     initializeTopBottomProductsChart([], []);
   }
 };
 
-// Initialize top and bottom products chart
 const initializeTopBottomProductsChart = (topProducts, bottomProducts) => {
     if (!topBottomProductsRef.value) return;
-    
+
     const ctx = topBottomProductsRef.value.getContext('2d');
-    
+
     if (topBottomProductsChart) {
         topBottomProductsChart.destroy();
     }
 
-    // Prepare data for chart
     const topProductNames = topProducts.slice(0, 10).map(p => p.itemname);
     const bottomProductNames = bottomProducts.slice(0, 10).map(p => p.itemname);
     const topProductQuantities = topProducts.slice(0, 10).map(p => p.total_quantity);
@@ -408,26 +338,21 @@ const initializeTopBottomProductsChart = (topProducts, bottomProducts) => {
 
 const fetchMetrics = async () => {
   try {
-    console.log('Selected Stores:', selectedStores.value);
-    
+
     const payload = {
       start_date: selectedDateRange.value.start_date || '2000-01-01',
       end_date: selectedDateRange.value.end_date,
-      stores: selectedStores.value.map(store => 
+      stores: selectedStores.value.map(store =>
         typeof store === 'object' ? store.NAME : store
       )
     };
 
-    console.log('Payload for metrics:', payload);
-
     const response = await axios.post(route('get.metrics'), payload);
-    
-    console.log('Metrics response:', response.data);
-    
+
     localMetrics.value = response.data || props.initialMetrics;
     initializePaymentChart();
   } catch (error) {
-    console.error('Error fetching metrics:', error);
+
   }
 };
 
@@ -436,7 +361,7 @@ const fetchMonthlySales = async () => {
     const payload = {
       start_date: selectedDateRange.value.start_date || '2000-01-01',
       end_date: selectedDateRange.value.end_date,
-      stores: selectedStores.value.map(store => 
+      stores: selectedStores.value.map(store =>
         typeof store === 'object' ? store.NAME : store
       )
     };
@@ -444,15 +369,15 @@ const fetchMonthlySales = async () => {
     const response = await axios.post(route('get.monthly.sales'), payload);
     initializeMonthlySalesChart(response.data);
   } catch (error) {
-    console.error('Error fetching monthly sales:', error);
+
   }
 };
 
 const initializeMonthlySalesChart = (monthlySalesData) => {
   if (!monthlySalesRef.value) return;
-  
+
   const ctx = monthlySalesRef.value.getContext('2d');
-  
+
   if (monthlySalesChart) {
     monthlySalesChart.destroy();
   }
@@ -511,34 +436,33 @@ const fetchTopWastes = async () => {
     const payload = {
       start_date: selectedDateRange.value.start_date || '2000-01-01',
       end_date: selectedDateRange.value.end_date,
-      stores: selectedStores.value.map(store => 
+      stores: selectedStores.value.map(store =>
         typeof store === 'object' ? store.NAME : store
       )
     };
 
     const response = await axios.post(route('get.top.wastes'), payload);
 
-    const topWastes = Array.isArray(response?.data) 
-      ? response.data 
+    const topWastes = Array.isArray(response?.data)
+      ? response.data
       : [];
 
     initializeTopWasteChart(topWastes);
   } catch (error) {
-    console.error('Error fetching top wastes:', error);
+
     initializeTopWasteChart([]);
   }
 };
 
 const initializeTopWasteChart = (topWastes) => {
     if (!topWasteRef.value) return;
-    
+
     const ctx = topWasteRef.value.getContext('2d');
-    
+
     if (topWasteChart) {
         topWasteChart.destroy();
     }
 
-    // Prepare data for chart
     const wasteItemNames = topWastes.slice(0, 10).map(w => w.itemname || w.ITEMID);
     const wasteQuantities = topWastes.slice(0, 10).map(w => Math.abs(Number(w.ADJUSTMENT || 0)));
     const wasteCosts = topWastes.slice(0, 10).map(w => Math.abs(Number(w.SALESAMOUNT || 0)));
@@ -600,9 +524,9 @@ const initializeTopWasteChart = (topWastes) => {
 };
 
 watch([
-  () => selectedDateRange.value.start_date, 
-  () => selectedDateRange.value.end_date, 
-  () => JSON.stringify(selectedStores.value)  // Use JSON stringify to detect array changes
+  () => selectedDateRange.value.start_date,
+  () => selectedDateRange.value.end_date,
+  () => JSON.stringify(selectedStores.value)
 ], () => {
   if (isValidDateRange.value) {
     dateRangeError.value = '';
@@ -632,33 +556,33 @@ onMounted(() => {
                 <div class="absolute inset-0 opacity-10 bg-pattern z-0"></div>
 
                 <!-- Enhanced Filtering Section with Elegant Design -->
-                <div 
+                <div
                     class="relative z-10 bg-white/80 rounded-3xl shadow-2xl border border-blue-100/50 p-6 transform transition-all duration-500 hover:scale-[1.02]"
                 >
                     <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                         <!-- Date Range and Welcome Section -->
                         <div class="flex flex-col w-full md:w-auto">
                             <div class="flex items-center space-x-4">
-                                <h1 
+                                <h1
                                     class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-3 animate-pulse-slow"
                                 >
-                                    Welcome back, {{ username }}! 👋
+                                    Welcome back, {{ username }}!
                                 </h1>
                                 <div class="flex space-x-4">
                                     <div class="flex flex-col">
                                         <label class="text-sm font-medium text-gray-600 mb-1">Start Date</label>
-                                        <input 
-                                            type="date" 
-                                            v-model="selectedDateRange.start_date" 
+                                        <input
+                                            type="date"
+                                            v-model="selectedDateRange.start_date"
                                             class="border-2 border-blue-200 rounded-xl px-4 py-2 focus:ring-4 focus:ring-blue-300/50 transition-all duration-300"
                                             :class="{'border-red-500': dateRangeError}"
                                         >
                                     </div>
                                     <div class="flex flex-col">
                                         <label class="text-sm font-medium text-gray-600 mb-1">End Date</label>
-                                        <input 
-                                            type="date" 
-                                            v-model="selectedDateRange.end_date" 
+                                        <input
+                                            type="date"
+                                            v-model="selectedDateRange.end_date"
                                             class="border-2 border-blue-200 rounded-xl px-4 py-2 focus:ring-4 focus:ring-blue-300/50 transition-all duration-300"
                                             :class="{'border-red-500': dateRangeError}"
                                         >
@@ -666,11 +590,11 @@ onMounted(() => {
                                 </div>
                             </div>
                             <!-- Error Message with Animation -->
-                            <div 
-                                v-if="dateRangeError" 
+                            <div
+                                v-if="dateRangeError"
                                 class="text-red-500 text-xs mt-2 flex items-center space-x-2 animate-bounce"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <svg xmlns="http:
                                     <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                                 </svg>
                                 <span>{{ dateRangeError }}</span>
@@ -698,7 +622,7 @@ onMounted(() => {
                             <div class="bg-white/90 rounded-3xl shadow-xl border border-blue-100/50 p-6 space-y-4 relative overflow-hidden group">
                                 <!-- Gradient Background Overlay -->
                                 <div class="absolute inset-0 opacity-20 group-hover:opacity-30 transition-all duration-300" :style="{background: `linear-gradient(135deg, ${card.color}, transparent)`}"></div>
-                                
+
                                 <div class="flex justify-between items-center relative z-10">
                                     <div :class="[card.bgColor, 'p-3 rounded-xl shadow-md transform transition-all group-hover:rotate-12']">
                                         <component :is="card.icon" :class="[card.color, 'w-7 h-7']" />
@@ -728,7 +652,7 @@ onMounted(() => {
                     <div class="bg-white/80  rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.02] transition-all duration-300">
                         <div class="absolute inset-0 opacity-10 bg-blue-100"></div>
                         <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center relative z-10">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http:
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm4 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
                             </svg>
                             Payment Methods Distribution
@@ -742,7 +666,7 @@ onMounted(() => {
                     <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.02] transition-all duration-300">
                         <div class="absolute inset-0 opacity-10 bg-green-100"></div>
                         <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center relative z-10">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http:
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                             </svg>
                             Recent Announcements
@@ -774,7 +698,7 @@ onMounted(() => {
                 <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.01] transition-all duration-300">
                     <div class="absolute inset-0 opacity-10 bg-purple-100"></div>
                     <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center relative z-10">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http:
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                         </svg>
                         Popular Products & Products Under Monitoring
@@ -795,7 +719,7 @@ onMounted(() => {
                             <canvas ref="monthlySalesRef" class="w-full h-full"></canvas>
                         </div>
                     </div>
-                    
+
                     <WasteAnalysis
                     :selectedDateRange="selectedDateRange"
                     :selectedStores="selectedStores"
@@ -850,7 +774,6 @@ onMounted(() => {
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* Bubble effect on hover */
 .metric-card::after {
     content: '';
     position: absolute;

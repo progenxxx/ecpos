@@ -46,7 +46,7 @@ const props = defineProps({
     },
     items: {
         type: Array,
-        required: true, 
+        required: true,
     },
 });
 
@@ -65,7 +65,7 @@ const columns = [
         data: 'COUNTED',
         title: 'COUNTED',
         render: function (data, type, row) {
-            return Math.floor(data); 
+            return Math.floor(data);
         }
     },
 ];
@@ -82,10 +82,10 @@ const options = {
             const node = this.node();
             const input = node.querySelector('.counted-input');
             if (input) {
-                // Set initial background color and text color
+
                 const count = Number(input.value);
                 let backgroundColor, textColor;
-                
+
                 if (count === 0) {
                     backgroundColor = '#f3f3f3';
                     textColor = 'black';
@@ -96,10 +96,10 @@ const options = {
                     backgroundColor = 'white';
                     textColor = 'black';
                 }
-                
+
                 input.style.backgroundColor = backgroundColor;
                 input.style.color = textColor;
-                
+
                 input.addEventListener('change', (event) => handleCountedChange(event, rowData));
             }
         });
@@ -110,19 +110,19 @@ const toggleCreateModal = (journalid, newLINENUM) => {
     JOURNALID.value = journalid;
     LINENUM.value = newLINENUM;
     showCreateModal.value = true;
-    console.log(JOURNALID.value);
+
 };
 
 const toggleGetBWModal = (journalid) => {
     JOURNALID.value = journalid;
     showGetBWModal.value = true;
-    console.log(JOURNALID.value);
+
 };
 
 const toggleGetCFModal = (journalid) => {
     JOURNALID.value = journalid;
     showGetCFModal.value = true;
-    console.log(JOURNALID.value);
+
 };
 
 const createModalHandler = () => {
@@ -155,139 +155,29 @@ const ViewOrders = (journalid) => {
 };
 
 const handleSelectedItem = (item) => {
-    console.log('Selected Item:', item);
+
 };
 
-// Reactive state
 const tableData = ref([]);
 const updatedValues = reactive({});
 const message = reactive({
     text: '',
-    type: '' // 'success', 'error', or 'info'
+    type: ''
 });
-
-// Methods
-/* const handleCountedChange = (event, item) => {
-    const newValue = event.target.value;
-    updatedValues[item.ITEMID] = newValue;
-    const isLessThanMOQ = Number(newValue) < Number(item.moq);
-    const backgroundColor = isLessThanMOQ ? 'red' : 'white';
-    const textColor = isLessThanMOQ ? 'white' : 'black';
-    event.target.style.backgroundColor = backgroundColor;
-    event.target.style.color = textColor;
-}; */
-
-/* const handleCountedChange = (event, item) => {
-    const newValue = event.target.value;
-    updatedValues[item.ITEMID] = newValue;
-    
-    const count = Number(newValue);
-    let backgroundColor, textColor;
-    
-    if (count === 0) {
-        backgroundColor = '#f3f3f3';
-        textColor = 'black';
-    } else if (count < Number(item.moq)) {
-        backgroundColor = 'red';
-        textColor = 'white';
-    } else {
-        backgroundColor = 'white';
-        textColor = 'black';
-    }
-    
-    event.target.style.backgroundColor = backgroundColor;
-    event.target.style.color = textColor;
-}; */
-
-/* const updateAllCountedValues = async () => {
-    try {
-        message.text = 'Updating counted values...';
-        message.type = 'info';
-        
-        const response = await axios.post('/api/update-all-counted-values', {
-            journalId: props.journalid,
-            updatedValues: updatedValues,
-        });
-        
-        if (response.data.success) {
-            console.log('All values updated successfully');
-            for (const [itemId, newValue] of Object.entries(updatedValues)) {
-                const item = tableData.value.find(row => row.ITEMID === itemId);
-                if (item) {
-                    item.COUNTED = newValue;
-                }
-            }
-            Object.keys(updatedValues).forEach(key => delete updatedValues[key]);
-            
-            message.text = 'All counted values updated successfully';
-            message.type = 'success';
-
-            location.reload();
-        } else {
-            throw new Error('Update failed');
-        }
-    } catch (error) {
-        console.error(`You don't have any changes!`, error);
-        message.text = `You don't have any changes!`;
-        message.type = 'error';
-    }
-    clearMessage();
-}; */
-
-
-/* const updateAllCountedValues = async () => {
-    try {
-        message.text = 'Updating counted values...';
-        message.type = 'info';
-        
-        const response = await axios.post('/api/update-all-counted-values', {
-            journalId: props.journalid,
-            updatedValues: updatedValues,
-        });
-        
-        if (response.data.success) {
-            console.log('All values updated successfully');
-            for (const [itemId, newValue] of Object.entries(updatedValues)) {
-                const item = tableData.value.find(row => row.ITEMID === itemId);
-                if (item) {
-                    item.COUNTED = newValue;
-                }
-            }
-            Object.keys(updatedValues).forEach(key => delete updatedValues[key]);
-            
-            message.text = response.data.message;
-            message.type = 'success';
-            location.reload();
-        } else {
-            throw new Error(response.data.message);
-        }
-    } catch (error) {
-        console.error('Error updating values:', error);
-        message.text = error.response?.data?.message || error.message || "You don't have any changes!";
-        message.type = 'error';
-        
-        if (error.response?.data?.errors) {
-            error.response.data.errors.forEach(err => {
-                console.error(err);
-            });
-        }
-    }
-    clearMessage();
-}; */
 
 const updateAllCountedValues = async () => {
     try {
         isLoading.value = true;
         message.text = 'Updating counted values...';
         message.type = 'info';
-        
+
         const response = await axios.post('waste-update-all-counted-values', {
             journalId: props.journalid,
             updatedValues: updatedValues,
         });
-        
+
         if (response.data.success) {
-            console.log('All values updated successfully');
+
             for (const [itemId, newValue] of Object.entries(updatedValues)) {
                 const item = tableData.value.find(row => row.ITEMID === itemId);
                 if (item) {
@@ -295,43 +185,40 @@ const updateAllCountedValues = async () => {
                 }
             }
             Object.keys(updatedValues).forEach(key => delete updatedValues[key]);
-            
+
             message.text = response.data.message;
             message.type = 'success';
-            
-            // Use setTimeout to delay the page reload
+
             setTimeout(() => {
                 location.reload();
-            }, 1000); // 1 second delay
+            }, 1000);
         } else {
             throw new Error(response.data.message);
         }
     } catch (error) {
-        console.error('Error updating values:', error);
+
         message.text = error.response?.data?.message || error.message || "You don't have any changes!";
         message.type = 'error';
-        
+
         if (error.response?.data?.errors) {
             error.response.data.errors.forEach(err => {
-                console.error(err);
+
             });
         }
     } finally {
         clearMessage();
-        // Keep the loading state for a moment before reloading
+
         setTimeout(() => {
             isLoading.value = false;
         }, 500);
     }
 };
 
-
-
 const clearMessage = () => {
     setTimeout(() => {
         message.text = '';
         message.type = '';
-    }, 5000); // Clear after 5 seconds
+    }, 5000);
 };
 
 const navigateToOrder = (journalid) => {
@@ -344,7 +231,7 @@ const SYNCFG = () => {
     if (userConfirmed) {
         window.location.href = '/getcurrentstocks';
     } else {
-        console.log('User cancelled the post operation.');
+
     }
 };
 
@@ -360,18 +247,18 @@ const handlePrint = async () => {
 
         if (!response.ok) {
             const errorResponse = await response.json();
-            console.error('Printing failed:', errorResponse.message);
-            return; // Stop execution if the response isn't okay
+
+            return;
         }
 
         const result = await response.json();
         if (result.success) {
-            console.log('Print successful');
+
         } else {
-            console.error('Print failed:', result.message);
+
         }
     } catch (error) {
-        console.error('Print error:', error);
+
     }
 };
 </script>
@@ -405,10 +292,10 @@ const handlePrint = async () => {
         </div>
 
         <!-- Message display area -->
-        <div v-if="message.text" 
-             :class="['p-4 mb-4 rounded-md', 
-                      message.type === 'success' ? 'bg-green-100 text-green-700' : 
-                      message.type === 'error' ? 'bg-red-100 text-red-700' : 
+        <div v-if="message.text"
+             :class="['p-4 mb-4 rounded-md',
+                      message.type === 'success' ? 'bg-green-100 text-green-700' :
+                      message.type === 'error' ? 'bg-red-100 text-red-700' :
                       'bg-blue-100 text-blue-700']">
             {{ message.text }}
         </div>
@@ -464,10 +351,10 @@ const handlePrint = async () => {
             </div>
         </div>
 
-        <DataTable 
-            :data="wastedeclarationtrans" 
-            :columns="columns" 
-            class="w-full relative display" 
+        <DataTable
+            :data="wastedeclarationtrans"
+            :columns="columns"
+            class="w-full relative display"
             :options="options"
         >
             <template #action="data">

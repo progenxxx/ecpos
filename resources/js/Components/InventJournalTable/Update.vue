@@ -67,7 +67,7 @@ onMounted(() => {
     form.ADJUSTMENT = props.ADJUSTMENT;
     form.TYPE = props.TYPE;
     form.COSTPRICEPERITEM = props.COSTPRICEPERITEM;
-  
+
     watch(() => props.JOURNALID, (newValue) => {
         form.JOURNALID = newValue;
     });
@@ -106,7 +106,7 @@ onMounted(() => {
                         autofocus
                     />
                     <InputError :message="form.errors.ITEMID" class="mt-2" />
-                    </div>  
+                    </div>
 
                     <div class="col-span-2">
                     <InputLabel for="DESCRIPTION" value="DESCRIPTION" />

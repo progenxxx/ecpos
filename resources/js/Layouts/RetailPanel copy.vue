@@ -20,10 +20,7 @@ import CustomerGroup from "@/Components/Svgs/CustomerGroup.vue";
 import RetailGroup from "@/Components/Svgs/RetailGroup.vue";
 import SpecialGroup from "@/Components/Svgs/SpecialGroup.vue";
 
-
 import { ref, onMounted, onUnmounted } from 'vue';
-
-
 
 const isSidebarOpen = ref(true);
 const showModalLogout = ref(false);
@@ -77,7 +74,7 @@ const posperiodicdiscounts = () => {
             <nav class="pl-48 top-0 right-0 left-0 w-screen h-10 bg-white text-xs lg:text-sm text-navy font-bold absolute z-10 pr-2 flex justify-between items-center">
                 <div>{{ $page.props.auth.user.storeid }}</div>
                 <div class="flex-grow text-right pr-10">
-                    
+
                     <div class="tooltip tooltip-bottom tooltip-primary cursor-pointer" data-tip="Retail Group">
                         <RetailGroup class="h-5 mr-10" @click="rboinventitemretailgroups('/rboinventitemretailgroups')"></RetailGroup>
                     </div>
@@ -113,7 +110,6 @@ const posperiodicdiscounts = () => {
         </section>
     </div>
 </template>
-
 
 <script>
 export default {

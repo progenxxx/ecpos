@@ -27,7 +27,6 @@ class wastedeclarationtrans extends Model
         'POSTEDDATETIME',
     ];
 
-    // This is necessary for composite keys
     protected function setKeysForSaveQuery($query)
     {
         $query

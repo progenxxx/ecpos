@@ -53,16 +53,16 @@ const options = {
     left: 6
   },
   columnDefs: [
-    { width: '5%', targets: 0 }, // ITEMID
-    { width: '5%', targets: 1 }, // ITEMS
-    { width: '5%', targets: 2 }, // CATEGORY
-    { width: '8%', targets: 3 }, // ACTUAL INV COUNT
-    { width: '8%', targets: 4 }, // REMAINING STOCKS
-    { width: '8%', targets: 5 }, // TOTAL DISPATCH
-    { width: '8%', targets: '_all' } // All other columns
+    { width: '5%', targets: 0 },
+    { width: '5%', targets: 1 },
+    { width: '5%', targets: 2 },
+    { width: '8%', targets: 3 },
+    { width: '8%', targets: 4 },
+    { width: '8%', targets: 5 },
+    { width: '8%', targets: '_all' }
   ],
   error: function (xhr, error, thrown) {
-    console.error("DataTables error:", error);
+
   },
   initComplete: function(settings, json) {
     $(this).closest('.dataTables_wrapper').addClass('custom-datatable');
@@ -113,8 +113,8 @@ const columns = computed(() => [
   { title: 'ITEMID', data: 'ITEMID' },
   { title: 'ITEMS', data: 'ITEMNAME' },
   { title: 'CATEGORY', data: 'CATEGORY' },
-  { 
-    title: 'ACTUAL INV COUNT', 
+  {
+    title: 'ACTUAL INV COUNT',
     data: 'MGCount',
     render: (data, type, row) => {
       if (type === 'display') {
@@ -125,8 +125,8 @@ const columns = computed(() => [
   },
   { title: 'REMAINING STOCKS', data: 'BalanceCount' },
   { title: 'TOTAL DISPATCH', data: 'TOTAL' },
-  ...storeNames.value.map(storeName => ({ 
-    title: storeName, 
+  ...storeNames.value.map(storeName => ({
+    title: storeName,
     data: storeName,
     render: (data, type, row) => {
       if (type === 'display') {
@@ -142,16 +142,16 @@ window.updateMGCount = function(itemId, value) {
   if (item) {
     item.MGCount = parseInt(value, 10) || 0;
     item.BalanceCount = item.MGCount - item.TOTAL;
-    
+
     axios.post('/api/update-mgcount', {
       itemId: itemId,
       mgCount: item.MGCount
     })
     .then(response => {
-      console.log('MGCount updated successfully');
+
     })
     .catch(error => {
-      console.error('Error updating MGCount:', error);
+
     });
   }
 }
@@ -160,11 +160,11 @@ window.updateCounted = function(itemId, storeName, value) {
   const item = groupedOrders[itemId];
   if (item) {
     item[storeName] = parseInt(value, 10) || 0;
-    
+
     item.TOTAL = storeNames.value.reduce((sum, store) => {
       return sum + (item[store] || 0);
     }, 0);
-    
+
     item.BalanceCount = item.TOTAL - item.MGCount;
 
     axios.post('/api/update-counted', {
@@ -175,10 +175,10 @@ window.updateCounted = function(itemId, storeName, value) {
       balanceCount: item.BalanceCount
     })
     .then(response => {
-      console.log('Counted updated successfully');
+
     })
     .catch(error => {
-      console.error('Error updating Counted:', error);
+
     });
   }
 }
@@ -221,16 +221,14 @@ const saveAllData = () => {
     };
   });
 
-  console.log('Data to save:', JSON.stringify(dataToSave, null, 2));
-
   axios.post(route('save.all.data'), { data: dataToSave })
     .then(response => {
-      console.log('All data saved successfully:', response.data);
+
     })
     .catch(error => {
-      console.error('Error saving data:', error);
+
       if (error.response) {
-        console.error('Error response:', error.response.data);
+
       }
     });
 };
@@ -259,7 +257,7 @@ async function exportToExcel() {
     link.download = filename;
     link.click();
   } catch (error) {
-    console.error('Error exporting to Excel:', error);
+
   }
 }
 
@@ -280,7 +278,7 @@ const picklist = () => {
               <div date-rangepicker class="flex items-center">
                 <div class="relative ml-5 ">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
                   </div>
                   <input
                     id="StartDate"
@@ -293,7 +291,7 @@ const picklist = () => {
                 <span class="mx-4 text-gray-500">to</span>
                 <div class="relative">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
                   </div>
                   <input
                     id="EndDate"
@@ -341,11 +339,11 @@ const picklist = () => {
             </PrimaryButton>
           </div>
         </div>
-        
-        <DataTable 
-          :data="processedOrders" 
-          :columns="columns" 
-          class="w-full relative display" 
+
+        <DataTable
+          :data="processedOrders"
+          :columns="columns"
+          class="w-full relative display"
           :options="options"
         >
           <template #action="data">
@@ -360,7 +358,7 @@ const picklist = () => {
 
 <style>
 .custom-datatable table.dataTable {
-  /* font-size: 0.85rem; */
+
   font-size: 5px;
 }
 
@@ -407,51 +405,39 @@ const picklist = () => {
 }
 
 :root {
-  /* --column-width: 150px;  */
-  --column-width: 20px; 
+
+  --column-width: 20px;
 }
 
-/* Additional styles for better visibility of frozen columns */
 .custom-datatable .dataTables_scrollHead th:nth-child(-n+6),
 .custom-datatable .dataTables_scrollBody td:nth-child(-n+6) {
   box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
 
-/* Ensure input fields in table cells don't overflow */
 .custom-datatable input[type="number"] {
   width: 100%;
   box-sizing: border-box;
   padding: 2px;
 }
 
-/* Improve readability of table headers */
 .custom-datatable thead th {
   font-weight: bold;
   background-color: #f8f9fa;
 }
 
-/* Add some padding to table cells for better spacing */
-/* .custom-datatable td,
-.custom-datatable th {
-  padding: 8px;
-} */
-
-/* Style for alternating row colors */
 .custom-datatable tbody tr:nth-of-type(even) {
   background-color: #f3f4f6;
 }
 
-/* Hover effect for rows */
 .custom-datatable tbody tr:hover {
   background-color: #e5e7eb;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .custom-datatable table.dataTable {
     font-size: 0.75rem;
   }
-  
+
   .custom-datatable td,
   .custom-datatable th {
     padding: 4px;

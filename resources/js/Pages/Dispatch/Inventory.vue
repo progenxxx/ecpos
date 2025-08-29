@@ -45,7 +45,7 @@ const options = {
   scrollY: "60vh",
   scrollCollapse: true,
   error: function (xhr, error, thrown) {
-    console.error("DataTables error:", error);
+
   }
 };
 
@@ -74,8 +74,7 @@ const groupedOrders = computed(() => {
 
 const flattenedOrders = computed(() => {
   const orders = Object.values(groupedOrders.value);
-  
-  // Add total row
+
   const totalRow = {
     ITEMID: 'TOTAL',
     ITEMNAME: '',
@@ -86,12 +85,11 @@ const flattenedOrders = computed(() => {
       orders.reduce((sum, order) => sum + (order.dates[date] || 0), 0)
     ])),
   };
-  
+
   orders.push(totalRow);
-  
+
   return orders;
 });
-
 
 const uniqueDates = computed(() => {
   const today = new Date();
@@ -99,12 +97,12 @@ const uniqueDates = computed(() => {
   const month = today.getMonth();
   const lastDay = new Date(year, month + 1, 0).getDate();
   const dates = [];
-  
+
   for (let i = 1; i <= lastDay; i++) {
     const date = new Date(year, month, i);
     dates.push(date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }));
   }
-  
+
   return dates;
 });
 
@@ -119,8 +117,6 @@ const columns = computed(() => [
     render: (data, type, row) => row.dates[date] || 0
   }))
 ]);
-
-
 
 const StartDate = ref(null);
 const formattedDate1 = computed(() => {
@@ -182,11 +178,10 @@ const content = generateTextFileContent(flattenedOrders, columns);
 downloadTextFile(filename, content);
 }
 
-
 const generateReceiptContent = () => {
   const date = new Date().toLocaleDateString();
   const time = new Date().toLocaleTimeString();
-  
+
   let content = `
     <html>
       <head>
@@ -209,7 +204,6 @@ const generateReceiptContent = () => {
         <div class="center" style="width: 200px">${date} ${time}</div>
   `;
 
-  // Group orders by store
   const ordersByStore = flattenedOrders.value.reduce((acc, order) => {
     Object.entries(order).forEach(([key, value]) => {
       if (typeof value === 'object' && value !== null && 'count' in value && 'STOREID' in value) {
@@ -228,7 +222,6 @@ const generateReceiptContent = () => {
     return acc;
   }, {});
 
-  // Generate receipt content for each store
   Object.entries(ordersByStore).forEach(([storeName, items]) => {
     content += `
       <div class="bold" style="width:200px; ">${storeName} Branch:</div>
@@ -285,7 +278,7 @@ const printReceipt = () => {
 const sync = (journalid) => {
     JOURNALID.value = journalid;
     showGetBWModal.value = true;
-    console.log(JOURNALID.value);
+
 };
 
 const sheetData = ref([])
@@ -295,75 +288,42 @@ const fetchSheetData = async () => {
     const response = await axios.get('/api/google-sheet-data')
     sheetData.value = response.data
   } catch (error) {
-    console.error('Error fetching sheet data:', error)
-  }
-}
-
-onMounted(fetchSheetData)
-</script>
-
-<template>
-<Main active-tab="FG">
-  <template v-slot:main>
-    <TableContainer>
-      <div class="absolute adjust">
-        <div class="flex justify-start items-center">
-          
-        
-<a href="#" class="w-full flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
-
-</a>
-
-
-        </div>
-      </div>
-
-      <!-- <div>
-        <table v-if="sheetData.length">
-          <thead>
-            <tr>
-              <th v-for="(header, index) in sheetData[0]" :key="index">{{ header }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(row, rowIndex) in sheetData.slice(1)" :key="rowIndex">
-              <td v-for="(cell, cellIndex) in row" :key="cellIndex">{{ cell }}</td>
+     in row" :key="cellIndex">{{ cell }}</td>
             </tr>
           </tbody>
         </table>
       </div> -->
-      
-      <iframe 
-        src="https://docs.google.com/spreadsheets/d/1qPRNb5MK135DogIi7QlunasYYa_hkYEe50wWCB18yWE/edit?usp=sharing&rm=minimal#gid=951114160" 
+
+      <iframe
+        src="https:
         class="w-full" style="height: 90vh;">
       </iframe>
 
-      <!-- <iframe 
-        src="https://docs.google.com/spreadsheets/d/1qPRNb5MK135DogIi7QlunasYYa_hkYEe50wWCB18yWE/edit?usp=sharing&chrome=false" 
-        class="w-full" 
-        style="height: 80vh;"
-      >
-      </iframe> -->
-
-      <!-- <iframe 
-        src="https://sheetdb.io/api/v1/w8cvcd56i114j" 
-        class="w-full" 
+      <!-- <iframe
+        src="https:
+        class="w-full"
         style="height: 80vh;"
       >
       </iframe> -->
 
       <!-- <iframe
-      src="https://docs.google.com/spreadsheets/d/1qPRNb5MK135DogIi7QlunasYYa_hkYEe50wWCB18yWE/pubhtml?widget=true&amp;headers=false"
+        src="https:
+        class="w-full"
+        style="height: 80vh;"
+      >
+      </iframe> -->
+
+      <!-- <iframe
+      src="https:
       ></iframe> -->
 
-      <!-- <iframe class="airtable-embed" src="https://airtable.com/embed/appsCDdWqtwMxMw29/shrRHOn2wIcCmyYQ6?viewControls=on" 
+      <!-- <iframe class="airtable-embed" src="https:
       frameborder="0" onmousewheel="" width="100%" height="533" style="background: transparent; border: 1px solid #ccc;"></iframe> -->
-      
+
     </TableContainer>
   </template>
 </Main>
 </template>
-
 
 <script>
 import ExcelJS from 'exceljs';
@@ -404,28 +364,27 @@ export default {
       }));
     },
     async exportToExcel() {
-      console.log('Starting exportToExcel');
-      console.log('flattenedOrders:', this.flattenedOrders);
+
       try {
         if (!this.flattenedOrders || !Array.isArray(this.flattenedOrders) || this.flattenedOrders.length === 0) {
-          console.error('No data to export');
+
           return;
         }
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Orders');
-        // Define columns based on your DataTable structure
+
         const columns = [
           { header: 'ITEMID', key: 'ITEMID', width: 15 },
           { header: 'ITEMNAME', key: 'ITEMNAME', width: 30 },
           { header: 'CATEGORY', key: 'CATEGORY', width: 20 },
           { header: 'TOTAL', key: 'TOTAL', width: 15 },
         ];
-        // Add date columns
+
         this.uniqueDates.forEach(date => {
           columns.push({ header: date, key: date, width: 15 });
         });
         worksheet.columns = columns;
-        // Add data rows
+
         this.flattenedOrders.forEach(order => {
           const row = {
             ITEMID: order.ITEMID,
@@ -433,13 +392,13 @@ export default {
             CATEGORY: order.CATEGORY,
             TOTAL: order.TOTAL,
           };
-          // Add data for each date 
+
           this.uniqueDates.forEach(date => {
             row[date] = order.dates[date] || 0;
           });
           worksheet.addRow(row);
         });
-        // Style the header row
+
         worksheet.getRow(1).font = { bold: true };
         worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
         const today = new Date();
@@ -447,7 +406,7 @@ export default {
         const buffer = await workbook.xlsx.writeBuffer();
         this.saveExcelFile(buffer, filename);
       } catch (error) {
-        console.error('Error exporting to Excel:', error);
+
       }
     },
     saveExcelFile(buffer, filename) {

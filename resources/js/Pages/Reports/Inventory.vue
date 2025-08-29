@@ -11,7 +11,6 @@ import 'datatables.net-buttons/js/buttons.html5.mjs';
 import 'datatables.net-buttons/js/buttons.print.mjs';
 import ExcelJS from 'exceljs';
 
-// Import icons for mobile menu
 import MenuIcon from "@/Components/Svgs/Menu.vue";
 import CloseIcon from "@/Components/Svgs/Close.vue";
 
@@ -56,21 +55,17 @@ const startDate = ref(props.filters.startDate || '');
 const endDate = ref(props.filters.endDate || '');
 const isTableLoading = ref(true);
 
-// Mobile responsive state
 const showFloatingMenu = ref(false);
 const isMobile = ref(false);
 
-// Click tracking for mobile interactions
 const clickTimeout = ref(null);
 const clickCount = ref(0);
 const longPressTimeout = ref(null);
 const isLongPress = ref(false);
 
-// Store search functionality
 const storeSearchQuery = ref('');
 const showStoreDropdown = ref(false);
 
-// Adjustment modal state
 const showAdjustmentModal = ref(false);
 const selectedItem = ref(null);
 const adjustmentForm = ref({
@@ -80,12 +75,10 @@ const adjustmentForm = ref({
 });
 const adjustmentLoading = ref(false);
 
-// History modal state
 const showHistoryModal = ref(false);
 const adjustmentHistory = ref([]);
 const historyLoading = ref(false);
 
-// Sync functionality state
 const showSyncModal = ref(false);
 const syncForm = ref({
     sync_date: '',
@@ -95,20 +88,18 @@ const syncLoading = ref(false);
 const syncStatus = ref(null);
 const syncStatusLoading = ref(false);
 
-// Filtered stores based on search - handle both string and object formats
 const filteredStores = computed(() => {
     let stores = [];
-    
-    // Handle different store data formats
+
     if (Array.isArray(props.stores)) {
         stores = props.stores.map(store => {
-            // Handle if store is an object with name property
+
             if (typeof store === 'object' && store !== null) {
-                // Handle specific format like {"STOREID": "BW0011", "NAME": "ANCHETA"}
+
                 if (store.NAME) {
                     return store.NAME;
                 }
-                // Handle other common name properties
+
                 if (store.name) {
                     return store.name;
                 }
@@ -118,29 +109,26 @@ const filteredStores = computed(() => {
                 if (store.store_name) {
                     return store.store_name;
                 }
-                
-                // Try to extract NAME from string representation
+
                 const storeStr = JSON.stringify(store);
                 const nameMatch = storeStr.match(/"NAME"\s*:\s*"([^"]+)"/);
                 if (nameMatch) {
                     return nameMatch[1];
                 }
-                
-                // Last resort - clean up the object string
+
                 return storeStr.replace(/[{}":]/g, '').replace(/STOREID[^,]*,?\s*/g, '').replace(/NAME/g, '').trim() || 'Unknown Store';
             }
-            // Handle if store is already a string
+
             return String(store);
         });
     }
-    
+
     if (!storeSearchQuery.value) return stores;
-    return stores.filter(store => 
+    return stores.filter(store =>
         store.toLowerCase().includes(storeSearchQuery.value.toLowerCase())
     );
 });
 
-// Mobile interaction handlers - Fixed to work on ALL screen sizes
 const handleItemClick = (item) => {
     clearTimeout(clickTimeout.value);
     clickCount.value++;
@@ -150,7 +138,7 @@ const handleItemClick = (item) => {
             clickCount.value = 0;
         }, 300);
     } else if (clickCount.value === 2) {
-        // Double click - open adjustment modal
+
         clearTimeout(clickTimeout.value);
         openAdjustmentModal(item);
         clickCount.value = 0;
@@ -162,11 +150,11 @@ const handleTouchStart = (item, event) => {
     longPressTimeout.value = setTimeout(() => {
         isLongPress.value = true;
         openHistoryModal(item);
-        // Add haptic feedback if available
+
         if (navigator.vibrate) {
             navigator.vibrate(50);
         }
-    }, 1000); // 1 second for long press
+    }, 1000);
 };
 
 const handleTouchEnd = (item, event) => {
@@ -177,7 +165,7 @@ const handleTouchEnd = (item, event) => {
 };
 
 const handleMouseDown = (item, event) => {
-    // Prevent text selection during long press
+
     event.preventDefault();
     isLongPress.value = false;
     longPressTimeout.value = setTimeout(() => {
@@ -198,7 +186,6 @@ const clearTimeouts = () => {
     clearTimeout(clickTimeout.value);
 };
 
-// Mobile menu functions
 const toggleFloatingMenu = () => {
     showFloatingMenu.value = !showFloatingMenu.value;
 };
@@ -207,7 +194,6 @@ const closeFloatingMenu = () => {
     showFloatingMenu.value = false;
 };
 
-// Store selection functions
 const toggleStoreSelection = (store) => {
     const index = selectedStores.value.indexOf(store);
     if (index > -1) {
@@ -227,14 +213,14 @@ const clearStoreSelection = () => {
 };
 
 const selectAllStores = () => {
-    // Handle both string and object formats
+
     const allStores = props.stores.map(store => {
         if (typeof store === 'object' && store !== null) {
-            // Handle specific format like {"STOREID": "BW0011", "NAME": "ANCHETA"}
+
             if (store.NAME) {
                 return store.NAME;
             }
-            // Handle other common name properties
+
             if (store.name) {
                 return store.name;
             }
@@ -244,15 +230,13 @@ const selectAllStores = () => {
             if (store.store_name) {
                 return store.store_name;
             }
-            
-            // Try to extract NAME from string representation
+
             const storeStr = JSON.stringify(store);
             const nameMatch = storeStr.match(/"NAME"\s*:\s*"([^"]+)"/);
             if (nameMatch) {
                 return nameMatch[1];
             }
-            
-            // Last resort - clean up the object string
+
             return storeStr.replace(/[{}":]/g, '').replace(/STOREID[^,]*,?\s*/g, '').replace(/NAME/g, '').trim() || 'Unknown Store';
         }
         return String(store);
@@ -261,12 +245,10 @@ const selectAllStores = () => {
     showStoreDropdown.value = false;
 };
 
-// Detect mobile screen size
 const checkScreenSize = () => {
     isMobile.value = window.innerWidth < 768;
 };
 
-// Compute totals efficiently with memoization
 const totals = computed(() => {
     if (!props.inventory?.length) return {
         beginning: 0,
@@ -284,11 +266,11 @@ const totals = computed(() => {
         ratBites: 0,
         antBites: 0
     };
-    
+
     return props.inventory.reduce((acc, item) => {
         const safeNum = (val) => Number(val || 0);
-        const itemWaste = safeNum(item.throw_away) + safeNum(item.early_molds) + 
-                         safeNum(item.pull_out) + safeNum(item.rat_bites) + 
+        const itemWaste = safeNum(item.throw_away) + safeNum(item.early_molds) +
+                         safeNum(item.pull_out) + safeNum(item.rat_bites) +
                          safeNum(item.ant_bites);
 
         return {
@@ -339,9 +321,8 @@ const totalPositiveVariance = computed(() => {
     }, 0) || 0;
 });
 
-// Open adjustment modal
 const openAdjustmentModal = (item) => {
-    console.log('Opening adjustment modal for item:', item);
+
     selectedItem.value = item;
     adjustmentForm.value = {
         adjustment_value: '',
@@ -352,7 +333,6 @@ const openAdjustmentModal = (item) => {
     closeFloatingMenu();
 };
 
-// Close adjustment modal
 const closeAdjustmentModal = () => {
     showAdjustmentModal.value = false;
     selectedItem.value = null;
@@ -363,7 +343,6 @@ const closeAdjustmentModal = () => {
     };
 };
 
-// Submit adjustment
 const submitAdjustment = async () => {
     if (!adjustmentForm.value.adjustment_value || !adjustmentForm.value.remarks.trim()) {
         alert('Please fill in all required fields');
@@ -372,7 +351,7 @@ const submitAdjustment = async () => {
 
     if (!selectedItem.value || !selectedItem.value.id) {
         alert('Item ID is missing. This might be an aggregated record. Please contact support if this persists.');
-        console.error('Missing ID for item:', selectedItem.value);
+
         return;
     }
 
@@ -380,7 +359,7 @@ const submitAdjustment = async () => {
 
     try {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        
+
         if (!csrfToken) {
             throw new Error('CSRF token not found');
         }
@@ -391,8 +370,6 @@ const submitAdjustment = async () => {
             adjustment_type: adjustmentForm.value.adjustment_type,
             remarks: adjustmentForm.value.remarks.trim()
         };
-
-        console.log('Submitting adjustment:', requestData);
 
         const response = await fetch('/inventory/adjust-item-count', {
             method: 'POST',
@@ -406,12 +383,11 @@ const submitAdjustment = async () => {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('HTTP Error Response:', errorText);
+
             throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
-        console.log('Response:', data);
 
         if (data.success) {
             alert('Item count adjusted successfully');
@@ -420,21 +396,20 @@ const submitAdjustment = async () => {
         } else {
             alert(data.message || 'Failed to adjust item count');
             if (data.errors) {
-                console.error('Validation errors:', data.errors);
+
                 Object.keys(data.errors).forEach(key => {
-                    console.error(`${key}: ${data.errors[key].join(', ')}`);
+
                 });
             }
         }
     } catch (error) {
-        console.error('Error adjusting item count:', error);
+
         alert('An error occurred while adjusting item count: ' + error.message);
     } finally {
         adjustmentLoading.value = false;
     }
 };
 
-// Open history modal
 const openHistoryModal = async (item) => {
     selectedItem.value = item;
     showHistoryModal.value = true;
@@ -443,7 +418,7 @@ const openHistoryModal = async (item) => {
 
     try {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        
+
         const response = await fetch('/inventory/adjustment-history', {
             method: 'POST',
             headers: {
@@ -462,23 +437,21 @@ const openHistoryModal = async (item) => {
         if (data.success) {
             adjustmentHistory.value = data.data;
         } else {
-            console.error('Failed to fetch adjustment history:', data.message);
+
         }
     } catch (error) {
-        console.error('Error fetching adjustment history:', error);
+
     } finally {
         historyLoading.value = false;
     }
 };
 
-// Close history modal
 const closeHistoryModal = () => {
     showHistoryModal.value = false;
     selectedItem.value = null;
     adjustmentHistory.value = [];
 };
 
-// Open sync modal
 const openSyncModal = () => {
     syncForm.value = {
         sync_date: endDate.value || startDate.value || new Date().toISOString().split('T')[0],
@@ -486,12 +459,10 @@ const openSyncModal = () => {
     };
     showSyncModal.value = true;
     closeFloatingMenu();
-    
-    // Get sync status when modal opens
+
     getSyncStatus();
 };
 
-// Close sync modal
 const closeSyncModal = () => {
     showSyncModal.value = false;
     syncForm.value = {
@@ -501,15 +472,14 @@ const closeSyncModal = () => {
     syncStatus.value = null;
 };
 
-// Get sync status
 const getSyncStatus = async () => {
     if (!syncForm.value.sync_date) return;
-    
+
     syncStatusLoading.value = true;
-    
+
     try {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        
+
         const response = await fetch('/inventory/sync-status', {
             method: 'POST',
             headers: {
@@ -524,20 +494,19 @@ const getSyncStatus = async () => {
         });
 
         const data = await response.json();
-        
+
         if (data.success) {
             syncStatus.value = data.data;
         } else {
-            console.error('Failed to get sync status:', data.message);
+
         }
     } catch (error) {
-        console.error('Error getting sync status:', error);
+
     } finally {
         syncStatusLoading.value = false;
     }
 };
 
-// Perform sync
 const performSync = async () => {
     if (!syncForm.value.sync_date) {
         alert('Please select a sync date');
@@ -553,7 +522,7 @@ const performSync = async () => {
 
     try {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        
+
         const response = await fetch('/inventory/sync-variance', {
             method: 'POST',
             headers: {
@@ -568,28 +537,26 @@ const performSync = async () => {
         });
 
         const data = await response.json();
-        
+
         if (data.success) {
             alert(`Sync completed successfully!\n\nStore: ${data.data.store_name}\nDate: ${data.data.sync_date}\nRecords Updated: ${data.data.total_affected_rows}`);
-            
+
             closeSyncModal();
-            
-            // Refresh the page to show updated data
+
             window.location.reload();
         } else {
             alert('Sync failed: ' + data.message);
         }
     } catch (error) {
-        console.error('Error performing sync:', error);
+
         alert('An error occurred during sync: ' + error.message);
     } finally {
         syncLoading.value = false;
     }
 };
 
-// DataTable columns for desktop - with enhanced interactions
 const columns = [
-    { 
+    {
         data: 'itemname',
         title: 'Item Name',
         className: 'min-w-[200px]'
@@ -671,7 +638,7 @@ const columns = [
                 <div class="flex items-center justify-between">
                     <span>${value}</span>
                     <div class="flex gap-1 ml-2">
-                        <button 
+                        <button
                             id="${rowId}"
                             class="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-300 rounded adjust-btn"
                             title="Adjust Item Count"
@@ -679,7 +646,7 @@ const columns = [
                         >
                             Adjust
                         </button>
-                        <button 
+                        <button
                             id="${historyId}"
                             class="text-green-600 hover:text-green-800 text-xs px-2 py-1 border border-green-300 rounded history-btn"
                             title="View History"
@@ -710,7 +677,6 @@ const columns = [
     }
 ];
 
-// Setup event listeners for dynamically created buttons
 const setupButtonEventListeners = () => {
     document.removeEventListener('click', handleButtonClick);
     document.addEventListener('click', handleButtonClick);
@@ -726,7 +692,6 @@ const handleButtonClick = (event) => {
     }
 };
 
-// DataTable options - with enhanced row interactions using vanilla JS
 const options = {
     responsive: true,
     order: [[0, 'asc']],
@@ -734,7 +699,7 @@ const options = {
     dom: 'Bfrtip',
     deferRender: true,
     buttons: [
-        'copy', 
+        'copy',
         {
             extend: 'csv',
             title: 'Inventory Report'
@@ -750,37 +715,36 @@ const options = {
         'print'
     ],
     createdRow: function(row, data, dataIndex) {
-        // Add event listeners for long press and double click on desktop table rows
+
         let longPressTimer;
         let clickCount = 0;
         let clickTimer;
-        
-        // Add classes for styling
+
         row.classList.add('cursor-pointer', 'hover:bg-gray-50', 'select-none');
-        
+
         const handleMouseDown = (e) => {
             e.preventDefault();
             longPressTimer = setTimeout(() => {
                 openHistoryModal(data);
             }, 1000);
         };
-        
+
         const handleMouseUp = () => {
             clearTimeout(longPressTimer);
         };
-        
+
         const handleClick = (e) => {
-            // Don't trigger on button clicks
-            if (e.target.classList.contains('adjust-btn') || 
+
+            if (e.target.classList.contains('adjust-btn') ||
                 e.target.classList.contains('history-btn') ||
-                e.target.closest('.adjust-btn') || 
+                e.target.closest('.adjust-btn') ||
                 e.target.closest('.history-btn')) {
                 return;
             }
-            
+
             clearTimeout(clickTimer);
             clickCount++;
-            
+
             if (clickCount === 1) {
                 clickTimer = setTimeout(() => {
                     clickCount = 0;
@@ -791,14 +755,12 @@ const options = {
                 clickCount = 0;
             }
         };
-        
-        // Add event listeners
+
         row.addEventListener('mousedown', handleMouseDown);
         row.addEventListener('mouseup', handleMouseUp);
         row.addEventListener('mouseleave', handleMouseUp);
         row.addEventListener('click', handleClick);
-        
-        // Store cleanup function for later use if needed
+
         row._cleanupEvents = () => {
             row.removeEventListener('mousedown', handleMouseDown);
             row.removeEventListener('mouseup', handleMouseUp);
@@ -814,20 +776,19 @@ const options = {
     }
 };
 
-// Handle filter changes with validation
 const handleFilterChange = () => {
     if (startDate.value && endDate.value) {
         const start = new Date(startDate.value);
         const end = new Date(endDate.value);
-        
+
         if (start > end) {
             alert('Start date cannot be later than end date');
             return;
         }
     }
-    
+
     isTableLoading.value = true;
-    
+
     router.get(
         route('reports.inventory'),
         {
@@ -842,14 +803,13 @@ const handleFilterChange = () => {
                 isTableLoading.value = false;
             },
             onError: (errors) => {
-                console.error('Filter update failed:', errors);
+
                 isTableLoading.value = false;
             }
         }
     );
 };
 
-// Clear all filters
 const clearFilters = () => {
     selectedStores.value = [];
     startDate.value = '';
@@ -858,7 +818,6 @@ const clearFilters = () => {
     closeFloatingMenu();
 };
 
-// Export functions for mobile menu
 const exportToCsv = () => {
     if (window.DataTable) {
         const table = window.DataTable.tables()[0];
@@ -899,28 +858,24 @@ const printReport = () => {
     closeFloatingMenu();
 };
 
-// Click outside handlers
 const handleClickOutside = (event) => {
     if (showStoreDropdown.value && !event.target.closest('.store-dropdown-container')) {
         showStoreDropdown.value = false;
     }
 };
 
-// Watch for sync form changes to update status
 watch([() => syncForm.value.sync_date, () => syncForm.value.store_name], () => {
     if (showSyncModal.value) {
         getSyncStatus();
     }
 }, { deep: true });
 
-// Debounced filter handling
 let filterTimeout;
 watch([selectedStores, startDate, endDate], () => {
     clearTimeout(filterTimeout);
     filterTimeout = setTimeout(handleFilterChange, 500);
 }, { deep: true });
 
-// Cleanup
 onUnmounted(() => {
     clearTimeout(filterTimeout);
     clearTimeouts();
@@ -929,20 +884,16 @@ onUnmounted(() => {
     window.removeEventListener('resize', checkScreenSize);
 });
 
-// Initialize component
 onMounted(() => {
     selectedStores.value = props.filters.selectedStores || [];
     startDate.value = props.filters.startDate || '';
     endDate.value = props.filters.endDate || '';
-    
-    console.log("Inventory data:", props.inventory);
-    
-    // Setup event listeners
+
     setupButtonEventListeners();
     document.addEventListener('click', handleClickOutside);
     window.addEventListener('resize', checkScreenSize);
     checkScreenSize();
-    
+
     setTimeout(() => {
         isTableLoading.value = false;
     }, 500);
@@ -955,8 +906,8 @@ onMounted(() => {
             <!-- Filters Section -->
             <div class="mb-4 flex flex-wrap gap-4 p-4 bg-white rounded-lg shadow z-[999]">
                 <!-- Store Selection with Search -->
-                <div 
-                    v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'" 
+                <div
+                    v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'"
                     class="flex-1 min-w-[200px] store-dropdown-container relative"
                 >
                     <label class="block text-sm font-medium text-gray-700 mb-1">Stores</label>
@@ -1004,8 +955,8 @@ onMounted(() => {
 
                             <!-- Store options -->
                             <div class="max-h-40 overflow-auto">
-                                <label 
-                                    v-for="store in filteredStores" 
+                                <label
+                                    v-for="store in filteredStores"
                                     :key="store"
                                     class="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
                                 >
@@ -1034,7 +985,7 @@ onMounted(() => {
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
                 </div>
-                
+
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
                     <input
@@ -1051,7 +1002,7 @@ onMounted(() => {
     >
         Clear Filters
     </button>
-    
+
     <!-- ADD THIS SYNC BUTTON -->
     <button
         @click="openSyncModal"
@@ -1182,11 +1133,11 @@ onMounted(() => {
                     <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
                     <span class="ml-4 text-lg">Loading inventory data...</span>
                 </div>
-                
+
                 <!-- Mobile View -->
                 <div v-if="isMobile" class="overflow-hidden">
                     <div class="max-h-96 overflow-y-auto">
-                        <div v-for="item in inventory" :key="`${item.itemid}-${item.storename}`" 
+                        <div v-for="item in inventory" :key="`${item.itemid}-${item.storename}`"
                              class="border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors select-none cursor-pointer"
                              @touchstart="handleTouchStart(item, $event)"
                              @touchend="handleTouchEnd(item, $event)"
@@ -1195,13 +1146,13 @@ onMounted(() => {
                              @mouseup="handleMouseUp(item, $event)"
                              @mouseleave="clearTimeouts"
                              @contextmenu.prevent>
-                            
+
                             <div class="space-y-3">
                                 <div>
                                     <div class="font-medium text-gray-900">{{ item?.itemname || '' }}</div>
                                     <div class="text-sm text-gray-500">{{ item?.storename || '' }}</div>
                                 </div>
-                                
+
                                 <div class="grid grid-cols-2 gap-2 text-sm">
                                     <div>
                                         <span class="text-gray-600">Beginning:</span>
@@ -1261,14 +1212,14 @@ onMounted(() => {
                 <TableContainer v-else class="max-h-[80vh] overflow-x-auto overflow-y-auto">
                     <div class="p-4 bg-gray-50 border-b border-gray-200">
                         <p class="text-sm text-gray-600">
-                            <strong>Desktop Interactions:</strong> 
+                            <strong>Desktop Interactions:</strong>
                             Hold any row for 1 second to view adjustment history, or double-click to adjust item count.
                         </p>
                     </div>
-                    <DataTable 
-                        :data="inventory" 
-                        :columns="columns" 
-                        class="w-full relative display" 
+                    <DataTable
+                        :data="inventory"
+                        :columns="columns"
+                        class="w-full relative display"
                         :options="options"
                     />
                 </TableContainer>
@@ -1278,12 +1229,12 @@ onMounted(() => {
             <div v-if="isMobile" class="fixed bottom-6 right-6 z-40">
                 <!-- Floating Menu Options -->
                 <div v-if="showFloatingMenu" class="absolute bottom-16 right-0 bg-white rounded-lg shadow-lg border border-gray-200 py-2 w-56 transform transition-all duration-200 ease-out">
-                    
+
                     <!-- Export Options -->
                     <div class="px-4 py-2 border-b border-gray-200">
                         <p class="text-sm font-medium text-gray-700">Export Data</p>
                     </div>
-                    
+
                     <button
                         @click="exportToCsv"
                         class="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
@@ -1372,7 +1323,7 @@ onMounted(() => {
                         <h3 class="text-lg font-medium text-gray-900 mb-4">
                             Adjust Item Count
                         </h3>
-                        
+
                         <div v-if="selectedItem" class="mb-4 p-3 bg-gray-50 rounded">
                             <p class="text-sm font-medium">{{ selectedItem.itemname }}</p>
                             <p class="text-sm text-gray-600">Store: {{ selectedItem.storename }}</p>
@@ -1383,7 +1334,7 @@ onMounted(() => {
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Adjustment Type</label>
-                                <select 
+                                <select
                                     v-model="adjustmentForm.adjustment_type"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 >
@@ -1399,8 +1350,8 @@ onMounted(() => {
                                     <span v-else-if="adjustmentForm.adjustment_type === 'add'">Amount to Add</span>
                                     <span v-else>Amount to Subtract</span>
                                 </label>
-                                <input 
-                                    type="number" 
+                                <input
+                                    type="number"
                                     step="0.01"
                                     v-model="adjustmentForm.adjustment_value"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -1411,7 +1362,7 @@ onMounted(() => {
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Remarks *</label>
-                                <textarea 
+                                <textarea
                                     v-model="adjustmentForm.remarks"
                                     rows="3"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -1433,14 +1384,14 @@ onMounted(() => {
                         </div>
 
                         <div class="flex justify-end space-x-3 mt-6">
-                            <button 
+                            <button
                                 @click="closeAdjustmentModal"
                                 class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                                 :disabled="adjustmentLoading"
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 @click="submitAdjustment"
                                 class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
                                 :disabled="adjustmentLoading || !adjustmentForm.adjustment_value || !adjustmentForm.remarks.trim()"
@@ -1460,7 +1411,7 @@ onMounted(() => {
                         <h3 class="text-lg font-medium text-gray-900 mb-4">
                             Adjustment History
                         </h3>
-                        
+
                         <div v-if="selectedItem" class="mb-4 p-3 bg-gray-50 rounded">
                             <p class="text-sm font-medium">{{ selectedItem.itemname }}</p>
                             <p class="text-sm text-gray-600">Store: {{ selectedItem.storename }}</p>
@@ -1532,7 +1483,7 @@ onMounted(() => {
                         </div>
 
                         <div class="flex justify-end mt-6">
-                            <button 
+                            <button
                                 @click="closeHistoryModal"
                                 class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                             >
@@ -1550,7 +1501,7 @@ onMounted(() => {
                         <h3 class="text-lg font-medium text-gray-900 mb-4">
                             Sync Inventory Variance
                         </h3>
-                        
+
                         <div class="mb-4 p-3 bg-blue-50 rounded">
                             <p class="text-sm text-blue-700">
                                 This will update inventory data by syncing with waste declarations, received orders, and sales data.
@@ -1560,8 +1511,8 @@ onMounted(() => {
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Sync Date *</label>
-                                <input 
-                                    type="date" 
+                                <input
+                                    type="date"
                                     v-model="syncForm.sync_date"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     required
@@ -1570,7 +1521,7 @@ onMounted(() => {
 
                             <div v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'">
                                 <label class="block text-sm font-medium text-gray-700">Store *</label>
-                                <select 
+                                <select
                                     v-model="syncForm.store_name"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     required
@@ -1585,12 +1536,12 @@ onMounted(() => {
                             <!-- Sync Status Display -->
                             <div v-if="syncStatus" class="p-4 bg-gray-50 rounded-lg">
                                 <h4 class="text-sm font-medium text-gray-900 mb-2">Current Data Status</h4>
-                                
+
                                 <div v-if="syncStatusLoading" class="flex items-center">
                                     <div class="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-indigo-500"></div>
                                     <span class="ml-2 text-sm">Checking status...</span>
                                 </div>
-                                
+
                                 <div v-else class="space-y-2 text-sm">
                                     <div class="flex justify-between">
                                         <span>Inventory Records:</span>
@@ -1610,7 +1561,7 @@ onMounted(() => {
                                         <span>Sales Records:</span>
                                         <span class="text-gray-600">{{ syncStatus.status.sales_records }}</span>
                                     </div>
-                                    
+
                                     <div v-if="syncStatus.status.last_sync" class="mt-3 pt-3 border-t border-gray-200">
                                         <p class="text-xs text-gray-500">
                                             Last sync: {{ new Date(syncStatus.status.last_sync.created_at).toLocaleString() }}
@@ -1618,9 +1569,9 @@ onMounted(() => {
                                             Affected records: {{ syncStatus.status.last_sync.affected_records }}
                                         </p>
                                     </div>
-                                    
+
                                     <div v-if="!syncStatus.status.can_sync" class="mt-3 p-2 bg-red-50 rounded text-red-700 text-xs">
-                                        ⚠️ No inventory records found for this date/store. Cannot perform sync.
+                                         No inventory records found for this date/store. Cannot perform sync.
                                     </div>
                                 </div>
                             </div>
@@ -1633,7 +1584,7 @@ onMounted(() => {
                                     </svg>
                                     <div>
                                         <p class="text-yellow-800 text-sm">
-                                            <strong>Warning:</strong> This will overwrite existing waste, received, and sales data with values from the source tables. 
+                                            <strong>Warning:</strong> This will overwrite existing waste, received, and sales data with values from the source tables.
                                             Make sure the source data is accurate before proceeding.
                                         </p>
                                     </div>
@@ -1642,14 +1593,14 @@ onMounted(() => {
                         </div>
 
                         <div class="flex justify-end space-x-3 mt-6">
-                            <button 
+                            <button
                                 @click="closeSyncModal"
                                 class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                                 :disabled="syncLoading"
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 @click="performSync"
                                 class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-indigo-300"
                                 :disabled="syncLoading || !syncForm.sync_date || (syncStatus && !syncStatus.status.can_sync)"
@@ -1667,16 +1618,16 @@ onMounted(() => {
 
 <style>
 .dt-buttons {
-    display: flex;               
+    display: flex;
     justify-content: flex-end;
-    align-items: center;    
+    align-items: center;
     position: absolute;
     z-index: 1;
     margin: 10px;
     right: 0;
 }
 
-.dt-button, 
+.dt-button,
 .dt-buttons .buttons-copy,
 .dt-buttons .buttons-print {
     padding: 8px 12px;
@@ -1690,7 +1641,7 @@ onMounted(() => {
     font-size: 14px;
 }
 
-.dt-button:hover, 
+.dt-button:hover,
 .dt-buttons .buttons-copy:hover,
 .dt-buttons .buttons-print:hover {
     background-color: #2563eb;
@@ -1766,11 +1717,11 @@ table.dataTable tbody tr.selected {
 
 @media (max-width: 768px) {
     .dt-buttons {
-        display: none; /* Hide DataTable buttons on mobile */
+        display: none;
     }
-    
+
     .dataTables_filter {
-        display: none; /* Hide DataTable search on mobile */
+        display: none;
     }
 
     table.dataTable {

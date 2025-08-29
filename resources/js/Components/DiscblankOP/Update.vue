@@ -20,8 +20,7 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-    
-    
+
     showModal: {
         type: Boolean,
         default: false,
@@ -32,9 +31,8 @@ const form = useForm({
     ID: (''),
     DISCTYPE: (''),
     ISPRECENTAGE: (''),
-    
-});
 
+});
 
 const submitForm = () => {
     form.patch("/isdiscblankoperations/patch", {
@@ -52,7 +50,6 @@ onMounted(() => {
     form.ID = props.ID;
     form.DISCTYPE = props.DISCTYPE;
     form.ISPRECENTAGE = props.ISPRECENTAGE;
-    
 
     watch(() => props.ID, (newValue) => {
         form.ID = newValue;
@@ -83,8 +80,8 @@ onMounted(() => {
                         autofocus
                     />
                     <InputError :message="form.errors.ID" class="mt-2" />
-                    </div>  
-                    
+                    </div>
+
                     <div class="col-span-1 ml-4">
                         <InputLabel for="DISCTYPE" value="DISCTYPE" />
                     <TextInput

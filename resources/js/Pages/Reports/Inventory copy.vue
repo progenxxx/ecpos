@@ -1,5 +1,5 @@
 <script setup>
-import Main from "@/Layouts/Main.vue";  
+import Main from "@/Layouts/Main.vue";
 import MultiSelectDropdown from "@/Components/MultiSelect/MultiSelectDropdown.vue";
 import TableContainer from "@/Components/Tables/TableContainer.vue";
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
@@ -44,13 +44,13 @@ onMounted(() => {
 
 const filteredData = computed(() => {
     let filtered = [...props.inventory];
-    
+
     if (selectedStores.value.length > 0) {
-        filtered = filtered.filter(item => 
+        filtered = filtered.filter(item =>
             selectedStores.value.includes(item.storename)
         );
     }
-    
+
     if (startDate.value && endDate.value) {
         filtered = filtered.filter(item => {
             const itemDate = new Date(item.createddate);
@@ -59,12 +59,12 @@ const filteredData = computed(() => {
             return itemDate >= start && itemDate <= end;
         });
     }
-    
+
     return filtered;
 });
 
 const columns = [
-    { 
+    {
         data: 'itemname',
         title: 'Item Name',
         className: 'min-w-[200px]'
@@ -135,7 +135,6 @@ const columns = [
     }
 ];
 
-// Calculate totals
 const totals = computed(() => {
     const total = {
         beginning: 0,
@@ -187,7 +186,7 @@ const totals = computed(() => {
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
                 </div>
-                
+
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
                     <input
@@ -234,10 +233,10 @@ const totals = computed(() => {
                 </div>
 
             <TableContainer>
-                <DataTable 
-                    :data="filteredData" 
-                    :columns="columns" 
-                    class="w-full relative display" 
+                <DataTable
+                    :data="filteredData"
+                    :columns="columns"
+                    class="w-full relative display"
                     :options="options"
                 >
                 </DataTable>

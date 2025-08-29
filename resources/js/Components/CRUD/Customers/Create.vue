@@ -24,10 +24,10 @@ const form = useForm({
     country: (''),
     zipcode: (''),
     state:(''),
-    /* county: (''), */
+
     email: (''),
     cellularphone: (''),
-    /* dataareaid:(''), */
+
     gender: (''),
 });
 
@@ -63,8 +63,8 @@ const toggleActive = () => {
                         autofocus
                     />
                     <InputError :message="form.errors.number" class="mt-2" />
-                    </div>  
-                    
+                    </div>
+
                     <div class="col-span-3">
                     <InputLabel for="name" value="Name" class="mt-2 block w-full"/>
                     <TextInput
@@ -125,7 +125,6 @@ const toggleActive = () => {
                     <InputError :message="form.errors.state" class="mt-2" />
                     </div>
 
-                    
                     <div class="col-span-1 ml-4">
                     <InputLabel for="phone" value="Phone" class="mt-2 block w-full"/>
                     <TextInput
@@ -175,7 +174,7 @@ const toggleActive = () => {
                         autofocus
                     />
                     <InputError :message="form.errors.blocked" class="mt-2" /> -->
-                    <select 
+                    <select
                         className="select select-bordered w-full max-w-xs mt-5"
                         id="blocked"
                         v-model="form.blocked"
@@ -200,7 +199,7 @@ const toggleActive = () => {
                     />
                     <InputError :message="form.errors.email" class="mt-2" />
                     </div>
-                    
+
                     <div class="col-span-1 ml-4">
                         <!-- <InputLabel for="gender" value="Gender" class="mt-2"/>
                     <TextInput
@@ -212,7 +211,7 @@ const toggleActive = () => {
                     />
                     <InputError :message="form.errors.gender" class="mt-2" /> -->
 
-                    <select 
+                    <select
                         className="select select-bordered w-full max-w-xs mt-5"
                         id="gender"
                         v-model="form.gender"

@@ -18,15 +18,15 @@ const form = useForm({
 });
 
 const submitForm = () => {
-    console.log('Submitting form...');
+
     form.patch("/ItemOrders/post", {
         preserveScroll: true,
         onSuccess: () => {
-            console.log('Form submission successful.');
+
             toggleActive();
         },
         onError: (error) => {
-            console.error('Form submission error:', error);
+
         }
     });
 };

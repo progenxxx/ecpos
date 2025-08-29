@@ -20,10 +20,7 @@ import CustomerGroup from "@/Components/Svgs/CustomerGroup.vue";
 import RetailGroup from "@/Components/Svgs/RetailGroup.vue";
 import SpecialGroup from "@/Components/Svgs/SpecialGroup.vue";
 
-
 import { ref, onMounted, onUnmounted } from 'vue';
-
-
 
 const isSidebarOpen = ref(true);
 const showModalLogout = ref(false);
@@ -51,17 +48,17 @@ const logoutModalHandler = () => {
 };
 
 const rboinventitemretailgroups = () => {
-  /* window.alert('You are Redirecting to Category Entries'); */
+
   window.location.href = '/rboinventitemretailgroups';
 };
 
 const rbospecialgroups = () => {
-  /* window.alert('You are Redirecting to Special Category Entries'); */
+
   window.location.href = '/rbospecialgroups';
 };
 
 const posperiodicdiscounts = () => {
-  /* window.alert('You are Redirecting to Discount Entries'); */
+
   window.location.href = '/discountv2';
 };
 
@@ -143,7 +140,6 @@ const posperiodicdiscounts = () => {
         </section>
     </div>
 </template>
-
 
 <script>
 export default {

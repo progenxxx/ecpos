@@ -42,7 +42,7 @@ class OrderController extends Controller
                         ->get();
                     }
         
-                    /* $currentDateTime = Carbon::now()->toDateString(); */
+                    
                     $utcDateTime = Carbon::now('UTC');
                     $currentDateTime = $utcDateTime->setTimezone('Asia/Manila')->toDateString();
 
@@ -76,7 +76,7 @@ class OrderController extends Controller
    
     public function create()
     {
-        //
+        
     }
 
     public function store(Request $request)
@@ -89,7 +89,7 @@ class OrderController extends Controller
         $storeId = Auth::user()->storeid;
         $userId = Auth::user()->id;
 
-        // Check for existing order on the same day
+        
         $existingOrder = DB::table('inventjournaltables')
             ->whereDate('CREATEDDATETIME', $beijingDateTime)
             ->where('STOREID', $storeId)
@@ -99,7 +99,7 @@ class OrderController extends Controller
             throw new \Exception('You have already ordered this time.');
         }
 
-        // Get and update the next record number atomically
+        
         $nextRec = DB::table('nubersequencevalues')
             ->where('storeid', $storeId)
             ->lockForUpdate()
@@ -111,11 +111,11 @@ class OrderController extends Controller
             ->where('STOREID', $storeId)
             ->update(['NEXTREC' => $nextRec]);
 
-        // Generate JOURNALID and DESCRIPTION
+        
         $journalId = $userId . str_pad($nextRec, 8, '0', STR_PAD_LEFT);
         $description = "TR" . $journalId;
 
-        // Create new inventory journal
+        
         $newJournal = Inventjournaltables::create([
             'JOURNALID' => $journalId,
             'STOREID' => $storeId,
@@ -144,23 +144,23 @@ class OrderController extends Controller
 
     public function show(string $id)
     {
-        //
+        
     }
 
     public function edit(string $id)
     {
-        //
+        
     }
 
     public function update(Request $request, string $id)
     {
-        //
+        
     }
 
 
     public function destroy(string $id)
     {
-        //
+        
     }
 
     public function generatetxtfile()

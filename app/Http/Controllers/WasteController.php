@@ -12,26 +12,11 @@ use Carbon\Carbon;
 
 class WasteController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
         public function index()
     {
         $storeId = Auth::user()->storeid;
         $role = Auth::user()->role;
 
-                    /* if($role == "ADMIN"){
-                        $inventjournaltables = DB::table('inventjournaltables AS a')
-                        ->select('a.journalid', 'a.storeid', 'a.description',
-                                DB::raw('SUM(CAST(b.COUNTED AS UNSIGNED)) AS QTY'),
-                                DB::raw('SUM(CAST(c.priceincltax AS DECIMAL(10,2))) AS AMOUNT'),
-                                'a.posted', 'a.sent', 'a.updated_at', 'a.journaltype', 'a.createddatetime')
-                        ->leftJoin('inventjournaltrans AS b', 'b.JOURNALID', '=', 'a.journalid')
-                        ->leftJoin('inventtablemodules AS c', 'c.itemid', '=', 'b.ITEMID')
-                        ->groupBy('a.journalid', 'a.storeid', 'a.description',
-                                'a.posted', 'a.sent', 'a.updated_at', 'a.journaltype', 'a.createddatetime')
-                        ->get();
-                    }else{ */
                         $wastedeclarations = DB::table('wastedeclarations AS a')
                         ->select('a.journalid', 'a.storeid', 'a.description',
                                 DB::raw('SUM(CAST(b.COUNTED AS UNSIGNED)) AS qty'),
@@ -43,7 +28,6 @@ class WasteController extends Controller
                         ->groupBy('a.journalid', 'a.storeid', 'a.description',
                                 'a.posted', 'a.updated_at', 'a.createddatetime')
                         ->get();
-                    /* } */
         
                     $utcDateTime = Carbon::now('UTC');
                     $currentDateTime = $utcDateTime->setTimezone('Asia/Manila')->toDateString();
@@ -75,17 +59,10 @@ class WasteController extends Controller
                     ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         DB::beginTransaction();
@@ -96,7 +73,6 @@ class WasteController extends Controller
             $storeId = Auth::user()->storeid;
             $userId = Auth::user()->id;
 
-            // Check for existing order on the same day
             $existingWaste = DB::table('wastedeclarations')
                 ->whereDate('CREATEDDATETIME', $beijingDateTime)
                 ->where('STOREID', $storeId)
@@ -106,7 +82,6 @@ class WasteController extends Controller
                 throw new \Exception('You have already waste declaration this time.');
             }
 
-            // Get and update the next record number atomically
             $nextRec = DB::table('nubersequencevalues')
                 ->where('storeid', $storeId)
                 ->lockForUpdate()
@@ -118,11 +93,9 @@ class WasteController extends Controller
                 ->where('STOREID', $storeId)
                 ->update(['WASTEREC' => $nextRec]);
 
-            // Generate JOURNALID and DESCRIPTION
             $journalid = $userId . str_pad($nextRec, 8, '0', STR_PAD_LEFT);
             $description = "BO" . $journalid;
 
-            // Create new inventory journal
             $newJournal = wastedeclarations::create([
                 'journalid' => $journalid,
                 'STOREID' => $storeId,
@@ -147,35 +120,19 @@ class WasteController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
-        //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
-        //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
-        //
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
-        //
     }
 }

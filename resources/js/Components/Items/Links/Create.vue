@@ -39,7 +39,7 @@
                                 <!-- Item Selection -->
                                 <div class="mb-4 relative" ref="dropdownRef">
                                     <InputLabel for="child_itemid">Link To</InputLabel>
-                                    
+
                                     <!-- Selected Item Display -->
                                     <div
                                         @click="toggleDropdown"
@@ -72,7 +72,7 @@
 
                                         <!-- Items List -->
                                         <ul class="max-h-60 overflow-auto py-1" role="listbox">
-                                            <li v-if="filteredItems.length === 0" 
+                                            <li v-if="filteredItems.length === 0"
                                                 class="px-3 py-2 text-sm text-gray-500">
                                                 No items found
                                             </li>
@@ -89,7 +89,7 @@
                                             >
                                                 <div class="flex justify-between">
                                                     <span class="block truncate">{{ item.itemname }}</span>
-                                                    <span class="ml-2 block truncate text-sm" 
+                                                    <span class="ml-2 block truncate text-sm"
                                                           :class="{ 'text-indigo-200': selectedItem?.itemid === item.itemid, 'text-gray-500': selectedItem?.itemid !== item.itemid }">
                                                         {{ item.itemid }}
                                                     </span>
@@ -196,7 +196,6 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'created']);
 
-// Form
 const form = useForm({
     parent_itemid: '',
     child_itemid: '',
@@ -204,20 +203,17 @@ const form = useForm({
     quantity: '1'
 });
 
-// Initialize parent_itemid with mainItem's itemid
 form.parent_itemid = String(props.mainItem.itemid);
 
-// Refs
 const searchQuery = ref('');
 const isDropdownOpen = ref(false);
 const dropdownRef = ref(null);
 const selectedItem = ref(null);
 
-// Computed
 const filteredItems = computed(() => {
     const query = searchQuery.value.toLowerCase().trim();
     if (!query) return props.availableItems;
-    
+
     return props.availableItems.filter(item => {
         const nameMatch = item.itemname.toLowerCase().includes(query);
         const idMatch = String(item.itemid).toLowerCase().includes(query);
@@ -226,12 +222,11 @@ const filteredItems = computed(() => {
 });
 
 const isFormValid = computed(() => {
-    return form.child_itemid && 
-           form.link_type && 
+    return form.child_itemid &&
+           form.link_type &&
            parseFloat(form.quantity) > 0;
 });
 
-// Methods
 const handleClickOutside = (event) => {
     if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
         isDropdownOpen.value = false;
@@ -258,7 +253,7 @@ const selectItem = (item) => {
 const closeModal = () => {
     form.reset();
     form.clearErrors();
-    // Reset to initial parent_itemid after form reset
+
     form.parent_itemid = String(props.mainItem.itemid);
     searchQuery.value = '';
     isDropdownOpen.value = false;
@@ -269,7 +264,6 @@ const closeModal = () => {
 const submit = () => {
     if (!isFormValid.value) return;
 
-    // Ensure parent_itemid is set before submission
     form.parent_itemid = String(props.mainItem.itemid);
 
     form.post(route('item-links.store'), {
@@ -279,14 +273,13 @@ const submit = () => {
             closeModal();
         },
         onError: (errors) => {
-            console.error('Form submission errors:', errors);
+
         }
     });
 };
 
-// Lifecycle
 onMounted(() => {
-    // Ensure parent_itemid is set on mount
+
     form.parent_itemid = String(props.mainItem.itemid);
     document.addEventListener('click', handleClickOutside);
 });

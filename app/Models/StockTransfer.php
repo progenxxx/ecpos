@@ -19,7 +19,6 @@ class StockTransfer extends Model
         'notes'
     ];
 
-    // Add this to ensure proper casting
     protected $casts = [
         'from_store_id' => 'string',
         'to_store_id' => 'string',

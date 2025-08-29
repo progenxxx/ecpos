@@ -36,23 +36,15 @@ const props = defineProps({
 });
 
 const columns = [
-    /* { data: 'entryno', title: 'entryno' }, */
-    /* { data: 'customer', title: 'customer' }, */
-    /* { data: 'type', title: 'type' }, */
+
     { data: 'documentno', title: 'DocumentNo' },
     { data: 'description', title: 'Description' },
     { data: 'reasoncode', title: 'ReasonCode' },
-    /* { data: 'currency', title: 'currency' },
-    { data: 'currencyamount', title: 'currencyamount' }, */
+
     { data: 'amount', title: 'Amount' },
     { data: 'remainingamount', title: 'RemainingAmount' },
     { data: 'postingdate', title: 'PostingDate' },
-    /* { data: 'userid', title: 'userid' }, */
-    /* {
-        data: null,
-        render: '#action',
-        title: 'Action'
-    }, */
+
 ];
 
 const options = {
@@ -61,7 +53,6 @@ const options = {
     scrollY: "70vh",
     scrollCollapse: true,
 };
-
 
 const toggleUpdateModal = (newEntryno, newPostingdate, newCustomer, newType, newDocumentno, newDescription, newReasoncode, newCurrency, newCurrencyamount, newAmount, newRemainingamount, newUserid) => {
     entryno.value = newEntryno;

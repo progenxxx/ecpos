@@ -80,16 +80,13 @@ class WasteItemController extends Controller
                 ->with('isError', true);
         }
 
-        /* dd($storeName); */
 
         $wastedeclarationtrans = DB::table('wastedeclarationtrans AS a')
             ->select('a.*', 'b.*', 'c.*')
             ->leftJoin('inventtables AS b', 'a.itemid', '=', 'b.itemid')
             ->leftJoin('rboinventtables AS c', 'b.itemid', '=', 'c.itemid')
-            /* ->where('a.itemdepartment', 'REGULAR PRODUCT') */
             ->where('a.journalid', $journalid)
             ->where('a.storename', $storeName)
-            /* ->where('a.status', '=', '0') */
             ->get();
 
         
@@ -109,14 +106,12 @@ class WasteItemController extends Controller
                 'c.production as production',
                 'c.moq as moq',
                 DB::raw('ROUND(FORMAT(a.priceincltax, "N2"), 2) as price'),
-                /* DB::raw('ROUND(FORMAT(a.price, "N2"), 2) as cost'), */
                 DB::raw('CAST(a.price as float) as cost'),
                 DB::raw("CASE WHEN d.ITEMBARCODE <> '' THEN d.itembarcode ELSE 'N/A' END as barcode")
             )
             ->leftJoin('inventtables as b', 'a.ITEMID', '=', 'b.itemid')
             ->leftJoin('rboinventtables as c', 'b.itemid', '=', 'c.itemid')
             ->leftJoin('inventitembarcodes as d', 'c.barcode', '=', 'd.ITEMBARCODE')
-            /* ->where('c.itemdepartment', '=', 'REGULAR PRODUCT')  */
             ->get();
 
 
@@ -153,23 +148,6 @@ class WasteItemController extends Controller
 
                 } else {
 
-                    /* if($request->EndDate != null){
-
-                        $storename = Auth::user()->storeid;
-
-                        DB::insert(
-                            'INSERT INTO wastedeclarationtrans (JOURNALID, TRANSDATE, ITEMID, COUNTED, STORENAME)
-                             SELECT ?, ?, itemid, counted
-                             FROM wastedeclarationtrans
-                             WHERE DATE(POSTEDDATETIME) = ? and STORENAME = ?',
-                            [$request->JOURNALID, $currentDateTime, $request->EndDate, $storename]
-                        );
-                    
-                        return redirect()->route('WasteItem', ['journalid' => $request->JOURNALID])
-                            ->with('message', 'Generate Item Successfully')
-                            ->with('isSuccess', true);   
-                        
-                    }else{ */
 
                                 $storename = Auth::user()->storeid;
                                 DB::table('wastedeclarationtrans')
@@ -183,8 +161,7 @@ class WasteItemController extends Controller
                                                 'a.itemid as ITEMID',
                                                 DB::raw('0 as COUNTED'),
                                                 DB::raw("'{$storename}' as STORENAME"),
-                                                /* DB::raw("CASE WHEN b.moq IS NULL THEN 0 ELSE b.moq END"), */
-                                                DB::raw('0 as STATUS')
+                                                                DB::raw('0 as STATUS')
                                             )
                                             ->from('inventtables as a')
                                             ->leftJoin('rboinventtables as b', 'a.itemid', '=', 'b.itemid')
@@ -195,9 +172,6 @@ class WasteItemController extends Controller
                                 return redirect()->route('WasteItem', ['journalid' => $journalid])
                                 ->with('message', 'Generate Item Successfully')
                                 ->with('isSuccess', true);
-
-                            
-                    /* } */
                 }
 
                 
@@ -223,7 +197,6 @@ class WasteItemController extends Controller
             $utcDateTime = Carbon::now('UTC');
             $currentDate = $utcDateTime->setTimezone('Asia/Manila')->toDateString();
 
-            /* dd($request->reason); */
 
             wastedeclarationtrans::create([
                 'JOURNALID'=> $request->JOURNALID,
@@ -254,7 +227,6 @@ class WasteItemController extends Controller
     try {
         $storeName = Auth::user()->storeid;
         
-        // Fetch waste declaration data with proper indexing
         $wastedeclarationtrans = DB::table('wastedeclarationtrans AS a')
             ->select([
                 'a.itemid',
@@ -279,27 +251,21 @@ class WasteItemController extends Controller
             ], 404);
         }
 
-        // Validate printer configuration
         $printerName = config('pos.printer_name', env('POS_PRINTER_NAME', 'POS-80C'));
         if (empty($printerName)) {
             throw new \Exception('Printer name not configured');
         }
 
-        // Initialize printer
         $connector = new WindowsPrintConnector($printerName);
         $printer = new Printer($connector);
 
         try {
-            // Print header
             $this->printHeader($printer, $storeName, $journalid);
             
-            // Print items
             $totalCost = $this->printItems($printer, $wastedeclarationtrans);
             
-            // Print footer
             $this->printFooter($printer, $totalCost);
             
-            // Finalize printing
             $printer->cut();
             $printer->close();
 
@@ -310,12 +276,10 @@ class WasteItemController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            // Ensure printer connection is closed on error
             if (isset($printer)) {
                 try {
                     $printer->close();
                 } catch (\Exception $closeException) {
-                    // Log close exception but throw original error
                     \Log::error('Failed to close printer: ' . $closeException->getMessage());
                 }
             }
@@ -331,9 +295,6 @@ class WasteItemController extends Controller
     }
 }
 
-/**
- * Print receipt header
- */
 private function printHeader(Printer $printer, string $storeName, string $journalid): void
 {
     $printer->setJustification(Printer::JUSTIFY_CENTER);
@@ -348,175 +309,14 @@ private function printHeader(Printer $printer, string $storeName, string $journa
     $printer->text("Items:\n");
 }
 
-/**
- * Print receipt items and return total cost
- */
-/* private function printItems(Printer $printer, $items): float
-{
-    $totalCost = 0;
-    
-    foreach ($items as $item) {
-        if (!isset($item->itemid, $item->itemname, $item->qty, $item->price)) {
-            \Log::warning('Invalid item data in receipt', ['item' => $item]);
-            continue;
-        }
 
-        $lineTotal = $item->qty * $item->price;
-        $totalCost += $lineTotal;
 
-        // Format item details
-        $printer->text("Item ID: " . $item->itemid . "\n");
-        $printer->text("Item Name: " . $item->itemname . "\n");
-        $printer->text(sprintf(
-            "Quantity: %s @ %s\n",
-            number_format($item->qty, 2),
-            number_format($item->price, 2)
-        ));
-        $printer->text("COST: " . number_format($lineTotal / 1.12, 2) . "\n");
-        $printer->text("SRP: " . number_format($lineTotal, 2) . "\n");
-        $printer->text("REASON: " . $item->reason. "\n");
-        $printer->text(str_repeat("-", 40) . "\n");
-    }
-
-    return $totalCost;
-} */
-
-/* private function printItems(Printer $printer, $items): float
-{
-    $totalCost = 0;
-    $groupedItems = [];
-
-    foreach ($items as $item) {
-        if (!isset($item->itemid, $item->itemname, $item->qty, $item->price, $item->reason)) {
-            \Log::warning('Invalid item data in receipt', ['item' => $item]);
-            continue;
-        }
-
-        $lineTotal = $item->qty * $item->price;
-        $totalCost += $lineTotal;
-
-        $groupedItems[$item->reason][] = $item;
-    }
-
-    foreach ($groupedItems as $reason => $items) {
-        $printer->text(str_repeat("*", 40) . "\n");
-        $printer->text("REASON: " . $reason . "\n");
-        $printer->text(str_repeat("*", 40) . "\n");
-        foreach ($items as $item) {
-            $lineTotal = $item->qty * $item->price;
-
-            $printer->text("Item ID: " . $item->itemid . "\n");
-            $printer->text("Item Name: " . $item->itemname . "\n");
-            $printer->text(sprintf(
-                "Quantity: %s @ %s\n",
-                number_format($item->qty, 2),
-                number_format($item->price, 2)
-            ));
-            $printer->text("COST: " . number_format($lineTotal / 1.12, 2) . "\n");
-            $printer->text("SRP: " . number_format($lineTotal, 2) . "\n");
-            $printer->text(str_repeat("-", 40) . "\n");
-        }
-    }
-
-    return $totalCost;
-} */
-
-/* private function printItems(Printer $printer, $items): float
-{
-    $totalCost = 0;
-    $groupedByReason = [];
-
-    foreach ($items as $item) {
-        if (!$this->isValidItem($item)) {
-            \Log::warning('Invalid item data in receipt', ['item' => $item]);
-            continue;
-        }
-
-        if (!isset($groupedByReason[$item->reason])) {
-            $groupedByReason[$item->reason] = [
-                'items' => [],
-                'subtotal' => 0
-            ];
-        }
-
-        $key = $item->itemid;
-        if (!isset($groupedByReason[$item->reason]['items'][$key])) {
-            $groupedByReason[$item->reason]['items'][$key] = (object) [
-                'itemid' => $item->itemid,
-                'itemname' => $item->itemname,
-                'qty' => 0,
-                'price' => $item->price,
-            ];
-        }
-        $groupedByReason[$item->reason]['items'][$key]->qty += $item->qty;
-    }
-
-    foreach ($groupedByReason as $reason => $group) {
-        $printer->text(str_repeat("*", 40) . "\n");
-        $printer->text("REASON: " . $reason . "\n");
-        $printer->text(str_repeat("*", 40) . "\n");
-
-        $reasonTotal = 0;
-        foreach ($group['items'] as $item) {
-            if ($item->qty > 0) {
-                $lineTotal = $item->qty * $item->price;
-                $this->printItemDetails($printer, $item, $lineTotal);
-                $reasonTotal += $lineTotal;
-            }
-        }
-
-        $printer->text(str_repeat("=", 40) . "\n");
-        $printer->text(sprintf(
-            "SUBTOTAL FOR %s:\n", 
-            strtoupper($reason)
-        ));
-        $printer->text("COST: " . number_format($reasonTotal / 1.12, 2) . "\n");
-        $printer->text("SRP: " . number_format($reasonTotal, 2) . "\n");
-        $printer->text(str_repeat("=", 40) . "\n\n");
-
-        $totalCost += $reasonTotal;
-    }
-
-    $printer->text(str_repeat("#", 40) . "\n");
-    $printer->text("GRAND TOTAL:\n");
-    $printer->text("COST: " . number_format($totalCost / 1.12, 2) . "\n");
-    $printer->text("SRP: " . number_format($totalCost, 2) . "\n");
-    $printer->text(str_repeat("#", 40) . "\n");
-
-    return $totalCost;
-}
-
-private function isValidItem($item): bool
-{
-    return isset(
-        $item->itemid,
-        $item->itemname,
-        $item->qty,
-        $item->price,
-        $item->reason
-    );
-}
-
-private function printItemDetails(Printer $printer, $item, float $lineTotal): void
-{
-    $printer->text("Item ID: " . $item->itemid . "\n");
-    $printer->text("Item Name: " . $item->itemname . "\n");
-    $printer->text(sprintf(
-        "Quantity: %s @ %s\n",
-        number_format($item->qty, 2),
-        number_format($item->price, 2)
-    ));
-    $printer->text("COST: " . number_format($lineTotal / 1.12, 2) . "\n");
-    $printer->text("SRP: " . number_format($lineTotal, 2) . "\n");
-    $printer->text(str_repeat("-", 40) . "\n");
-} */
 
 private function printItems(Printer $printer, $items): float
 {
     $totalCost = 0;
     $groupedByReason = [];
 
-    // First group items by reason
     foreach ($items as $item) {
         if (!$this->isValidItem($item)) {
             \Log::warning('Invalid item data in receipt', ['item' => $item]);
@@ -539,7 +339,6 @@ private function printItems(Printer $printer, $items): float
         $groupedByReason[$item->reason][$key]->qty += $item->qty;
     }
 
-    // Print items grouped by reason
     foreach ($groupedByReason as $reason => $items) {
         $printer->text(str_repeat("*", 40) . "\n");
         $printer->text("REASON: " . $reason . "\n");
@@ -558,9 +357,6 @@ private function printItems(Printer $printer, $items): float
     return $totalCost;
 }
 
-/**
- * Validates if item object has all required properties
- */
 private function isValidItem($item): bool
 {
     return isset(
@@ -572,9 +368,6 @@ private function isValidItem($item): bool
     );
 }
 
-/**
- * Prints detailed information for a single item
- */
 private function printItemDetails(Printer $printer, $item, float $lineTotal): void
 {
     $printer->text("Item ID: " . $item->itemid . "\n");

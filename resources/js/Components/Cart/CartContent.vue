@@ -22,7 +22,7 @@ const fetchCartData = async () => {
     }));
     calculateTotal();
   } catch (error) {
-    console.error('Error fetching cart data:', error);
+
   }
 };
 
@@ -38,7 +38,7 @@ const clearCart = async () => {
     selectAll.value = false;
     calculateTotal();
   } catch (error) {
-    console.error('Error clearing cart:', error);
+
   }
 };
 
@@ -60,7 +60,7 @@ const updateQuantity = async (itemName, newQuantity) => {
       calculateTotal();
     }
   } catch (error) {
-    console.error('Error updating quantity:', error);
+
   }
 };
 
@@ -73,17 +73,17 @@ const deleteSelectedItems = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items: selectedItems.value })
     });
-    
+
     if (response.ok) {
       cartItems.value = cartItems.value.filter(item => !selectedItems.value.includes(item.itemname));
       selectedItems.value = [];
       selectAll.value = false;
       calculateTotal();
     } else {
-      console.error('Failed to delete items');
+
     }
   } catch (error) {
-    console.error('Error deleting selected items:', error);
+
   }
 };
 
@@ -103,12 +103,12 @@ const formattedTotal = computed(() => formattedPrice(total.value));
 
 onMounted(() => {
   fetchCartData();
-  // Start polling for updates every 5 seconds
+
   pollingInterval = setInterval(fetchCartData, 5000);
 });
 
 onUnmounted(() => {
-  // Clear the polling interval when the component is unmounted
+
   clearInterval(pollingInterval);
 });
 </script>
@@ -130,8 +130,8 @@ onUnmounted(() => {
           <ul class="grid grid-cols-4 text-md font-bold lg:grid-cols-4">
             <li class="p-2 flex justify-center">
               <label class="inline-flex items-center">
-                <input type="checkbox" 
-                       v-model="selectAll" 
+                <input type="checkbox"
+                       v-model="selectAll"
                        @change="toggleSelectAll"
                        class="form-checkbox h-4 w-4 text-blue-600 rounded-full"
                 />
@@ -146,9 +146,9 @@ onUnmounted(() => {
           <ul v-for="item in cartItems" :key="item.itemname" class="grid grid-cols-4 text-sm lg:grid-cols-4">
             <li class="p-2 flex justify-center">
               <label class="inline-flex items-center">
-                <input type="checkbox" 
-                       :value="item.itemname" 
-                       v-model="selectedItems" 
+                <input type="checkbox"
+                       :value="item.itemname"
+                       v-model="selectedItems"
                        class="form-checkbox h-4 w-4 text-blue-600 rounded-full"
                 />
               </label>

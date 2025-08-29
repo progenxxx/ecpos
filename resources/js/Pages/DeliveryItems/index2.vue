@@ -48,8 +48,8 @@ const columns = [
     { data: 'ITEMID', title: 'ITEMID' },
     { data: 'itemname', title: 'ITEMNAME' },
     { data: 'itemgroup', title: 'CATEGORY' },
-    { 
-        data: 'COUNTED', 
+    {
+        data: 'COUNTED',
         title: 'COUNTED',
         render: function(data, type, row) {
             if (type === 'display') {
@@ -82,19 +82,19 @@ const toggleCreateModal = (journalid, newLINENUM) => {
     JOURNALID.value = journalid;
     LINENUM.value = newLINENUM;
     showCreateModal.value = true;
-    console.log(JOURNALID.value);
+
 };
 
 const toggleGetBWModal = (journalid) => {
     JOURNALID.value = journalid;
     showGetBWModal.value = true;
-    console.log(JOURNALID.value);
+
 };
 
 const toggleGetCFModal = (journalid) => {
     JOURNALID.value = journalid;
     showGetCFModal.value = true;
-    console.log(JOURNALID.value);
+
 };
 
 const createModalHandler = () => {
@@ -127,18 +127,16 @@ const ViewOrders = () => {
 };
 
 const handleSelectedItem = (item) => {
-    console.log('Selected Item:', item);
+
 };
 
-// Reactive state
 const tableData = ref([]);
 const updatedValues = reactive({});
 const message = reactive({
     text: '',
-    type: '' // 'success', 'error', or 'info'
+    type: ''
 });
 
-// Methods
 const handleCountedChange = (event, item) => {
     const newValue = event.target.value;
     updatedValues[item.ITEMID] = newValue;
@@ -148,14 +146,14 @@ const updateAllCountedValues = async () => {
     try {
         message.text = 'Updating counted values...';
         message.type = 'info';
-        
+
         const response = await axios.post('/api/update-all-counted-values', {
             journalId: props.journalid,
             updatedValues: updatedValues,
         });
-        
+
         if (response.data.success) {
-            console.log('All values updated successfully');
+
             for (const [itemId, newValue] of Object.entries(updatedValues)) {
                 const item = tableData.value.find(row => row.ITEMID === itemId);
                 if (item) {
@@ -163,7 +161,7 @@ const updateAllCountedValues = async () => {
                 }
             }
             Object.keys(updatedValues).forEach(key => delete updatedValues[key]);
-            
+
             message.text = 'All counted values updated successfully';
             message.type = 'success';
 
@@ -172,7 +170,7 @@ const updateAllCountedValues = async () => {
             throw new Error('Update failed');
         }
     } catch (error) {
-        console.error('Failed to update counted values:', error);
+
         message.text = `Failed to update counted values: ${error.message}`;
         message.type = 'error';
     }
@@ -183,14 +181,12 @@ const clearMessage = () => {
     setTimeout(() => {
         message.text = '';
         message.type = '';
-    }, 5000); // Clear after 5 seconds
+    }, 5000);
 };
-
-
 
 const togglePostModal = (newJOURNALID,) => {
     journalid.value = newJOURNALID || props.journalid;
-    /* journalid.value = newJOURNALID; */
+
     showPostModal.value = true;
 };
 
@@ -209,7 +205,7 @@ const postAndSend = (journalid) => {
             <Create
                 :show-modal="showCreateModal"
                 :JOURNALID="JOURNALID"
-                :items="props.items" 
+                :items="props.items"
                 @toggle-active="createModalHandler"
                 @select-item="handleSelectedItem"
             />
@@ -241,10 +237,10 @@ const postAndSend = (journalid) => {
             </div>
         </div>
 
-        <DataTable 
-            :data="receivedordertrans" 
-            :columns="columns" 
-            class="w-full relative display" 
+        <DataTable
+            :data="receivedordertrans"
+            :columns="columns"
+            class="w-full relative display"
             :options="options"
         >
             <template #action="data">

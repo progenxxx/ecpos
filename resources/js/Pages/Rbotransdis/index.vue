@@ -62,7 +62,6 @@ const options = {
     scrollCollapse: true,
 };
 
-
 const toggleUpdateModal = (newTRANSACTIONID, newLINENUM, newDISCLINENUM, newSTORE, newDISCOUNTTYPE, newDISCOUNTPCT, newDISCOUNTAMT, newDISCOUNTAMTWITHTAX, newPERIODICDISCTYPE, newDISCOFFERID, newDISCOFFERNAME, newQTYDISCOUNTED) => {
     TRANSACTIONID.value = newTRANSACTIONID;
     LINENUM.value = newLINENUM;
@@ -86,7 +85,6 @@ const toggleDeleteModal = (newTRANSACTIONID) => {
 const toggleCreateModal = () => {
     showCreateModal.value = true;
 };
-
 
 const updateModalHandler = () => {
     showModalUpdate.value = false;

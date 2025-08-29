@@ -13,7 +13,6 @@ import ExcelJS from 'exceljs';
 import jQuery from 'jquery';
 import { router } from '@inertiajs/vue3';
 
-// Initialize DataTables with jQuery
 window.$ = window.jQuery = jQuery;
 DataTable.use(DataTablesCore);
 
@@ -46,8 +45,7 @@ const props = defineProps({
 });
 
 const layoutComponent = computed(() => {
-    console.log('userRole value:', props.userRole);
-    console.log('Is Store?:', props.userRole.toUpperCase() === 'STORE');
+
     return props.userRole.toUpperCase() === 'STORE' ? StorePanel : Main;
 });
 
@@ -59,13 +57,13 @@ onMounted(() => {
 
 const filteredData = computed(() => {
     let filtered = [...props.bo];
-    
+
     if (selectedStores.value.length > 0) {
-        filtered = filtered.filter(item => 
+        filtered = filtered.filter(item =>
             selectedStores.value.includes(item.storename)
         );
     }
-    
+
     return filtered;
 });
 
@@ -88,7 +86,7 @@ const footerTotals = computed(() => {
 });
 
 const columns = [
-    { 
+    {
         data: 'itemid',
         title: 'Item ID',
         footer: 'Grand Total'
@@ -145,24 +143,23 @@ const columns = [
     }
 ];
 
-// Add custom button for Excel export
 const options = {
     responsive: true,
     order: [[0, 'asc']],
     pageLength: 25,
-    dom: 'Bfrtip', // Ensure buttons are configured with this
+    dom: 'Bfrtip',
     scrollX: true,
     scrollY: "50vh",
     buttons: [
-        'copy', // This should work
+        'copy',
         {
             text: 'Export Excel',
             action: function(e, dt, node, config) {
                 exportToExcel();
             }
         },
-        'pdf', // This should work
-        'print' // This should work
+        'pdf',
+        'print'
     ],
     order: [[2, 'asc']],
     drawCallback: function(settings) {
@@ -179,12 +176,10 @@ const options = {
     }
 };
 
-// Export function to Excel
 const exportToExcel = () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('BO Data');
 
-    // Define columns in Excel sheet
     worksheet.columns = [
         { header: 'Item ID', key: 'itemid' },
         { header: 'Item Name', key: 'itemname' },
@@ -196,7 +191,6 @@ const exportToExcel = () => {
         { header: 'Ant Bites', key: 'ant_bites' }
     ];
 
-    // Add filtered data to the worksheet
     filteredData.value.forEach(row => {
         worksheet.addRow({
             itemid: row.itemid,
@@ -210,7 +204,6 @@ const exportToExcel = () => {
         });
     });
 
-    // Add a row for totals
     worksheet.addRow({
         itemid: 'Total',
         itemname: '',
@@ -222,7 +215,6 @@ const exportToExcel = () => {
         ant_bites: footerTotals.value.ant_bites.toFixed(2)
     });
 
-    // Generate the Excel file and trigger the download
     workbook.xlsx.writeBuffer().then((buffer) => {
         const blob = new Blob([buffer], { type: 'application/octet-stream' });
         const link = document.createElement('a');
@@ -232,7 +224,6 @@ const exportToExcel = () => {
     });
 };
 
-// Handle filter changes and refresh data
 const handleFilterChange = () => {
     if (startDate.value && endDate.value && new Date(startDate.value) > new Date(endDate.value)) {
         alert('Start date cannot be later than end date');
@@ -240,7 +231,7 @@ const handleFilterChange = () => {
         endDate.value = '';
         return;
     }
-    
+
     router.get(
         route('reports.bo'),
         {
@@ -286,7 +277,7 @@ onUnmounted(() => {
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
                 </div>
-                
+
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
                     <input
@@ -307,10 +298,10 @@ onUnmounted(() => {
             </div>
 
             <TableContainer>
-                <DataTable 
-                    :data="filteredData" 
-                    :columns="columns" 
-                    class="w-full relative display" 
+                <DataTable
+                    :data="filteredData"
+                    :columns="columns"
+                    class="w-full relative display"
                     :options="options"
                 >
                 </DataTable>
@@ -320,7 +311,7 @@ onUnmounted(() => {
 </template>
 
 <style>
-/* General Styling for DataTable */
+
 table.dataTable {
     width: 100%;
     border-collapse: collapse;
@@ -362,7 +353,6 @@ table.dataTable td {
     font-size: 13px;
 }
 
-/* Styling for Footer */
 .dataTable tfoot {
     background-color: #007bff;
     color: white;
@@ -374,7 +364,6 @@ table.dataTable td {
     padding: 12px 15px;
 }
 
-/* Styling for DataTable Buttons */
 .dt-buttons {
     display: flex;
     justify-content: flex-start;
@@ -397,7 +386,6 @@ table.dataTable td {
     background-color: #218838;
 }
 
-/* Copy, Print, Export to Excel Button Styling */
 .dt-buttons .buttons-copy,
 .dt-buttons .buttons-print,
 .dt-buttons .buttons-excel {
@@ -414,7 +402,6 @@ table.dataTable td {
     background-color: #0056b3;
 }
 
-/* Search Box Styling */
 .dataTables_filter {
     float: right;
     margin-bottom: 20px;
@@ -427,7 +414,6 @@ table.dataTable td {
     font-size: 14px;
 }
 
-/* Clear Filters Button */
 button.clear-filters {
     padding: 10px 15px;
     background-color: #ffc107;
@@ -443,7 +429,6 @@ button.clear-filters:hover {
     background-color: #e0a800;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     table.dataTable th, table.dataTable td {
         padding: 8px 10px;
@@ -459,11 +444,10 @@ button.clear-filters:hover {
     }
 }
 
-/* Styling for DataTable Buttons */
 .dt-buttons {
-    display: flex;                 /* Align buttons horizontally */
-    justify-content: flex-start;   /* Align buttons to the left */
-    gap: 10px;                     /* Add space between buttons */
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
     margin: 10px 0;
 }
 
@@ -482,12 +466,11 @@ button.clear-filters:hover {
     background-color: #218838;
 }
 
-/* Search Box Styling */
 .dataTables_filter {
-    display: flex;                 /* Display search box inline with buttons */
-    align-items: center;           /* Align vertically */
-    gap: 10px;                     /* Add space between search input and buttons */
-    margin-left: auto;             /* Align search box to the right */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
 }
 
 .dataTables_filter input {
@@ -497,24 +480,23 @@ button.clear-filters:hover {
     font-size: 14px;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .dt-buttons {
-        flex-wrap: wrap;            /* Allow buttons to wrap on smaller screens */
-        justify-content: center;    /* Center the buttons */
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .dataTables_filter {
-        margin: 0;                  /* Remove margin when wrapping */
+        margin: 0;
     }
 }
 
 .dt-buttons {
-    display: flex;               
-    justify-content: flex-start; 
-    align-items: center;    
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
     position: absolute;
-    z-index: 1;  
+    z-index: 1;
 }
 
 .dt-buttons .buttons-copy{
@@ -542,7 +524,7 @@ button.clear-filters:hover {
     float: right;
     padding-bottom: 20px;
     position: relative;
-    z-index: 999;  
+    z-index: 999;
 }
 
 </style>

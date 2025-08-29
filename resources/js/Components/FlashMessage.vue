@@ -12,7 +12,7 @@
       </div>
     </div>
   </template>
-  
+
   <script setup>
   import { CheckCircleIcon } from '@heroicons/vue3/solid'
   </script>

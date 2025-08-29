@@ -6,7 +6,7 @@
   <AdminPanel :active-tab="'ATTENDANCE'" :user="$page.props.auth.user">
     <template #main>
       <div class="container mx-auto px-3 sm:px-4 lg:px-8 py-4">
-        
+
         <!-- Header Section -->
         <div class="mb-6">
           <div class="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
@@ -14,7 +14,7 @@
               <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Attendance Management</h1>
               <p class="mt-1 text-sm text-gray-600">Track staff attendance and view records</p>
             </div>
-            
+
             <!-- Stats Cards (Mobile: stacked, Desktop: inline) -->
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4">
               <div class="bg-blue-50 rounded-lg px-3 py-2 text-center sm:text-left">
@@ -35,7 +35,7 @@
         <div class="mb-6">
           <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
             <div class="flex flex-col sm:flex-row gap-4">
-              
+
               <!-- Search Bar -->
               <div class="flex-1">
                 <label for="search" class="sr-only">Search records</label>
@@ -67,7 +67,7 @@
 
               <!-- Filter Buttons (Mobile: full width, Desktop: auto) -->
               <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                <select 
+                <select
                   v-model="statusFilter"
                   class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 >
@@ -75,7 +75,7 @@
                   <option value="ACTIVE">Active</option>
                   <option value="INACTIVE">Inactive</option>
                 </select>
-                
+
                 <input
                   v-model="dateFilter"
                   type="date"
@@ -118,7 +118,7 @@
               (filtered)
             </span>
           </div>
-          
+
           <!-- View toggle (Desktop only) -->
           <div class="hidden lg:flex items-center gap-2">
             <span class="text-sm text-gray-500">View:</span>
@@ -126,8 +126,8 @@
               @click="viewMode = 'table'"
               :class="[
                 'px-3 py-1 text-xs rounded-md transition-colors',
-                viewMode === 'table' 
-                  ? 'bg-blue-100 text-blue-700' 
+                viewMode === 'table'
+                  ? 'bg-blue-100 text-blue-700'
                   : 'text-gray-500 hover:text-gray-700'
               ]"
             >
@@ -137,8 +137,8 @@
               @click="viewMode = 'card'"
               :class="[
                 'px-3 py-1 text-xs rounded-md transition-colors',
-                viewMode === 'card' 
-                  ? 'bg-blue-100 text-blue-700' 
+                viewMode === 'card'
+                  ? 'bg-blue-100 text-blue-700'
                   : 'text-gray-500 hover:text-gray-700'
               ]"
             >
@@ -205,19 +205,16 @@ const props = defineProps({
     },
 });
 
-// Reactive state
 const search = ref(props.filters.search || '');
 const statusFilter = ref('');
 const dateFilter = ref('');
 const viewMode = ref('table');
 const loading = ref(false);
 
-// Modal state
 const showModal = ref(false);
 const isEditing = ref(false);
 const selectedAttendance = ref(null);
 
-// Form
 const form = useForm({
     staffId: '',
     storeId: '',
@@ -233,28 +230,24 @@ const form = useForm({
     status: 'ACTIVE'
 });
 
-// Computed filtered attendances
 const filteredAttendances = computed(() => {
     let filtered = props.attendances;
 
-    // Filter by status
     if (statusFilter.value) {
-        filtered = filtered.filter(attendance => 
+        filtered = filtered.filter(attendance =>
             attendance.status === statusFilter.value
         );
     }
 
-    // Filter by date
     if (dateFilter.value) {
-        filtered = filtered.filter(attendance => 
+        filtered = filtered.filter(attendance =>
             attendance.date === dateFilter.value
         );
     }
 
-    // Client-side search filter (for immediate feedback)
     if (search.value) {
         const searchLower = search.value.toLowerCase();
-        filtered = filtered.filter(attendance => 
+        filtered = filtered.filter(attendance =>
             attendance.staffId.toLowerCase().includes(searchLower) ||
             attendance.storeId.toLowerCase().includes(searchLower) ||
             attendance.date.includes(searchLower)
@@ -264,17 +257,16 @@ const filteredAttendances = computed(() => {
     return filtered;
 });
 
-// Debounced search function
 const debouncedSearch = debounce((value) => {
     loading.value = true;
     router.get(
         '/attendance',
-        { 
+        {
             search: value,
             status: statusFilter.value,
             date: dateFilter.value
         },
-        { 
+        {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -285,15 +277,13 @@ const debouncedSearch = debounce((value) => {
     );
 }, 300);
 
-// Watch for changes in filters
 watch([search, statusFilter, dateFilter], ([newSearch, newStatus, newDate]) => {
-    // Only make server request for search, handle others client-side for better UX
+
     if (newSearch !== props.filters.search) {
         debouncedSearch(newSearch);
     }
 });
 
-// Modal functions
 const openCreateModal = () => {
     isEditing.value = false;
     form.reset();
@@ -340,35 +330,32 @@ const handleDelete = (id) => {
 
 </script>
 
-
 <style scoped>
-/* Custom scrollbar for mobile */
+
 @media (max-width: 640px) {
   .overflow-x-auto::-webkit-scrollbar {
     height: 4px;
   }
-  
+
   .overflow-x-auto::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 10px;
   }
-  
+
   .overflow-x-auto::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 10px;
   }
-  
+
   .overflow-x-auto::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
   }
 }
 
-/* Smooth transitions */
 .transition-colors {
   transition: color 0.2s ease-in-out, border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-/* Loading spinner animation */
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -377,7 +364,6 @@ const handleDelete = (id) => {
   animation: spin 1s linear infinite;
 }
 
-/* Focus states for better accessibility */
 input:focus,
 select:focus,
 button:focus {
@@ -385,7 +371,6 @@ button:focus {
   outline-offset: 2px;
 }
 
-/* Mobile-first responsive design helpers */
 @media (max-width: 640px) {
   .container {
     padding-left: 1rem;
@@ -393,18 +378,15 @@ button:focus {
   }
 }
 
-/* Card hover effects */
 .bg-white:hover {
   transition: box-shadow 0.2s ease-in-out;
 }
 
-/* Status badge animations */
 .bg-blue-50,
 .bg-green-50 {
   transition: all 0.2s ease-in-out;
 }
 
-/* Search input enhancements */
 .relative input {
   transition: all 0.2s ease-in-out;
 }
@@ -413,15 +395,13 @@ button:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* Mobile optimization for touch targets */
 @media (max-width: 640px) {
   button,
   input,
   select {
-    min-height: 44px; /* Minimum touch target size */
+    min-height: 44px;
   }
-  
-  /* Ensure clickable areas are large enough */
+
   .cursor-pointer {
     min-height: 44px;
     display: flex;
@@ -429,29 +409,25 @@ button:focus {
   }
 }
 
-/* Loading overlay */
 .fixed.inset-0 {
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
 }
 
-/* Responsive text sizes */
 @media (max-width: 640px) {
   h1 {
-    font-size: 1.25rem; /* 20px */
-    line-height: 1.75rem; /* 28px */
+    font-size: 1.25rem;
+    line-height: 1.75rem;
   }
 }
 
-/* Animation for filter changes */
 .bg-white.shadow-sm {
   transition: all 0.3s ease-in-out;
 }
 
-/* Custom select styling for mobile */
 @media (max-width: 640px) {
   select {
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http:
     background-position: right 8px center;
     background-repeat: no-repeat;
     background-size: 16px 16px;

@@ -8,7 +8,7 @@ import SuccessButton from "@/Components/Buttons/SuccessButton.vue";
 import Main from "@/Layouts/Main.vue";
 import Send from "@/Components/Svgs/Send.vue";
 
-import Add from "@/Components/Svgs/Add.vue";    
+import Add from "@/Components/Svgs/Add.vue";
 
 import TableContainer from "@/Components/Tables/TableContainer.vue";
 import { ref, onMounted, onUnmounted } from "vue";
@@ -38,12 +38,12 @@ const props = defineProps({
 });
 const txtfilecolumns = [
     { data: 'STOREID', title: 'STOREID' },
-    { 
-        data: 'POSTEDDATETIME', 
+    {
+        data: 'POSTEDDATETIME',
         title: 'POSTEDDATETIME',
         render: function(data, type, row) {
             const date = new Date(data);
-            return date.toLocaleDateString(); 
+            return date.toLocaleDateString();
         }
     },
     { data: 'ITEMID', title: 'ITEMID' },
@@ -80,7 +80,7 @@ const createModalHandler = () => {
     showCreateModal.value = false;
 };
 const sendModalHandler = () => {
-    showSendModal.value = false;  
+    showSendModal.value = false;
 };
 const MoreModalHandler = () => {
     showModalMore.value = false;
@@ -90,24 +90,20 @@ const postModalHandler = () => {
 };
 
 const navigateToOrder = (journalid) => {
-  console.log('Redirecting to Item Order Entries for account:', journalid);
+
   window.location.href = `/ReceivedItems/${journalid}`;
 };
 
-
 const post = async (journalId) => {
-  console.log('Starting post operation for journalId:', journalId);
-  
+
   try {
-    // Get CSRF token
+
     const csrfToken = document.querySelector('meta[name="csrf-token"]');
-    console.log('CSRF Token found:', !!csrfToken);
-    
+
     if (!csrfToken) {
       throw new Error('CSRF token not found');
     }
 
-    console.log('Sending POST request to /post-receivedorder');
     const postResponse = await fetch('/post-receivedorder', {
       method: 'POST',
       headers: {
@@ -118,25 +114,20 @@ const post = async (journalId) => {
     });
 
     const responseData = await postResponse.json();
-    console.log('Server response:', responseData);
 
     if (!postResponse.ok) {
       throw new Error(`Server responded with status: ${postResponse.status}, message: ${responseData.message || 'Unknown error'}`);
     }
 
     alert('Receive Order has been successfully posted!');
-    console.log('Reloading page after successful post');
+
     location.reload();
-    
+
   } catch (error) {
-    console.error('Post operation failed:', {
-      error: error.message,
-      stack: error.stack
-    });
+
     alert('Error posting and sending order: ' + error.message);
   }
 };
-
 
 async function generateAndDownloadTextFile() {
     if (!props.orders || props.orders.length === 0) {
@@ -159,7 +150,7 @@ async function generateAndDownloadTextFile() {
     const formattedPostedDate = `${postedDate.getFullYear()}${(postedDate.getMonth() + 1).toString().padStart(2, '0')}${postedDate.getDate().toString().padStart(2, '0')}`;
     const filename = `${storeID}${formattedPostedDate}.txt`;
     const header = `${storeID}|${postedDate.toLocaleDateString()}`;
-    
+
     const dataRows = props.orders
         .filter(order => order.COUNTED > 0)
         .map(order => `${order.ITEMID}|${Math.floor(order.COUNTED)}`);
@@ -184,13 +175,12 @@ async function generateAndDownloadTextFile() {
         });
 
         const responseText = await response.text();
-        console.log('Full server response:', responseText);
 
         let data;
         try {
             data = JSON.parse(responseText);
         } catch (error) {
-            console.error('Error parsing JSON:', error);
+
             alert('Error: Server returned an invalid response. Please clear your cache!');
             return;
         }
@@ -202,7 +192,7 @@ async function generateAndDownloadTextFile() {
             alert('Error saving file: ' + (data.message || 'Unknown error'));
         }
     } catch (error) {
-        console.error('Error:', error);
+
         alert('Error saving file: ' + error.message);
     }
 }
@@ -213,15 +203,15 @@ const currentTime = ref('');
 let audio;
 
 const startWarningSound = () => {
-  console.log('Starting warning sound');
+
   if (!audio) {
     audio = new Audio('/audio/warning.ogg');
     audio.loop = true;
   }
   audio.play().then(() => {
-    console.log('Audio started playing');
+
   }).catch(error => {
-    console.error('Error playing audio:', error);
+
   });
 };
 
@@ -232,16 +222,13 @@ const stopWarningSound = () => {
   }
 };
 
-
 const checkTime = () => {
   const now = new Date();
   const hours = now.getHours();
   const minutes = now.getMinutes();
-  
-  console.log(`Checking time: ${hours}:${minutes}`);
-  
+
   if ((hours === 13 && minutes === 32) || (hours === 16 && minutes === 40)) {
-    console.log('Warning condition met!');
+
     showWarning.value = true;
     currentTime.value = now.toLocaleTimeString();
     startWarningSound();
@@ -285,7 +272,6 @@ onUnmounted(() => {
             <SendModal :show-modal="showSendModal" item-name="inventjournaltables" :journalid="journalid" @toggle-active="sendModalHandler"  />
             <Post :show-modal="showPostModal" item-name="inventjournaltrans" :journalid="journalid" @toggle-active="postModalHandler"  />
 
-
             <More
             :show-modal="showModalMore"
             :accountnum="accountnum"
@@ -296,7 +282,7 @@ onUnmounted(() => {
         <template v-slot:main>
 
             <TableContainer>
-                
+
                 <div class="absolute adjust">
                     <div class="flex justify-start items-center">
 
@@ -348,16 +334,12 @@ onUnmounted(() => {
 
             </TableContainer>
 
-
-
                 <TableContainer class="hidden">
                     <div class="absolute adjust">
 
                         <div class="flex justify-start items-center">
-                        
 
                             &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<button @click="generateAndDownloadTextFile">Generate and Download Text File</button>
-                                
 
                             <SuccessButton
                                 type="button"
@@ -367,10 +349,9 @@ onUnmounted(() => {
                                 <ExcelIcon class="h-4" />
                             </SuccessButton>
 
-                            
                         </div>
                     </div>
-                
+
                     <DataTable :data="orders" :columns="txtfilecolumns" class="w-full relative display" :options="options">
                         <template #action="data">
                             <div class="flex justify-start">
@@ -382,7 +363,4 @@ onUnmounted(() => {
     </Main>
 
 </template>
-
-
-
 

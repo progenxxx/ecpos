@@ -70,7 +70,7 @@ const toggleActive = () => {
 };
 
 onMounted(() => {
-    // Initialize form with props
+
     form.offerid = props.offerid;
     form.description = props.description;
     form.status = props.status;
@@ -81,7 +81,6 @@ onMounted(() => {
     form.discountamountvalue = props.discountamountvalue;
 });
 
-// Watch for props changes
 watch(() => props.offerid, (newValue) => {
     form.offerid = newValue;
 });
@@ -148,7 +147,7 @@ watch(() => props.discvalidperiodid, (newValue) => {
 
                     <div class="col-span-2 mt-4">
                         <InputLabel for="status" value="Status" />
-                        <select 
+                        <select
                             class="select select-bordered w-full max-w-xs"
                             id="status"
                             name="status"
@@ -165,7 +164,7 @@ watch(() => props.discvalidperiodid, (newValue) => {
 
                     <div class="col-span-2 ml-4 mt-4">
                         <InputLabel for="discounttype" value="Discount Type" />
-                        <select 
+                        <select
                             class="select select-bordered w-full max-w-xs"
                             id="discounttype"
                             name="discounttype"
@@ -193,9 +192,9 @@ watch(() => props.discvalidperiodid, (newValue) => {
                         >
                             <option disabled value="">Select Period</option>
                             <option value="">None</option>
-                            <option 
-                                v-for="period in discvalidperiodid" 
-                                :key="period.id" 
+                            <option
+                                v-for="period in discvalidperiodid"
+                                :key="period.id"
                                 :value="period.id"
                             >
                                 {{ period.description }}

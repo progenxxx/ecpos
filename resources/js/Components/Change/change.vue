@@ -8,7 +8,7 @@
       </div>
     </div>
   </template>
-  
+
   <script>
   export default {
     props: {
@@ -29,7 +29,7 @@
     },
   };
   </script>
-  
+
   <style>
   .modal-overlay {
     position: fixed;
@@ -52,4 +52,3 @@
     cursor: pointer;
   }
   </style>
-  

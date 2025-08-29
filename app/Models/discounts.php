@@ -35,16 +35,13 @@ class discounts extends Model
         'updated_at' => 'datetime'
     ];
 
-    // Add timestamps
     public $timestamps = true;
 
-    // Scope for active discounts (if you need this later)
     public function scopeActive($query)
     {
         return $query->where('active', true);
     }
 
-    // Helper method to format discount value for specific platform
     public function getFormattedValueAttribute($platform = null)
     {
         $parameter = $this->getParameterForPlatform($platform);
@@ -60,7 +57,6 @@ class discounts extends Model
         }
     }
 
-    // Get parameter value for specific platform
     public function getParameterForPlatform($platform = null)
     {
         switch ($platform) {
@@ -81,7 +77,6 @@ class discounts extends Model
         }
     }
 
-    // Helper method to get discount description for specific platform
     public function getDescriptionAttribute($platform = null)
     {
         $parameter = $this->getParameterForPlatform($platform);
@@ -98,7 +93,6 @@ class discounts extends Model
         }
     }
 
-    // Calculate discount for given amount and platform
     public function calculateDiscount($amount, $platform = null)
     {
         $originalAmount = $amount;
@@ -133,7 +127,6 @@ class discounts extends Model
         ];
     }
 
-    // Get all platform parameters
     public function getAllPlatformParameters()
     {
         return [
@@ -147,7 +140,6 @@ class discounts extends Model
         ];
     }
 
-    // Check if discount has platform-specific parameters
     public function hasPlatformSpecificParameters()
     {
         return $this->GRABFOOD_PARAMETER !== null ||

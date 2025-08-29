@@ -31,31 +31,19 @@ const props = defineProps({
     },
 });
 
-/* const submitForm = () => {
-    form.post("/signup", {
-        preserveScroll: true,
-        onSuccess: () => form.reset(),
-        data: {
-            ...form.data,
-            selectStore: form.storeid, // Add the storeid value as selectStore
-        },
-    });
-}; */
-
 const submitForm = () => {
     form.post("/signup", {
         preserveScroll: true,
         onSuccess: () => {
             form.reset();
-            // Perform any additional actions after successful form submission
+
         },
         onError: (errors) => {
-            // Handle form submission errors
-            console.error(errors);
+
         },
         data: {
             ...form.data,
-            selectStore: form.storeid, // Add the storeid value as selectStore
+            selectStore: form.storeid,
         },
     });
 };
@@ -73,7 +61,7 @@ const navigate = () => {
     <AuthenticationCard>
         <template #logo>
             <AuthenticationCardLogo />
-            <img id="background" class="absolute -left-20 top-0 max-w-[877px]" src="https://laravel.com/assets/img/welcome/background.svg" />
+            <img id="background" class="absolute -left-20 top-0 max-w-[877px]" src="https:
         </template>
 
         <form @submit.prevent="submitForm"  >
@@ -117,7 +105,6 @@ const navigate = () => {
                     </select>
                     <InputError class="mt-2" :message="form.errors.storeid" />
                 </div>
-
 
             <div class="mt-4">
                 <InputLabel for="email" value="Email" />
@@ -182,15 +169,14 @@ const navigate = () => {
                     </PrimaryButton>
                 </div>
             </div>
-            
 
             <!-- <div class="flex justify-start mt-4">
                 <PrimaryButton @click="navigate()">BACK</PrimaryButton>
                 <PrimaryButton type="submit" @click="submitForm" :disabled="form.processing" :class="{ 'opacity-25': form.processing }">SUBMIT</PrimaryButton>
             </div> -->
-            
+
         </form>
     </AuthenticationCard>
     </div>
-    
+
 </template>

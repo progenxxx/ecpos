@@ -10,7 +10,6 @@ import Income from "@/Components/Svgs/Income.vue";
 import Discounts from "@/Components/Svgs/Discounts.vue";
 import { CubeIcon } from '@heroicons/vue/24/outline';
 
-// Register Chart.js components
 Chart.register(...registerables);
 
 const props = defineProps({
@@ -45,7 +44,6 @@ const props = defineProps({
     }
 });
 
-// State variables
 const hoveredCard = ref(null);
 const isVisible = ref(false);
 const chartRef = ref(null);
@@ -53,13 +51,11 @@ const topBottomProductsRef = ref(null);
 let paymentChart = null;
 let topBottomProductsChart = null;
 
-// Date range for top/bottom products
 const selectedDateRange = ref({
     start_date: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
     end_date: new Date().toISOString().split('T')[0]
 });
 
-// Currency formatting utility
 const formatCurrency = (value) => {
     const numValue = Number(value);
     return new Intl.NumberFormat('en-PH', {
@@ -68,7 +64,6 @@ const formatCurrency = (value) => {
     }).format(isNaN(numValue) ? 0 : numValue);
 };
 
-// Metrics cards computation (continued)
 const metricsCards = computed(() => {
     const metrics = props.metrics || {};
     return [
@@ -123,21 +118,20 @@ const metricsCards = computed(() => {
     ];
 });
 
-// Initialize payment methods chart
 const initializePaymentChart = () => {
     if (!chartRef.value) return;
-    
+
     const ctx = chartRef.value.getContext('2d');
-    
+
     if (paymentChart) {
         paymentChart.destroy();
     }
 
     const paymentBreakdown = props.metrics?.paymentBreakdown || {};
-    const labels = Object.keys(paymentBreakdown).map(label => 
+    const labels = Object.keys(paymentBreakdown).map(label =>
         label.replace(/([A-Z])/g, ' $1').trim()
     );
-    const data = Object.values(paymentBreakdown).map(value => 
+    const data = Object.values(paymentBreakdown).map(value =>
         Number(value) || 0
     );
 
@@ -148,8 +142,8 @@ const initializePaymentChart = () => {
             datasets: [{
                 data,
                 backgroundColor: [
-                    '#3B82F6', '#10B981', '#F43F5E', 
-                    '#6366F1', '#8B5CF6', '#EC4899', 
+                    '#3B82F6', '#10B981', '#F43F5E',
+                    '#6366F1', '#8B5CF6', '#EC4899',
                     '#F97316'
                 ],
                 hoverOffset: 4
@@ -174,7 +168,6 @@ const initializePaymentChart = () => {
     });
 };
 
-// Fetch top and bottom products
 const fetchTopBottomProducts = async () => {
     try {
         const response = await axios.post(route('get.top.bottom.products'), {
@@ -187,21 +180,19 @@ const fetchTopBottomProducts = async () => {
 
         initializeTopBottomProductsChart(topProducts, bottomProducts);
     } catch (error) {
-        console.error('Error fetching top/bottom products:', error);
+
     }
 };
 
-// Initialize top and bottom products chart
 const initializeTopBottomProductsChart = (topProducts, bottomProducts) => {
     if (!topBottomProductsRef.value) return;
-    
+
     const ctx = topBottomProductsRef.value.getContext('2d');
-    
+
     if (topBottomProductsChart) {
         topBottomProductsChart.destroy();
     }
 
-    // Prepare data for chart
     const topProductNames = topProducts.slice(0, 10).map(p => p.itemname);
     const bottomProductNames = bottomProducts.slice(0, 10).map(p => p.itemname);
     const topProductQuantities = topProducts.slice(0, 10).map(p => p.total_quantity);
@@ -261,12 +252,10 @@ const initializeTopBottomProductsChart = (topProducts, bottomProducts) => {
     });
 };
 
-// Watch for changes in date range
 watch(selectedDateRange, () => {
     fetchTopBottomProducts();
 });
 
-// Lifecycle hooks
 onMounted(() => {
     isVisible.value = true;
     initializePaymentChart();
@@ -279,12 +268,12 @@ onMounted(() => {
         <template #main>
             <div class="min-h-screen bg-gray-50 p-6">
                 <!-- Welcome Section -->
-                <div 
+                <div
                     class="mb-8 transform transition-all duration-500"
                     :class="[isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0']"
                 >
                     <h1 class="text-3xl font-bold text-gray-800">
-                        Welcome back, {{ username }}! 👋
+                        Welcome back, {{ username }}!
                     </h1>
                     <p class="text-gray-600 mt-2">
                         Here's your business overview for today
@@ -307,15 +296,15 @@ onMounted(() => {
                             @mouseenter="hoveredCard = index"
                             @mouseleave="hoveredCard = null"
                         >
-                            <div 
+                            <div
                                 class="bg-white rounded-xl shadow-md transition-all duration-300 transform hover:scale-105"
                                 :class="{ 'shadow-lg': hoveredCard === index }"
                             >
                                 <div class="p-6">
                                     <div class="flex items-center justify-between">
                                         <div :class="[card.bgColor, 'p-3 rounded-lg']">
-                                            <component 
-                                                :is="card.icon" 
+                                            <component
+                                                :is="card.icon"
                                                 :class="[card.color, 'w-6 h-6']"
                                             />
                                         </div>
@@ -383,14 +372,14 @@ onMounted(() => {
                             Top & Bottom Products Analysis
                         </h3>
                         <div class="flex space-x-4">
-                            <input 
-                                type="date" 
-                                v-model="selectedDateRange.start_date" 
+                            <input
+                                type="date"
+                                v-model="selectedDateRange.start_date"
                                 class="border rounded px-2 py-1"
                             >
-                            <input 
-                                type="date" 
-                                v-model="selectedDateRange.end_date" 
+                            <input
+                                type="date"
+                                v-model="selectedDateRange.end_date"
                                 class="border rounded px-2 py-1"
                             >
                         </div>
@@ -399,7 +388,7 @@ onMounted(() => {
                         <canvas ref="topBottomProductsRef"></canvas>
                     </div>
                 </div>
-                
+
             </div>
         </template>
     </AdminPanel>

@@ -2,18 +2,18 @@
     <div class="container mx-auto p-4">
       <div class="mb-4 flex justify-between items-center">
         <h1 class="text-2xl font-bold">Loyalty Cards Management</h1>
-        <button 
+        <button
           @click="showCreateModal = true"
           class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
         >
           Create New Card
         </button>
       </div>
-  
+
       <FlashMessage v-if="$page.props.flash.success" class="mb-4">
         {{ $page.props.flash.success }}
       </FlashMessage>
-  
+
       <!-- Cards List -->
       <div class="bg-white shadow rounded-lg overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">
@@ -35,19 +35,19 @@
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <Link 
+                <Link
                   :href="`/loyalty-cards/${card.customer_id}`"
                   class="text-indigo-600 hover:text-indigo-900 mr-2"
                 >
                   View
                 </Link>
-                <button 
+                <button
                   @click="editCard(card)"
                   class="text-green-600 hover:text-green-900 mr-2"
                 >
                   Edit
                 </button>
-                <button 
+                <button
                   @click="confirmDelete(card)"
                   class="text-red-600 hover:text-red-900"
                 >
@@ -58,7 +58,7 @@
           </tbody>
         </table>
       </div>
-  
+
       <!-- Create Modal -->
       <Modal :show="showCreateModal" @close="closeCreateModal">
         <div class="p-6">
@@ -66,7 +66,7 @@
           <form @submit.prevent="submitCreate">
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700">Customer</label>
-              <select 
+              <select
                 v-model="form.customer_id"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
               >
@@ -77,7 +77,7 @@
             </div>
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700">Status</label>
-              <select 
+              <select
                 v-model="form.status"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
               >
@@ -87,14 +87,14 @@
               </select>
             </div>
             <div class="flex justify-end gap-2">
-              <button 
+              <button
                 type="button"
                 @click="closeCreateModal"
                 class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="submit"
                 class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
               >
@@ -104,7 +104,7 @@
           </form>
         </div>
       </Modal>
-  
+
       <!-- Edit Modal -->
       <Modal :show="showEditModal" @close="closeEditModal">
         <div class="p-6">
@@ -112,7 +112,7 @@
           <form @submit.prevent="submitEdit">
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700">Status</label>
-              <select 
+              <select
                 v-model="editForm.status"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
               >
@@ -122,14 +122,14 @@
               </select>
             </div>
             <div class="flex justify-end gap-2">
-              <button 
+              <button
                 type="button"
                 @click="closeEditModal"
                 class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="submit"
                 class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
               >
@@ -141,31 +141,31 @@
       </Modal>
     </div>
   </template>
-  
+
   <script setup>
   import { ref } from 'vue'
   import { Link, useForm } from '@inertiajs/vue3'
   import Modal from '@/Components/Modal.vue'
   import FlashMessage from '@/Components/FlashMessage.vue'
-  
+
   const props = defineProps({
     loyaltyCards: Array,
     customers: Array
   })
-  
+
   const showCreateModal = ref(false)
   const showEditModal = ref(false)
   const selectedCard = ref(null)
-  
+
   const form = useForm({
     customer_id: '',
     status: 'active'
   })
-  
+
   const editForm = useForm({
     status: ''
   })
-  
+
   const getStatusClass = (status) => {
     const classes = {
       active: 'bg-green-100 text-green-800',
@@ -174,7 +174,7 @@
     }
     return `px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${classes[status]}`
   }
-  
+
   const submitCreate = () => {
     form.post('/loyalty-cards', {
       onSuccess: () => {
@@ -183,13 +183,13 @@
       }
     })
   }
-  
+
   const editCard = (card) => {
     selectedCard.value = card
     editForm.status = card.status
     showEditModal.value = true
   }
-  
+
   const submitEdit = () => {
     editForm.put(`/loyalty-cards/${selectedCard.value.id}`, {
       onSuccess: () => {
@@ -199,18 +199,18 @@
       }
     })
   }
-  
+
   const confirmDelete = (card) => {
     if (confirm('Are you sure you want to delete this loyalty card?')) {
       useForm().delete(`/loyalty-cards/${card.id}`)
     }
   }
-  
+
   const closeCreateModal = () => {
     showCreateModal.value = false
     form.reset()
   }
-  
+
   const closeEditModal = () => {
     showEditModal.value = false
     editForm.reset()

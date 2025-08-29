@@ -27,8 +27,7 @@ const exportToExcel = async () => {
   try {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Sheet1');
-    
-    // Define the columns based on the screenshot
+
     const columns = [
       { header: 'PRODUCTCODE', key: 'itemid', width: 20 },
       { header: 'DESCRIPTION', key: 'itemname', width: 30 },
@@ -41,20 +40,18 @@ const exportToExcel = async () => {
       { header: 'GRABFOOD', key: 'grabfoodprice', width: 12 },
       { header: 'FOODPANDA', key: 'foodpandaprice', width: 12 }
     ];
-    
-    // Add columns to worksheet
+
     worksheet.columns = columns;
-    
-    // Style header row
+
     const headerRow = worksheet.addRow(columns.map(col => col.header));
     headerRow.eachCell((cell) => {
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: '0000FF' } // Blue background
+        fgColor: { argb: '0000FF' }
       };
       cell.font = {
-        color: { argb: 'FFFFFF' }, // White text
+        color: { argb: 'FFFFFF' },
         bold: true
       };
       cell.alignment = {
@@ -62,14 +59,12 @@ const exportToExcel = async () => {
         horizontal: 'center'
       };
     });
-    
-    // Add data rows
+
     props.data.forEach(item => {
       const rowValues = columns.map(column => item[column.key] || '');
       worksheet.addRow(rowValues);
     });
-    
-    // Apply borders to all cells
+
     worksheet.eachRow((row, rowNumber) => {
       row.eachCell((cell) => {
         cell.border = {
@@ -78,9 +73,8 @@ const exportToExcel = async () => {
           bottom: { style: 'thin' },
           right: { style: 'thin' }
         };
-        
-        // Apply center alignment to all cells except description
-        if (cell.col !== 2) { // Description column
+
+        if (cell.col !== 2) {
           cell.alignment = {
             horizontal: 'center',
             vertical: 'middle'
@@ -88,19 +82,15 @@ const exportToExcel = async () => {
         }
       });
     });
-    
-    // Generate Excel file
+
     const buffer = await workbook.xlsx.writeBuffer();
-    
-    // Save the Excel file
+
     saveAs(new Blob([buffer]), props.fileName || 'products.xlsx');
   } catch (error) {
-    console.error('Error exporting to Excel:', error);
+
   }
 };
 
-// This function is no longer needed with the new export approach
-// Keeping the component props intact for backward compatibility
 </script>
 
 <template>

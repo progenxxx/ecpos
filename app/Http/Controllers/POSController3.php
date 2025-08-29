@@ -32,13 +32,13 @@ class POSController extends Controller
             ->get();
 
 
-        /* dd($category); */
+        
 
         $items = DB::table('inventtablemodules as a')
           ->select(
               'a.ITEMID as itemid',
               'b.itemname as itemname',
-              /* 'a.quantity as quantity', */
+              
               DB::raw('CAST(a.quantity as int) as quantity'),
               'c.itemgroup as itemgroup',
               'c.itemdepartment as specialgroup',
@@ -226,7 +226,7 @@ class POSController extends Controller
             $costAmount = $grossAmount - ($grossAmount * 0.12);
             $netAmount = $grossAmount;
 
-            //carts
+            
             DB::table('carts')->insert([
                 'itemid' => $id,
                 'itemname' => $itemData->itemname,
@@ -253,7 +253,7 @@ class POSController extends Controller
                 'updated_at' => now()
             ]);
 
-            //carttables
+            
             DB::table('carttables')->insert([
                 'store' => $store,
                 'staff' => $staff,
@@ -575,7 +575,7 @@ public function addToCart($id, $winid, $ar, $customers)
 
         try {
             $partialPaymentAmount = $request->input('amount');
-            /* $wintransid = $request->input('wintransid'); */
+            
             $wintransid = '1';
             /* $store = Auth::user()->storeid;
             $staff = Auth::user()->name; */
@@ -586,13 +586,13 @@ public function addToCart($id, $winid, $ar, $customers)
                 'wintransid' => $wintransid
             ]);
 
-            // Validate input
+            
             $this->validatePartialPayment($partialPaymentAmount, $wintransid);
 
-            // Update Carts and Carttables
+            
             $this->updateCartsAndCarttables($wintransid, $partialPaymentAmount);
 
-            // Generate and print receipt
+            
             $this->generateAndPrintReceipt($partialPaymentAmount, $wintransid);
 
             DB::commit();
@@ -644,7 +644,7 @@ public function addToCart($id, $winid, $ar, $customers)
     private function updateCartsAndCarttables($wintransid, $partialPaymentAmount)
     {
 
-        // Update Carttables
+        
         $updatedRows = Carttables::where('window_number', $wintransid)
             ->update([
                 'partialpayment' => DB::raw("partialpayment + $partialPaymentAmount"),
@@ -667,28 +667,28 @@ public function addToCart($id, $winid, $ar, $customers)
         try {
             $cartItems = Carts::where('wintransid', $wintransid)->get();
             $total = $cartItems->sum('grossamount');
-            $vatRate = 0.12; // Assuming 12% VAT, adjust as needed
+            $vatRate = 0.12; 
             $vatAmount = $total * $vatRate / (1 + $vatRate);
             $vatableSales = $total - $vatAmount;
 
             $cartTable = Carttables::where('window_number', $wintransid)->first();
             $totalPartialPayment = $cartTable ? $cartTable->partialpayment : $partialPaymentAmount;
 
-            // Generate base receipt content
+            
             $baseReceiptContent = $this->generateReceiptHeader($wintransid);
             $baseReceiptContent .= $this->generateReceiptItems($cartItems);
             $baseReceiptContent .= $this->generateReceiptSummary($total, $vatAmount, $partialPaymentAmount, $vatableSales, $totalPartialPayment);
             $baseReceiptContent .= $this->generateReceiptFooter($wintransid);
 
-            // Generate and print Customer Copy
+            
             $customerCopy = $this->addCopyLabel($baseReceiptContent, "Customer Copy");
             $this->printReceipt($customerCopy);
 
-            // Generate and print Staff Copy
+            
             $staffCopy = $this->addCopyLabel($baseReceiptContent, "Staff Copy");
             $this->printReceipt($staffCopy);
 
-            // Generate and print Window Number
+            
             $windowNumber = $this->generateWindowNumberPrint($wintransid);
             $this->printReceipt($windowNumber);
 
@@ -758,7 +758,7 @@ public function addToCart($id, $winid, $ar, $customers)
     {
         $footer = "Transaction ID: " . str_pad(Carts::where('wintransid', $wintransid)->max('id'), 9, "0", STR_PAD_LEFT) . "\n";
         $footer .= "Receipt ID: " . str_pad(Carts::where('wintransid', $wintransid)->max('id'), 9, "0", STR_PAD_LEFT) . "\n";
-       /*  $footer .= "Store: " . Auth::user()->store->name . "\n"; */
+       
        $footer .= "Store: " . "\n";
         $footer .= "Staff: " . "\n";
         $footer .= "Window Number: " . $wintransid . "\n";

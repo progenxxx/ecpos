@@ -22,10 +22,6 @@ const props = defineProps({
     }
 });
 
-/* const form = useForm({
-    itemid: 0,
-}); */
-
 const form = useForm({
   itemid: props.itemid,
 });
@@ -40,10 +36,10 @@ const submitForm2 = () => {
   form.patch(route('retail.terminal'), {
     preserveScroll: true,
     onSuccess: () => {
-      // Handle success
+
     },
     onError: () => {
-      // Handle error
+
     },
   });
 };
@@ -67,7 +63,7 @@ onMounted(() => {
     <Modal title="OPTIONS"  @toggle-active="toggleActive" :show-modal="showModal">
         <template #content >
             <FormComponent @submit.prevent="submitForm2"  >
-                
+
                 <div class="col-span-6 sm:col-span-4">
                     <!-- <InputLabel for="itemid" value="itemid" /> -->
                     <TextInput
@@ -105,16 +101,15 @@ onMounted(() => {
 
                     <TransparentButton :url="route('retail.terminal', { itemid: form.itemid })">
                         <div class="bg-blue-50 p-4 rounded-md w-full">
-                        <POSSETTINGS /> 
+                        <POSSETTINGS />
                         <div class="flex items-center justify-center font-bold">POS TERMINAL</div>
                         </div>
                     </TransparentButton>
-                    
+
                 </div>
-                
+
             </FormComponent>
         </template>
-        
 
         <<!-- template #buttons>
             <PrimaryButton type="submit" @click="submitForm" :disabled="form.processing" :class="{ 'opacity-25': form.processing }">

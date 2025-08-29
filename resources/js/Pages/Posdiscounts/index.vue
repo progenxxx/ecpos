@@ -57,14 +57,12 @@ const columns = [
     },
 ];
 
-
 const options = {
     paging: false,
     scrollX: true,
     scrollY: "70vh",
     scrollCollapse: true,
 };
-
 
 const toggleUpdateModal = (newOFFERID, newDESCRIPTION, newSTATUS, newDISCOUNTTYPE, newDEALPRICEVALUE, newDISCOUNTPCTVALUE, newDISCOUNTAMOUNTVALUE, newDISCVALIDPERIODID) => {
     offerid.value = newOFFERID;
@@ -83,10 +81,6 @@ const toggleDeleteModal = (newOFFERID) => {
     showDeleteModal.value = true;
 };
 
-/* const toggleCreateModal = () => {
-    showCreateModal.value = true;
-}; */
-
 const toggleCreateModal = (discvalidperiodid) => {
     if (discvalidperiodid && typeof discvalidperiodid === 'object' && 'discvalidperiodid' in discvalidperiodid) {
         discvalidperiodid.value = discvalidperiodid.discvalidperiodid;
@@ -97,7 +91,7 @@ const toggleCreateModal = (discvalidperiodid) => {
     }
 
     showCreateModal.value = true;
-    console.log(discvalidperiodid.value);
+
 };
 
 const updateModalHandler = () => {
@@ -111,8 +105,7 @@ const deleteModalHandler = () => {
 };
 
 const navigateToPosDiscount = (offerid, discounttype) => {
-  /* console.log('Redirecting to Mix And Match Entries for account:', offerid / DISCOUNTTYPE); */
-  /* window.alert('You are Redirecting to Discount Validation Period Entries', offerid / DISCOUNTTYPE); */
+
   window.location.href = `/MNM/${offerid}/${discounttype}`;
 };
 
@@ -158,18 +151,18 @@ const posdiscvalidationperiods = () => {
                 </div>
                 <DataTable :data="posperiodicdiscounts" :columns="columns" class="w-full relative display" :options="options" >
                     <template #action="data">
-                        <PrimaryButton 
-                            type="button" 
+                        <PrimaryButton
+                            type="button"
                             @click="toggleUpdateModal(
-                                data.cellData.offerid, 
-                                data.cellData.description, 
-                                data.cellData.status, 
+                                data.cellData.offerid,
+                                data.cellData.description,
+                                data.cellData.status,
                                 data.cellData.discounttype,
                                 data.cellData.dealpricevalue,
                                 data.cellData.discountpctvalue,
                                 data.cellData.discountamountvalue,
                                 data.cellData.discvalidperiodid
-                            )" 
+                            )"
                             class="me-1"
                         >
                             Update

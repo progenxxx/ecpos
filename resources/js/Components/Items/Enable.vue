@@ -16,25 +16,16 @@ const form = useForm({
     itemid: '',
 });
 
-/* const submitForm = () => {
-    form.delete("/ItemOrders/destroy", {
-        preserveScroll: true,
-        onSuccess: () => {
-            toggleActive();
-        },
-    });
-}; */
-
 const submitForm = () => {
-    console.log('Submitting form...');
+
     form.patch("/ItemOrders/getbwproducts", {
         preserveScroll: true,
         onSuccess: () => {
-            console.log('Form submission successful.');
+
             toggleActive();
         },
         onError: (error) => {
-            console.error('Form submission error:', error);
+
         }
     });
 };

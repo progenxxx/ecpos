@@ -4,7 +4,7 @@
     <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
       <div class="mt-3">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Update Item</h3>
-        
+
         <form @submit.prevent="submitForm" class="space-y-4">
           <!-- Item ID and Name -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -343,7 +343,6 @@ const form = useForm({
   confirm_defaults: false
 });
 
-// Available categories from retail groups
 const availableCategories = computed(() => {
   if (!props.rboinventitemretailgroups || !Array.isArray(props.rboinventitemretailgroups)) {
     return [];
@@ -351,7 +350,6 @@ const availableCategories = computed(() => {
   return props.rboinventitemretailgroups.map(group => group.NAME || group.name).filter(Boolean);
 });
 
-// Helper function to convert values to boolean - FIXED
 const toBool = (value) => {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'number') return value === 1;
@@ -359,13 +357,11 @@ const toBool = (value) => {
   return false;
 };
 
-// Watch for prop changes and update form - FIXED to properly handle default values
 watch(() => props.showModal, (newVal) => {
   if (newVal) {
-    // Reset form first
+
     form.reset();
-    
-    // Then populate with current values
+
     form.itemid = props.itemid;
     form.itemname = props.itemname;
     form.itemgroup = props.itemgroup;
@@ -379,12 +375,11 @@ watch(() => props.showModal, (newVal) => {
     form.foodpandamallprice = props.foodpandamallprice;
     form.grabfoodmallprice = props.grabfoodmallprice;
     form.production = props.production;
-    
-    // FIXED: Properly convert and set default values
+
     form.default1 = toBool(props.default1);
     form.default2 = toBool(props.default2);
     form.default3 = toBool(props.default3);
-    
+
     form.confirm_defaults = false;
   }
 });
@@ -397,7 +392,7 @@ const submitForm = () => {
       form.reset();
     },
     onError: (errors) => {
-      console.error('Update failed:', errors);
+
     }
   });
 };

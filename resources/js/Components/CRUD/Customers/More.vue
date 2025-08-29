@@ -22,10 +22,6 @@ const props = defineProps({
     }
 });
 
-/* const form = useForm({
-    accountnum: 0,
-}); */
-
 const form = useForm({
     accountnum: props.accountnum,
 });
@@ -40,10 +36,10 @@ const submitForm2 = () => {
   form.patch(route('retail.terminal'), {
     preserveScroll: true,
     onSuccess: () => {
-      // Handle success
+
     },
     onError: () => {
-      // Handle error
+
     },
   });
 };
@@ -67,7 +63,7 @@ onMounted(() => {
     <Modal title="OPTIONS"  @toggle-active="toggleActive" :show-modal="showModal">
         <template #content >
             <FormComponent @submit.prevent="submitForm2"  >
-                
+
                 <div class="col-span-6 sm:col-span-4">
                     <TextInput
                         id="accountnum"
@@ -83,15 +79,14 @@ onMounted(() => {
                 <div class="grid grid-cols-1 gap-4 pt-5">
                     <TransparentButton :url="route('retail.terminal', { accountnum: form.accountnum })">
                         <div class="bg-blue-50 p-4 rounded-md w-full">
-                        <POSSETTINGS /> 
+                        <POSSETTINGS />
                         <div class="flex items-center justify-center font-bold">LEDGER</div>
                         </div>
                     </TransparentButton>
                 </div>
-                
+
             </FormComponent>
         </template>
-        
 
         <<!-- template #buttons>
             <PrimaryButton type="submit" @click="submitForm" :disabled="form.processing" :class="{ 'opacity-25': form.processing }">

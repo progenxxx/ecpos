@@ -26,7 +26,6 @@ import DataTable from 'datatables.net-vue3';
 import DataTablesCore from 'datatables.net';
 DataTable.use(DataTablesCore);
 
-
 const itemid = ref('');
 const itemname = ref('');
 const cost = ref('');
@@ -35,13 +34,10 @@ const specialgroup = ref('');
 const price = ref('');
 const barcode = ref('');
 
-
 const showModalUpdate = ref(false);
 const showCreateModal = ref(false);
-/* const showDeleteModal = ref(false); */
+
 const showModalMore = ref(false);
-
-
 
 const props = defineProps({
     items: {
@@ -55,7 +51,7 @@ const columns = [
     { data: 'itemname', title: 'DESCRIPTION' },
     { data: 'barcode', title: 'BARCODE' },
     { data: 'itemgroup', title: 'CATEGORY' },
-    /* { data: 'specialgroup', title: 'SPECIALGROUP' }, */
+
     {
     data: 'cost',
     title: 'COST',
@@ -92,7 +88,6 @@ const options = {
     scrollCollapse: true,
 };
 
-
 const toggleUpdateModal = (newID, newItemName, newItemGroup, newPrice, newCost) => {
   itemid.value = newID;
   itemname.value = newItemName;
@@ -101,10 +96,6 @@ const toggleUpdateModal = (newID, newItemName, newItemGroup, newPrice, newCost) 
   cost.value = newCost;
   showModalUpdate.value = true;
 };
-/* const toggleDeleteModal = (newID) => {
-    itemid.value = newID;
-    showDeleteModal.value = true;
-}; */
 
 const toggleCreateModal = () => {
     showCreateModal.value = true;
@@ -115,16 +106,13 @@ const toggleMoreModal = (newID) => {
     showModalMore.value = true;
 };
 
-
 const updateModalHandler = () => {
     showModalUpdate.value = false;
 };
 const createModalHandler = () => {
     showCreateModal.value = false;
 };
-/* const deleteModalHandler = () => {
-    showDeleteModal.value = false;
-}; */
+
 const MoreModalHandler = () => {
     showModalMore.value = false;
 };
@@ -159,14 +147,14 @@ const submitForm = () => {
           <div class="flex justify-center">
             <div class="w-[95%] mt-5">
               <div role="alert" class="alert shadow-lg p-5 skeleton">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <svg xmlns="http:
                 <div v-for="item in items" :key="item.itemid">
                   <span>{{ item.itemid }} - {{ item.itemname }}</span>
                 </div>
               </div>
             </div>
           </div>
-          
+
       </template>
 
     </Main>

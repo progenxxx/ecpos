@@ -22,9 +22,7 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-    
-    
-    
+
     showModal: {
         type: Boolean,
         default: false,
@@ -35,9 +33,8 @@ const form = useForm({
     NUMBERSEQUENCE: (''),
     NEXTREC: (''),
     STOREID: (''),
-    
-});
 
+});
 
 const submitForm = () => {
     form.patch("/nubersequencevalues/patch", {
@@ -55,7 +52,6 @@ onMounted(() => {
     form.NUMBERSEQUENCE = props.NUMBERSEQUENCE;
     form.NEXTREC = props.NEXTREC;
     form.STOREID = props.STOREID;
-    
 
     watch(() => props.NUMBERSEQUENCE, (newValue) => {
         form.NUMBERSEQUENCE = newValue;
@@ -87,7 +83,7 @@ onMounted(() => {
                     />
                     <InputError :message="form.errors.NUMBERSEQUENCE" class="mt-2" />
                     </div>
-                    
+
                     <div class="col-span-2 ">
                     <InputLabel for="UNITID" value="UNITID" />
                     <TextInput
@@ -100,7 +96,7 @@ onMounted(() => {
                     />
                     <InputError :message="form.errors.UNITID" class="mt-2" />
                     </div>
-                    
+
                     <div class="col-span-1 ml-4">
                         <InputLabel for="STOREID" value="STOREID" />
                     <TextInput

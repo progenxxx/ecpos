@@ -30,7 +30,7 @@ const props = defineProps({
     },
     items: {
         type: Array,
-        required: true, 
+        required: true,
     },
     isPosted: {
         type: Number,
@@ -38,7 +38,6 @@ const props = defineProps({
     },
 });
 
-// State management
 const JOURNALID = ref('');
 const isLoading = ref(false);
 const showGetCFModal = ref(false);
@@ -52,7 +51,6 @@ const message = reactive({
     timeout: null
 });
 
-// Column visibility state
 const showColumnMenu = ref(false);
 const columnVisibility = ref({
     ITEMID: true,
@@ -67,18 +65,16 @@ const columnVisibility = ref({
     COUNTED: true
 });
 
-// DataTable reference
 const dataTableRef = ref(null);
 
-// Helper function to show message with automatic cleanup
 const showMessage = (text, type, duration = 3000) => {
     if (message.timeout) {
         clearTimeout(message.timeout);
     }
-    
+
     message.text = text;
     message.type = type;
-    
+
     message.timeout = setTimeout(() => {
         message.text = '';
         message.type = '';
@@ -86,21 +82,20 @@ const showMessage = (text, type, duration = 3000) => {
     }, duration);
 };
 
-// Column definitions
 const columns = ref([
-    { 
+    {
         data: 'ITEMID',
         title: 'ITEMID',
         width: '120px',
         visible: columnVisibility.value.ITEMID
     },
-    { 
+    {
         data: 'itemname',
         title: 'ITEMNAME',
         width: '200px',
         visible: columnVisibility.value.itemname
     },
-    { 
+    {
         data: 'itemgroup',
         title: 'CATEGORY',
         width: '150px',
@@ -115,7 +110,7 @@ const columns = ref([
             if (type === 'display') {
                 const count = Number(data);
                 return `
-                    <input type="number" 
+                    <input type="number"
                         class="counted-input form-input w-full rounded-md"
                         value="${count.toFixed(0)}"
                         min="0"
@@ -141,9 +136,9 @@ const columns = ref([
                 const isCurrentDate = row.TRANSDATE === now.toISOString().split('T')[0];
                 const isWithinDisabledHours = currentHour >= 12 || currentHour === 0;
                 const isDisabled = row.posted === 1 || !isCurrentDate || isWithinDisabledHours;
-                
+
                 return `
-                    <input type="number" 
+                    <input type="number"
                         class="counted-input form-input w-full rounded-md"
                         value="${count.toFixed(0)}"
                         min="0"
@@ -166,10 +161,10 @@ const columns = ref([
                 const order = Number(row.ADJUSTMENT);
                 const received = Number(row.RECEIVEDCOUNT);
                 const variance = order - received;
-                const backgroundColor = variance === 0 ? '#f3f3f3' : 
+                const backgroundColor = variance === 0 ? '#f3f3f3' :
                                       variance < 0 ? '#ffebee' : '#e8f5e9';
                 return `
-                    <div class="text-center p-2" 
+                    <div class="text-center p-2"
                          style="background-color: ${backgroundColor}">
                         ${variance}
                     </div>
@@ -189,9 +184,9 @@ const columns = ref([
                 const currentDate = new Date().toISOString().split('T')[0];
                 const isCurrentDate = row.TRANSDATE === currentDate;
                 const isDisabled = row.posted === 1 || !isCurrentDate;
-                
+
                 return `
-                    <input type="number" 
+                    <input type="number"
                         class="counted-input form-input w-full rounded-md"
                         value="${count.toFixed(0)}"
                         min="0"
@@ -237,9 +232,9 @@ const columns = ref([
                 const isDisabled = row.posted === 1 || data !== null;
                 const options = ['throw_away', 'early_molds', 'pull_out', 'rat_bites', 'ant_bites'];
                 const currentValue = data || '';
-                
+
                 return `
-                    <select 
+                    <select
                         class="waste-type-select form-select w-full rounded-md"
                         data-field="WASTETYPE"
                         ${isDisabled ? 'disabled' : ''}>
@@ -303,7 +298,7 @@ const options = {
         api.rows().every(function() {
             const rowData = this.data();
             const node = this.node();
-            
+
             const inputs = node.querySelectorAll('.counted-input, .waste-type-select');
             inputs.forEach(input => {
                 if (!rowData.posted) {
@@ -316,12 +311,12 @@ const options = {
 
 const toggleColumnVisibility = (columnKey) => {
     columnVisibility.value[columnKey] = !columnVisibility.value[columnKey];
-    
+
     const column = columns.value.find(col => col.data === columnKey);
     if (column) {
         column.visible = columnVisibility.value[columnKey];
     }
-    
+
     if (dataTableRef.value) {
         try {
             const dtInstance = dataTableRef.value.dt;
@@ -332,7 +327,7 @@ const toggleColumnVisibility = (columnKey) => {
                 }
             }
         } catch (error) {
-            console.error('Error updating column visibility:', error);
+
         }
     }
 };
@@ -356,13 +351,12 @@ const handleCountedChange = (event, rowData) => {
         updatedValues[rowData.ITEMID] = {};
     }
 
-    const value = event.target.type === 'number' ? 
-                 parseFloat(event.target.value) || 0 : 
+    const value = event.target.type === 'number' ?
+                 parseFloat(event.target.value) || 0 :
                  event.target.value;
 
     updatedValues[rowData.ITEMID][field] = value;
 
-    // Update UI
     if (event.target.type === 'number') {
         const backgroundColor = value === 0 ? '#f3f3f3' : 'white';
         event.target.style.backgroundColor = backgroundColor;
@@ -386,28 +380,24 @@ const updateAllCountedValues = async () => {
 
         if (response.data.success) {
             showMessage(response.data.message, 'success');
-            
-            // Update local data
+
             Object.entries(updatedValues).forEach(([itemId, values]) => {
                 const row = tableData.value.find(r => r.ITEMID === itemId);
                 if (row) Object.assign(row, values);
             });
-            
-            // Clear updates
+
             Object.keys(updatedValues).forEach(key => delete updatedValues[key]);
-            
-            // Reload page after successful update
+
             window.location.reload();
         }
     } catch (error) {
-        console.error('Update error:', error);
+
         showMessage(error.response?.data?.message || 'Update failed', 'error');
     } finally {
         isLoading.value = false;
     }
 };
 
-// Navigation functions
 const StockCounting = () => {
     window.location.href = '/StockCounting';
 };
@@ -420,7 +410,6 @@ const TransferOrder = (journalid) => {
     window.location.href = `/getstocktransfer/${journalid}`;
 };
 
-// Modal handlers
 const toggleCreateModal = (journalid) => {
     JOURNALID.value = journalid;
     showCreateModal.value = true;
@@ -449,7 +438,7 @@ const GetCFModalHandler = () => {
 };
 
 const handleSelectedItem = (item) => {
-    console.log('Selected Item:', item);
+
 };
 
 const initializeDataTable = () => {
@@ -500,10 +489,10 @@ onBeforeUnmount(() => {
         <template v-slot:main>
             <TableContainer>
                 <!-- Loading Overlay -->
-                <div v-if="isLoading" 
+                <div v-if="isLoading"
                      class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-50 backdrop-filter backdrop-blur-sm">
                     <div class="bg-white p-4 rounded-lg shadow-lg flex items-center space-x-3">
-                        <svg class="animate-spin h-5 w-5 text-navy" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg class="animate-spin h-5 w-5 text-navy" xmlns="http:
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -512,7 +501,7 @@ onBeforeUnmount(() => {
                 </div>
 
                 <!-- Message Banner -->
-                <div v-if="message.text" 
+                <div v-if="message.text"
                      :class="[
                          'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg transition-all duration-300',
                          message.type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' :
@@ -526,7 +515,7 @@ onBeforeUnmount(() => {
                     <div class="flex space-x-2">
                         <!-- Column Visibility Dropdown -->
                         <div class="relative column-visibility-dropdown">
-                            <button 
+                            <button
                                 @click="toggleColumnMenu"
                                 class="bg-navy px-4 py-2 rounded-md text-white flex items-center space-x-2"
                             >
@@ -537,15 +526,15 @@ onBeforeUnmount(() => {
                             </button>
 
                             <!-- Column visibility menu -->
-                            <div v-if="showColumnMenu" 
+                            <div v-if="showColumnMenu"
                                 class="absolute z-50 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                                 <div class="py-1" role="menu">
-                                    <label 
-                                        v-for="(visible, columnKey) in columnVisibility" 
+                                    <label
+                                        v-for="(visible, columnKey) in columnVisibility"
                                         :key="columnKey"
                                         class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                                     >
-                                        <input 
+                                        <input
                                             type="checkbox"
                                             :checked="visible"
                                             @change="toggleColumnVisibility(columnKey)"
@@ -600,8 +589,8 @@ onBeforeUnmount(() => {
                 >
                     <template #action="data">
                         <label class="inline-flex items-center">
-                            <input 
-                                type="checkbox" 
+                            <input
+                                type="checkbox"
                                 class="form-checkbox h-5 w-5 text-blue-600 rounded"
                                 :checked="data.selected"
                                 @change="toggleRowSelection(data)"
@@ -623,7 +612,6 @@ onBeforeUnmount(() => {
     min-height: 400px;
 }
 
-/* Column visibility dropdown styles */
 .column-visibility-dropdown {
     @apply relative;
 }
@@ -640,7 +628,6 @@ onBeforeUnmount(() => {
     @apply mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500;
 }
 
-/* Input and Select Styles */
 :deep(.counted-input),
 :deep(.waste-type-select) {
     @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500;
@@ -651,12 +638,10 @@ onBeforeUnmount(() => {
     @apply bg-gray-100 cursor-not-allowed opacity-75;
 }
 
-/* Button Styles */
 .bg-navy {
     @apply bg-blue-900 hover:bg-blue-800 text-white;
 }
 
-/* Loading and Message Styles */
 .loading-overlay {
     @apply fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm;
 }
@@ -677,7 +662,6 @@ onBeforeUnmount(() => {
     @apply bg-blue-100 text-blue-800 border border-blue-300;
 }
 
-/* Animation for messages */
 @keyframes fadeOut {
     from {
         opacity: 1;
@@ -693,16 +677,15 @@ onBeforeUnmount(() => {
     animation: fadeOut 0.3s ease-out forwards;
 }
 
-/* Responsive Adjustments */
 @media (max-width: 768px) {
     :deep(.dataTables_wrapper) {
         padding: 0.5rem;
     }
-    
+
     .button-group {
         @apply flex-wrap gap-2;
     }
-    
+
     :deep(.counted-input),
     :deep(.waste-type-select) {
         @apply text-sm;

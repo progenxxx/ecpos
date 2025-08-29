@@ -17,11 +17,6 @@ use Inertia\Inertia;
 
 class StockTransferController extends Controller
 {
-    /**
-     * Display a listing of stock transfers
-     *
-     * @return \Inertia\Response
-     */
     public function index()
 {
     try {
@@ -36,8 +31,6 @@ class StockTransferController extends Controller
             return back()->with('error', 'No store assigned to current user.');
         }
 
-        // Add logging to debug the store ID
-        \Log::info('Current store ID:', ['storeid' => $currentStore]);
 
         $transfers = StockTransfer::with([
                 'from_store:STOREID,NAME',
@@ -52,8 +45,6 @@ class StockTransferController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Log the transfers query result
-        \Log::info('Transfers query result:', ['count' => $transfers->count()]);
 
         $pendingTransfers = $transfers->where('status', 'request');
         
@@ -61,13 +52,9 @@ class StockTransferController extends Controller
             ->where('STOREID', '!=', $currentStore)
             ->get();
 
-        // Log stores data
-        \Log::info('Available stores:', ['count' => $stores->count()]);
 
         $items = $this->getFormattedItems();
 
-        // Log items data
-        \Log::info('Available items:', ['count' => count($items)]);
 
         return Inertia::render('StockTransfer/list', [
             'transfers' => $transfers,
@@ -85,11 +72,6 @@ class StockTransferController extends Controller
     }
 }
 
-    /**
-     * Get formatted items with their modules
-     *
-     * @return \Illuminate\Support\Collection
-     */
     private function getFormattedItems()
     {
         return inventtables::with(['modules' => function($query) {
@@ -107,12 +89,6 @@ class StockTransferController extends Controller
             });
     }
 
-    /**
-     * Store a new stock transfer
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function store(Request $request)
     {
         $currentStore = Auth::user()->storeid;  
@@ -205,13 +181,6 @@ class StockTransferController extends Controller
         }
     }
 
-    /**
-     * Update the status of a stock transfer
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\StockTransfer  $transfer
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function updateStatus(Request $request, StockTransfer $transfer)
     {
         $validated = $request->validate([
@@ -220,36 +189,17 @@ class StockTransferController extends Controller
 
         DB::beginTransaction();
         try {
-            // Update transfer status
             $transfer->update([
                 'status' => (string)$validated['status'],
                 'processed_by' => Auth::id(),
                 'processed_at' => Carbon::now(),
             ]);
 
-            // Update items status
             $transfer->items()->update(['status' => $validated['status']]);
 
             if ($validated['status'] === 'approved') {
                 foreach ($transfer->items as $item) {
-                    // Create inventory transactions
-                    /* inventtrans::create([
-                        'POSTINGDATE' => Carbon::now(),
-                        'ITEMID' => $item->itemid,
-                        'STOREID' => $transfer->to_store_id,
-                        'ADJUSTMENT' => $item->quantity,
-                        'TYPE' => 'TRANSFER_IN',
-                        'REASONCODE' => 'STOCK_TRANSFER_' . $transfer->id,
-                    ]); */
 
-                    /* inventtrans::create([
-                        'POSTINGDATE' => Carbon::now(),
-                        'ITEMID' => $item->itemid,
-                        'STOREID' => $transfer->from_store_id,
-                        'ADJUSTMENT' => -$item->quantity,
-                        'TYPE' => 'TRANSFER_OUT',
-                        'REASONCODE' => 'STOCK_TRANSFER_' . $transfer->id,
-                    ]); */
                 }
             }
 

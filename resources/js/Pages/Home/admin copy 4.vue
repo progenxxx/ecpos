@@ -11,7 +11,6 @@ import Discounts from "@/Components/Svgs/Discounts.vue";
 import { CubeIcon } from '@heroicons/vue/24/outline';
 import MultiSelectDropdown from "@/Components/MultiSelect/MultiSelectDropdown.vue";
 
-// Register Chart.js components
 Chart.register(...registerables);
 
 axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -63,13 +62,12 @@ const fetchStores = async () => {
   try {
     const response = await axios.get(route('get.stores'));
     stores.value = response.data;
-    selectedStores.value = response.data;  // By default, all stores are selected
+    selectedStores.value = response.data;
   } catch (error) {
-    console.error('Error fetching stores:', error);
+
   }
 };
 
-// State variables
 const hoveredCard = ref(null);
 const isVisible = ref(false);
 const chartRef = ref(null);
@@ -78,25 +76,22 @@ let paymentChart = null;
 let topBottomProductsChart = null;
 
 const selectedDateRange = ref({
-    start_date: '2024-11-25',  // Default start date
-    end_date: new Date().toISOString().split('T')[0]  // Today's date
+    start_date: '2024-11-25',
+    end_date: new Date().toISOString().split('T')[0]
 });
 
-// New: Date Range Validation Computed Property
 const isValidDateRange = computed(() => {
     const startDate = new Date(selectedDateRange.value.start_date);
     const endDate = new Date(selectedDateRange.value.end_date);
     const today = new Date();
 
     return (
-        startDate <= endDate && 
+        startDate <= endDate &&
         startDate <= today &&
         endDate <= today
     );
 });
 
-
-// Currency formatting utility
 const formatCurrency = (value) => {
     const numValue = Number(value);
     return new Intl.NumberFormat('en-PH', {
@@ -105,9 +100,8 @@ const formatCurrency = (value) => {
     }).format(isNaN(numValue) ? 0 : numValue);
 };
 
-// Metrics cards computation (continued)
 const metricsCards = computed(() => {
-    /* const metrics = props.metrics || {}; */
+
     const metrics = localMetrics.value || {};
     return [
         {
@@ -163,19 +157,18 @@ const metricsCards = computed(() => {
 
 const initializePaymentChart = () => {
     if (!chartRef.value) return;
-    
+
     const ctx = chartRef.value.getContext('2d');
-    
+
     if (paymentChart) {
         paymentChart.destroy();
     }
 
-    // Use localMetrics instead of props.metrics
     const paymentBreakdown = localMetrics.value?.paymentBreakdown || {};
-    const labels = Object.keys(paymentBreakdown).map(label => 
+    const labels = Object.keys(paymentBreakdown).map(label =>
         label.replace(/([A-Z])/g, ' $1').trim()
     );
-    const data = Object.values(paymentBreakdown).map(value => 
+    const data = Object.values(paymentBreakdown).map(value =>
         Number(value) || 0
     );
 
@@ -186,8 +179,8 @@ const initializePaymentChart = () => {
             datasets: [{
                 data,
                 backgroundColor: [
-                    '#3B82F6', '#10B981', '#F43F5E', 
-                    '#6366F1', '#8B5CF6', '#EC4899', 
+                    '#3B82F6', '#10B981', '#F43F5E',
+                    '#6366F1', '#8B5CF6', '#EC4899',
                     '#F97316'
                 ],
                 hoverOffset: 4
@@ -203,7 +196,7 @@ const initializePaymentChart = () => {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            // Changed to show actual value instead of percentage
+
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                             const value = context.parsed;
                             const percentage = ((value / total) * 100).toFixed(2);
@@ -219,42 +212,40 @@ const initializePaymentChart = () => {
 const fetchTopBottomProducts = async () => {
   try {
     const startDate = selectedDateRange.value.start_date || '2000-01-01';
-    
+
     const payload = {
       start_date: startDate,
       end_date: selectedDateRange.value.end_date,
-      stores: selectedStores.value.map(store => 
+      stores: selectedStores.value.map(store =>
           store.NAME || (typeof store === 'object' ? store.NAME : store)
       )
     };
 
     const response = await axios.post(route('get.top.bottom.products'), payload);
 
-    const topProducts = Array.isArray(response?.data?.topProducts) 
-      ? response.data.topProducts 
+    const topProducts = Array.isArray(response?.data?.topProducts)
+      ? response.data.topProducts
       : [];
-    const bottomProducts = Array.isArray(response?.data?.bottomProducts) 
-      ? response.data.bottomProducts 
+    const bottomProducts = Array.isArray(response?.data?.bottomProducts)
+      ? response.data.bottomProducts
       : [];
 
     initializeTopBottomProductsChart(topProducts, bottomProducts);
   } catch (error) {
-    console.error('Error fetching top/bottom products:', error);
+
     initializeTopBottomProductsChart([], []);
   }
 };
 
-// Initialize top and bottom products chart
 const initializeTopBottomProductsChart = (topProducts, bottomProducts) => {
     if (!topBottomProductsRef.value) return;
-    
+
     const ctx = topBottomProductsRef.value.getContext('2d');
-    
+
     if (topBottomProductsChart) {
         topBottomProductsChart.destroy();
     }
 
-    // Prepare data for chart
     const topProductNames = topProducts.slice(0, 10).map(p => p.itemname);
     const bottomProductNames = bottomProducts.slice(0, 10).map(p => p.itemname);
     const topProductQuantities = topProducts.slice(0, 10).map(p => p.total_quantity);
@@ -316,33 +307,28 @@ const initializeTopBottomProductsChart = (topProducts, bottomProducts) => {
 
 const fetchMetrics = async () => {
   try {
-    console.log('Selected Stores:', selectedStores.value);
-    
+
     const payload = {
       start_date: selectedDateRange.value.start_date || '2000-01-01',
       end_date: selectedDateRange.value.end_date,
-      stores: selectedStores.value.map(store => 
+      stores: selectedStores.value.map(store =>
         typeof store === 'object' ? store.NAME : store
       )
     };
 
-    console.log('Payload for metrics:', payload);
-
     const response = await axios.post(route('get.metrics'), payload);
-    
-    console.log('Metrics response:', response.data);
-    
+
     localMetrics.value = response.data || props.initialMetrics;
     initializePaymentChart();
   } catch (error) {
-    console.error('Error fetching metrics:', error);
+
   }
 };
 
 watch([
-  () => selectedDateRange.value.start_date, 
-  () => selectedDateRange.value.end_date, 
-  () => JSON.stringify(selectedStores.value)  // Use JSON stringify to detect array changes
+  () => selectedDateRange.value.start_date,
+  () => selectedDateRange.value.end_date,
+  () => JSON.stringify(selectedStores.value)
 ], () => {
   if (isValidDateRange.value) {
     dateRangeError.value = '';
@@ -371,23 +357,23 @@ onMounted(() => {
                         <div class="flex flex-col">
                             <div class="flex items-center space-x-2">
                                 <label class="text-gray-700">Start Date:</label>
-                                <input 
-                                    type="date" 
-                                    v-model="selectedDateRange.start_date" 
+                                <input
+                                    type="date"
+                                    v-model="selectedDateRange.start_date"
                                     class="border rounded px-2 py-1"
                                     :class="{'border-red-500': dateRangeError}"
                                 >
                                 <label class="text-gray-700">End Date:</label>
-                                <input 
-                                    type="date" 
-                                    v-model="selectedDateRange.end_date" 
+                                <input
+                                    type="date"
+                                    v-model="selectedDateRange.end_date"
                                     class="border rounded px-2 py-1"
                                     :class="{'border-red-500': dateRangeError}"
                                 >
                             </div>
                             <!-- Date Range Error Message -->
-                            <p 
-                                v-if="dateRangeError" 
+                            <p
+                                v-if="dateRangeError"
                                 class="text-red-500 text-sm mt-1"
                             >
                                 {{ dateRangeError }}
@@ -407,12 +393,12 @@ onMounted(() => {
                     </div>
                 </div>
                 <!-- Welcome Section -->
-                <div 
+                <div
                     class="mb-8 transform transition-all duration-500"
                     :class="[isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0']"
                 >
                     <h1 class="text-3xl font-bold text-gray-800">
-                        Welcome back, {{ username }}! 👋
+                        Welcome back, {{ username }}!
                     </h1>
                     <p class="text-gray-600 mt-2">
                         Here's your business overview for today
@@ -435,15 +421,15 @@ onMounted(() => {
                             @mouseenter="hoveredCard = index"
                             @mouseleave="hoveredCard = null"
                         >
-                            <div 
+                            <div
                                 class="bg-white rounded-xl shadow-md transition-all duration-300 transform hover:scale-105"
                                 :class="{ 'shadow-lg': hoveredCard === index }"
                             >
                                 <div class="p-6">
                                     <div class="flex items-center justify-between">
                                         <div :class="[card.bgColor, 'p-3 rounded-lg']">
-                                            <component 
-                                                :is="card.icon" 
+                                            <component
+                                                :is="card.icon"
                                                 :class="[card.color, 'w-6 h-6']"
                                             />
                                         </div>
@@ -511,14 +497,14 @@ onMounted(() => {
                             Top & Bottom Products Analysis
                         </h3>
                         <div class="flex space-x-4">
-                            <input 
-                                type="date" 
-                                v-model="selectedDateRange.start_date" 
+                            <input
+                                type="date"
+                                v-model="selectedDateRange.start_date"
                                 class="border rounded px-2 py-1"
                             >
-                            <input 
-                                type="date" 
-                                v-model="selectedDateRange.end_date" 
+                            <input
+                                type="date"
+                                v-model="selectedDateRange.end_date"
                                 class="border rounded px-2 py-1"
                             >
                         </div>

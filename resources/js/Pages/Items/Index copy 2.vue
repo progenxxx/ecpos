@@ -20,7 +20,6 @@ import CloseIcon from "@/Components/Svgs/Close.vue";
 import { ref, computed, toRefs, watch, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 
-// Reactive refs
 const itemid = ref('');
 const itemname = ref('');
 const cost = ref('');
@@ -42,20 +41,17 @@ const showItemInfoModal = ref(false);
 const selectedItemInfo = ref(null);
 const showFloatingMenu = ref(false);
 
-// Click tracking
 const clickTimeout = ref(null);
 const clickCount = ref(0);
 const longPressTimeout = ref(null);
 const isLongPress = ref(false);
 
-// Pagination and filtering state
 const currentPage = ref(1);
 const itemsPerPage = ref(50);
 const searchQuery = ref('');
 const selectedCategory = ref('');
 const selectedStatus = ref('');
 
-// Props with proper validation and defaults
 const props = defineProps({
     items: {
         type: Array,
@@ -78,7 +74,6 @@ const props = defineProps({
     },
 });
 
-// Computed properties with proper null checking
 const layoutComponent = computed(() => {
     return props.auth?.user?.role === 'STORE' ? StorePanel : Main;
 });
@@ -91,14 +86,12 @@ const isOpic = computed(() => userRole.value === 'SUPERADMIN');
 const isAdmin = computed(() => userRole.value === 'OPIC');
 const isRso = computed(() => userRole.value === 'ADMIN');
 
-// Modal states
 const showModalUpdate = ref(false);
 const showModalUpdateMOQ = ref(false);
 const showCreateModal = ref(false);
 const showEnableModal = ref(false);
 const showModalMore = ref(false);
 
-// Computed properties for filtering and pagination with proper null checking
 const categories = computed(() => {
     if (!props.items || !Array.isArray(props.items)) return [];
     const cats = new Set(props.items.map(item => item?.itemgroup).filter(Boolean));
@@ -107,25 +100,22 @@ const categories = computed(() => {
 
 const filteredItems = computed(() => {
     if (!props.items || !Array.isArray(props.items)) return [];
-    
+
     let filtered = [...props.items];
 
-    // Search filter
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
-        filtered = filtered.filter(item => 
+        filtered = filtered.filter(item =>
             item?.itemid?.toLowerCase().includes(query) ||
             item?.itemname?.toLowerCase().includes(query) ||
             item?.barcode?.toLowerCase().includes(query)
         );
     }
 
-    // Category filter
     if (selectedCategory.value) {
         filtered = filtered.filter(item => item?.itemgroup === selectedCategory.value);
     }
 
-    // Status filter
     if (selectedStatus.value !== '') {
         const status = selectedStatus.value === '1';
         filtered = filtered.filter(item => Boolean(item?.Activeondelivery) === status);
@@ -153,7 +143,7 @@ const visiblePages = computed(() => {
     const maxVisible = 5;
     const total = totalPages.value;
     const current = currentPage.value;
-    
+
     if (total <= maxVisible) {
         for (let i = 1; i <= total; i++) {
             pages.push(i);
@@ -161,7 +151,7 @@ const visiblePages = computed(() => {
     } else {
         const start = Math.max(1, current - Math.floor(maxVisible / 2));
         const end = Math.min(total, start + maxVisible - 1);
-        
+
         for (let i = start; i <= end; i++) {
             pages.push(i);
         }
@@ -176,7 +166,7 @@ const allSelected = computed({
     },
     set(value) {
         if (!paginatedItems.value || paginatedItems.value.length === 0) return;
-        
+
         if (value) {
             const newSelections = paginatedItems.value.map(item => item?.itemid).filter(Boolean);
             selectedItems.value = [...new Set([...selectedItems.value, ...newSelections])];
@@ -187,23 +177,22 @@ const allSelected = computed({
     }
 });
 
-// Click handling functions
 const handleItemClick = (item) => {
     clearTimeout(clickTimeout.value);
     clickCount.value++;
 
     if (clickCount.value === 1) {
         clickTimeout.value = setTimeout(() => {
-            // Single click - do nothing or select item
+
             clickCount.value = 0;
         }, 300);
     } else if (clickCount.value === 2) {
-        // Double click - open update form
+
         clearTimeout(clickTimeout.value);
         toggleUpdateModal(item);
         clickCount.value = 0;
     } else if (clickCount.value === 3) {
-        // Triple click - show item links
+
         clearTimeout(clickTimeout.value);
         handleViewLinks(item);
         clickCount.value = 0;
@@ -215,7 +204,7 @@ const handleTouchStart = (item, event) => {
     longPressTimeout.value = setTimeout(() => {
         isLongPress.value = true;
         showItemInfo(item);
-    }, 800); // 800ms for long press
+    }, 800);
 };
 
 const handleTouchEnd = (item, event) => {
@@ -245,7 +234,6 @@ const showItemInfo = (item) => {
     showItemInfoModal.value = true;
 };
 
-// Floating Menu Functions
 const toggleFloatingMenu = () => {
     showFloatingMenu.value = !showFloatingMenu.value;
 };
@@ -254,10 +242,9 @@ const closeFloatingMenu = () => {
     showFloatingMenu.value = false;
 };
 
-// Modal handlers
 const toggleUpdateModal = (item) => {
     if (!item) return;
-    
+
     itemid.value = item.itemid || '';
     itemname.value = item.itemname || '';
     itemgroup.value = item.itemgroup || '';
@@ -284,7 +271,7 @@ const toggleMoreModal = (item) => {
 
 const toggleUpdateMOQModal = (item) => {
     if (!item) return;
-    
+
     itemid.value = item.itemid || '';
     itemname.value = item.itemname || '';
     itemgroup.value = item.itemgroup || '';
@@ -317,7 +304,6 @@ const MoreModalHandler = () => {
     showModalMore.value = false;
 };
 
-// Import form
 const importForm = useForm({
     file: null,
 });
@@ -343,7 +329,7 @@ const submitImportForm = () => {
             window.location.reload();
         },
         onError: (errors) => {
-            console.error('Import failed:', errors);
+
         },
     });
 };
@@ -353,7 +339,6 @@ const downloadTemplate = () => {
     closeFloatingMenu();
 };
 
-// Table event handlers
 const handleEditItem = (item) => {
     toggleUpdateModal(item);
 };
@@ -370,7 +355,7 @@ const handleMoreActions = (item) => {
 
 const handleBulkEnable = (itemIds) => {
     const validIds = Array.isArray(itemIds) ? itemIds.filter(Boolean) : [];
-    
+
     if (validIds.length === 0) {
         alert('Please select at least one item.');
         return;
@@ -384,7 +369,7 @@ const handleBulkEnable = (itemIds) => {
         location.reload();
     })
     .catch(error => {
-        console.error('Error updating items:', error);
+
         alert('An error occurred while updating items.');
     });
 
@@ -395,10 +380,9 @@ const handleSelectionChanged = (newSelection) => {
     selectedItems.value = Array.isArray(newSelection) ? newSelection : [];
 };
 
-// Export data preparation
 const getExportData = () => {
     if (!props.items || !Array.isArray(props.items)) return [];
-    
+
     return props.items.map(item => ({
         itemid: item?.itemid || '',
         itemname: item?.itemname || '',
@@ -422,7 +406,6 @@ const getExportData = () => {
     }));
 };
 
-// Utility functions
 const formatCurrency = (value) => {
     if (value == null || value === '') return '0.00';
     return Number(value).toFixed(2);
@@ -460,13 +443,11 @@ const nonproducts = () => {
     closeFloatingMenu();
 };
 
-// Cleanup timeouts
 onUnmounted(() => {
     clearTimeout(clickTimeout.value);
     clearTimeout(longPressTimeout.value);
 });
 
-// Reset to first page when filters change
 watch([searchQuery, selectedCategory, selectedStatus], () => {
     currentPage.value = 1;
 });
@@ -484,9 +465,9 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
 
     <component :is="layoutComponent" active-tab="RETAILITEMS">
       <template v-slot:modals>
-        <Create 
-          :show-modal="showCreateModal" 
-          @toggle-active="createModalHandler" 
+        <Create
+          :show-modal="showCreateModal"
+          @toggle-active="createModalHandler"
           :rboinventitemretailgroups="props.rboinventitemretailgroups"
         />
 
@@ -537,7 +518,7 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
           <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white" @click.stop>
             <div class="mt-3">
               <h3 class="text-lg font-medium text-gray-900 mb-4">Item Information</h3>
-              
+
               <div v-if="selectedItemInfo" class="space-y-3">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -616,7 +597,7 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
           <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div class="mt-3">
               <h3 class="text-lg font-medium text-gray-900 mb-4">Import Items</h3>
-              
+
               <div class="mb-4">
                 <button
                   @click="downloadTemplate"
@@ -691,14 +672,14 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
                 <Excel
                   :data="getExportData()"
                   :headers="[
-                    'ITEMID', 'ITEMNAME', 'BARCODE', 'CATEGORY', 'RETAILGROUP', 
-                    'PRODUCTION', 'MOQ', 'COST', 'SRP', 'MANILA', 'MALL', 
+                    'ITEMID', 'ITEMNAME', 'BARCODE', 'CATEGORY', 'RETAILGROUP',
+                    'PRODUCTION', 'MOQ', 'COST', 'SRP', 'MANILA', 'MALL',
                     'GRABFOOD', 'FOODPANDA', 'FOODPANDA_MALL', 'GRABFOOD_MALL',
                     'DEFAULT1', 'DEFAULT2', 'DEFAULT3', 'ENABLEORDER'
                   ]"
                   :row-name-props="[
-                    'itemid', 'itemname', 'barcode', 'itemgroup', 'specialgroup', 
-                    'production', 'moq', 'cost', 'price', 'manilaprice', 'mallprice', 
+                    'itemid', 'itemname', 'barcode', 'itemgroup', 'specialgroup',
+                    'production', 'moq', 'cost', 'price', 'manilaprice', 'mallprice',
                     'grabfoodprice', 'foodpandaprice', 'foodpandamallprice', 'grabfoodmallprice',
                     'default1', 'default2', 'default3', 'Activeondelivery'
                   ]"
@@ -707,11 +688,11 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
                 >
                   Export Excel
                 </Excel>
-                
+
                 <!-- Import Button -->
-                <PrimaryButton 
-                  class="bg-blue-500 hover:bg-blue-700" 
-                  @click="showImportModal = true" 
+                <PrimaryButton
+                  class="bg-blue-500 hover:bg-blue-700"
+                  @click="showImportModal = true"
                   v-if="isOpic"
                 >
                   <Import class="h-4 mr-2" />
@@ -753,7 +734,7 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                 </div>
-                
+
                 <!-- Filters -->
                 <div class="flex gap-2">
                   <select
@@ -765,7 +746,7 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
                       {{ category }}
                     </option>
                   </select>
-                  
+
                   <select
                     v-model="selectedStatus"
                     class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -793,13 +774,13 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
               <div class="max-h-96 overflow-y-auto">
                 <!-- Mobile View -->
                 <div class="lg:hidden">
-                  <div v-for="item in paginatedItems" :key="item?.itemid" 
+                  <div v-for="item in paginatedItems" :key="item?.itemid"
                        class="border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors"
                        @touchstart="handleTouchStart(item, $event)"
                        @touchend="handleTouchEnd(item, $event)"
                        @mousedown="handleMouseDown(item, $event)"
                        @mouseup="handleMouseUp(item, $event)">
-                    
+
                     <div class="flex items-center justify-between mb-2">
                       <div v-if="isAdmin || isOpic" class="flex items-center">
                         <input
@@ -816,25 +797,25 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
                         {{ item?.Activeondelivery ? 'Active' : 'Inactive' }}
                       </span>
                     </div>
-                    
+
                     <div class="space-y-2">
                       <div>
                         <div class="font-medium text-gray-900">{{ item?.itemname || '' }}</div>
                         <div class="text-sm text-gray-500 font-mono">{{ item?.itemid || '' }}</div>
                       </div>
-                      
+
                       <div class="flex justify-between items-center">
                         <div class="text-sm text-gray-600">{{ item?.itemgroup || '' }}</div>
                         <div class="text-sm font-medium">₱{{ formatCurrency(item?.price) }}</div>
                       </div>
-                      
+
                       <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
                         <div>Manila: ₱{{ formatCurrency(item?.manilaprice) }}</div>
                         <div>Mall: ₱{{ formatCurrency(item?.mallprice) }}</div>
                         <div>Foodpanda: ₱{{ formatCurrency(item?.foodpandaprice) }}</div>
                         <div>GrabFood: ₱{{ formatCurrency(item?.grabfoodprice) }}</div>
                       </div>
-                      
+
                       <div v-if="isAdmin || isOpic" class="flex justify-end space-x-2 mt-2">
                         <button
                           @click.stop="handleEditItem(item)"
@@ -887,7 +868,7 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
                     </tr>
                   </thead>
                   <tbody class="bg-white divide-y divide-gray-200">
-                    <tr v-for="item in paginatedItems" :key="item?.itemid" 
+                    <tr v-for="item in paginatedItems" :key="item?.itemid"
                         class="hover:bg-gray-50 cursor-pointer transition-colors"
                         @click="handleItemClick(item)"
                         @mousedown="handleMouseDown(item, $event)"
@@ -1041,14 +1022,14 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
               <Excel
                 :data="getExportData()"
                 :headers="[
-                  'ITEMID', 'ITEMNAME', 'BARCODE', 'CATEGORY', 'RETAILGROUP', 
-                  'PRODUCTION', 'MOQ', 'COST', 'SRP', 'MANILA', 'MALL', 
+                  'ITEMID', 'ITEMNAME', 'BARCODE', 'CATEGORY', 'RETAILGROUP',
+                  'PRODUCTION', 'MOQ', 'COST', 'SRP', 'MANILA', 'MALL',
                   'GRABFOOD', 'FOODPANDA', 'FOODPANDA_MALL', 'GRABFOOD_MALL',
                   'DEFAULT1', 'DEFAULT2', 'DEFAULT3', 'ENABLEORDER'
                 ]"
                 :row-name-props="[
-                  'itemid', 'itemname', 'barcode', 'itemgroup', 'specialgroup', 
-                  'production', 'moq', 'cost', 'price', 'manilaprice', 'mallprice', 
+                  'itemid', 'itemname', 'barcode', 'itemgroup', 'specialgroup',
+                  'production', 'moq', 'cost', 'price', 'manilaprice', 'mallprice',
                   'grabfoodprice', 'foodpandaprice', 'foodpandamallprice', 'grabfoodmallprice',
                   'default1', 'default2', 'default3', 'Activeondelivery'
                 ]"

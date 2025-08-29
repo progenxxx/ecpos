@@ -15,12 +15,11 @@ import Bread from "@/Components/Svgs/Bread.vue";
 import Save from "@/Components/Svgs/Save.vue";
 import Search from "@/Components/Svgs/SearchColored.vue";
 import SelectOption from '@/Components/SelectOption/SelectOption.vue';
-/* import 'datatables.net-fixedcolumns'; */
+
 import 'datatables.net-fixedcolumns';
 import { ref, computed, isRef, unref, reactive, onMounted } from 'vue';
 import ExcelJS from 'exceljs';
 import axios from 'axios';
-
 
 DataTable.use(DataTablesCore);
 
@@ -63,9 +62,9 @@ const options = {
   fixedColumns: {
     start: 6,
   },
-  
+
   error: function (xhr, error, thrown) {
-    console.error("DataTables error:", error);
+
   },
   footerCallback: function(tfoot, data, start, end, display) {
     const api = this.api();
@@ -76,9 +75,8 @@ const options = {
       }
     });
   },
-  
-};
 
+};
 
 const groupedOrders = reactive(props.orders.reduce((acc, order) => {
   const { STORENAME, ITEMID, ITEMNAME, CATEGORY, COUNTED, MGCOUNT } = order;
@@ -149,70 +147,54 @@ const footerTotals = computed(() => {
 });
 
 const columns = computed(() => [
-  { 
-    title: 'ITEMID', 
+  {
+    title: 'ITEMID',
     data: 'ITEMID',
     className: 'frozen-column',
     footer: () => footerTotals.value.ITEMID,
     width: '120px'
   },
-  { 
-    title: 'ITEMS', 
+  {
+    title: 'ITEMS',
     data: 'ITEMNAME',
     className: 'frozen-column',
     footer: () => '',
     orderable: true,
     width: '200px'
   },
-  /* { 
-    title: 'POSTEDDATETIME', 
-    data: 'POSTEDDATETIME',
-    className: 'frozen-column',
-    footer: () => '',
-    orderable: true
-  }, */
-  { 
-    title: 'CATEGORY', 
+
+  {
+    title: 'CATEGORY',
     data: 'CATEGORY',
     className: 'frozen-column',
     footer: () => '',
     width: '120px'
   },
-  
-  { 
-    title: 'ACTUAL INV COUNT', 
+
+  {
+    title: 'ACTUAL INV COUNT',
     data: 'MGCount',
     className: 'frozen-column',
     footer: () => footerTotals.value.MGCount,
     width: '180px'
   },
-  { 
-    title: 'REMAINING STOCKS', 
+  {
+    title: 'REMAINING STOCKS',
     data: 'BalanceCount',
     className: 'frozen-column',
     footer: () => footerTotals.value.BalanceCount,
     width: '120px'
   },
-  { 
-    title: 'TOTAL ALLOCATION', 
+  {
+    title: 'TOTAL ALLOCATION',
     data: 'TOTAL',
     className: 'frozen-column',
     footer: () => footerTotals.value.TOTAL,
     width: '130px'
   },
-  /* ...Array.from(storeNames.value).map(storeName => ({ 
-    title: storeName, 
-    data: storeName,
-    render: (data, type, row) => {
-      if (type === 'display') {
-        return `<input type="number" value="${data}" onchange="window.updateCounted('${row.ITEMID}', '${storeName}', this.value)" />`;
-      }
-      return data;
-    },
-    footer: () => footerTotals.value[storeName]
-  })), */
-  ...Array.from(storeNames.value).map(storeName => ({ 
-  title: storeName, 
+
+  ...Array.from(storeNames.value).map(storeName => ({
+  title: storeName,
   data: storeName,
   render: (data, type, row) => {
     if (type === 'sort' || type === 'type') {
@@ -226,7 +208,6 @@ const columns = computed(() => [
   footer: () => footerTotals.value[storeName]
 })),
 ]);
-
 
 const showMessage = ref(false);
 const messageText = ref('');
@@ -248,11 +229,9 @@ const saveAllData = () => {
     };
   });
 
-  console.log('Data to save:', JSON.stringify(dataToSave, null, 2));
-
   axios.post(route('save.all.data'), { data: dataToSave })
     .then(response => {
-      console.log('All data saved successfully:', response.data);
+
       messageText.value = 'Data saved successfully!';
       showMessage.value = true;
       setTimeout(() => {
@@ -260,9 +239,9 @@ const saveAllData = () => {
       }, 3000);
     })
     .catch(error => {
-      console.error('Error saving data:', error);
+
       if (error.response) {
-        console.error('Error response:', error.response.data);
+
       }
       messageText.value = 'Error saving data. Please try again.';
       showMessage.value = true;
@@ -294,15 +273,15 @@ window.updateMGCount = function(itemId, value) {
       mgCount: item.MGCount
     })
     .then(response => {
-      console.log('MGCount update response:', response.data);
+
       if (response.data.success) {
-        console.log('MGCount updated successfully');
+
       } else {
-        console.error('Failed to update MGCount:', response.data.message);
+
       }
     })
     .catch(error => {
-      console.error('Error updating MGCount:', error.response ? error.response.data : error);
+
     });
   }
 }
@@ -311,11 +290,11 @@ window.updateCounted = function(itemId, storeName, value) {
   const item = groupedOrders[itemId];
   if (item) {
     item[storeName] = parseInt(value, 10) || 0;
-    
+
     item.TOTAL = Array.from(storeNames.value).reduce((sum, store) => {
       return sum + (item[store] || 0);
     }, 0);
-    
+
     item.BalanceCount = item.MGCount - item.TOTAL;
 
     axios.post('/api/update-counted', {
@@ -326,10 +305,10 @@ window.updateCounted = function(itemId, storeName, value) {
       balanceCount: item.BalanceCount
     })
     .then(response => {
-      console.log('Counted updated successfully');
+
     })
     .catch(error => {
-      console.error('Error updating Counted:', error);
+
     });
   }
 }
@@ -406,108 +385,35 @@ function generateAndDownloadTextFile() {
   downloadTextFile(filename, content);
 }
 
-/* async function exportToExcel() {
-  try {
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Flattened Orders');
-    worksheet.columns = columns.value.map(column => ({
-      header: column.title,
-      key: column.data,
-      width: 15
-    }));
-
-    worksheet.addRow(columns.value.map(column => column.title));
-
-    const filteredOrders = processedOrders.value.filter(order => {
-      const storeCounts = Array.from(storeNames.value).map(store => order[store] || 0);
-      return storeCounts.some(count => count > 0);
-    });
-
-    filteredOrders.forEach(order => {
-      const rowData = columns.value.map(column => {
-        const value = order[column.data];
-        return value !== null && value !== undefined ? value : 0;
-      });
-      worksheet.addRow(rowData);
-    });
-
-    const filteredTotals = columns.value.reduce((acc, column) => {
-      if (column.footer) {
-        acc[column.data] = filteredOrders.reduce((sum, order) => {
-          return sum + (Number(order[column.data]) || 0);
-        }, 0);
-      }
-      return acc;
-    }, {});
-
-    const footerRow = worksheet.addRow(columns.value.map(column => {
-      if (column.footer) {
-        return filteredTotals[column.data] || 0;
-      }
-      return '';
-    }));
-    footerRow.font = { bold: true };
-    footerRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF7C0000' }
-    };
-    footerRow.font = { color: { argb: 'FFDDDDDD' } };
-
-    worksheet.getRow(1).font = { bold: true };
-    worksheet.getRow(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFF8F9FA' }
-    };
-
-    const today = new Date();
-    const filename = `FlattenedOrders_${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}.xlsx`;
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    link.click();
-  } catch (error) {
-    console.error('Error exporting to Excel:', error);
-  }
-} */
-
 async function exportToExcel() {
   try {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Flattened Orders');
-    
-    // Define the columns
+
     worksheet.columns = columns.value.map(column => ({
       header: column.title,
       key: column.data,
       width: 15
     }));
 
-    // Add the header row
     worksheet.addRow(columns.value.map(column => column.title));
 
-    // Filter and sort the data
     const filteredAndSortedOrders = processedOrders.value
       .filter(order => {
         const storeCounts = Array.from(storeNames.value).map(store => order[store] || 0);
         return storeCounts.some(count => count > 0);
       })
       .sort((a, b) => {
-        // Sort by Category first
+
         if (a.CATEGORY < b.CATEGORY) return -1;
         if (a.CATEGORY > b.CATEGORY) return 1;
-        
-        // If Categories are the same, sort by ITEMNAME
+
         if (a.ITEMNAME < b.ITEMNAME) return -1;
         if (a.ITEMNAME > b.ITEMNAME) return 1;
-        
+
         return 0;
       });
 
-    // Add the sorted data to the worksheet
     filteredAndSortedOrders.forEach(order => {
       const rowData = columns.value.map(column => {
         const value = order[column.data];
@@ -516,7 +422,6 @@ async function exportToExcel() {
       worksheet.addRow(rowData);
     });
 
-    // Add the footer row with totals
     const filteredTotals = columns.value.reduce((acc, column) => {
       if (column.footer) {
         acc[column.data] = filteredAndSortedOrders.reduce((sum, order) => {
@@ -540,7 +445,6 @@ async function exportToExcel() {
     };
     footerRow.font = { color: { argb: 'FFDDDDDD' } };
 
-    // Style the header row
     worksheet.getRow(1).font = { bold: true };
     worksheet.getRow(1).fill = {
       type: 'pattern',
@@ -548,7 +452,6 @@ async function exportToExcel() {
       fgColor: { argb: 'FFF8F9FA' }
     };
 
-    // Generate Excel file
     const today = new Date();
     const filename = `FlattenedOrders_${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}.xlsx`;
     const buffer = await workbook.xlsx.writeBuffer();
@@ -558,7 +461,7 @@ async function exportToExcel() {
     link.download = filename;
     link.click();
   } catch (error) {
-    console.error('Error exporting to Excel:', error);
+
   }
 }
 
@@ -570,19 +473,19 @@ const cakes = () => {
   window.location.href = '/cakepicklist';
 };
 
-const specialorder = () => { 
+const specialorder = () => {
     window.location.href = '/special-orders';
 };
 
-const inputpartycakes = () => { 
+const inputpartycakes = () => {
     window.location.href = '/add-partycakes';
 };
 
-const details = () => { 
+const details = () => {
     window.location.href = '/dispatch/add-details';
 };
 
-const inventory = () => { 
+const inventory = () => {
     window.location.href = '/inventory';
 };
 
@@ -592,7 +495,7 @@ const postorders = () => {
     if (userConfirmed) {
         window.location.href = '/opic/post';
     } else {
-        console.log('User cancelled the post operation.');
+
     }
 };
 
@@ -600,7 +503,7 @@ const showGetCFModal = ref(false);
 
 const toggleGetCFModal = () => {
     showGetCFModal.value = true;
-    console.log(JOURNALID.value);
+
 };
 
 const GetCFModalHandler = () => {
@@ -613,13 +516,9 @@ const SYNCFG = () => {
     if (userConfirmed) {
         window.location.href = '/finish-goods/sync';
     } else {
-        console.log('User cancelled the post operation.');
+
     }
 };
-
-/* const SYNCFG = () => { 
-    window.location.href = '/finish-goods/sync';
-}; */
 
 </script>
 
@@ -704,16 +603,16 @@ const SYNCFG = () => {
               <!-- <h6 class="ml-2">{{ routes }}</h6> -->
           </div>
         </div>
-        
+
         <div class="custom-datatable">
-          <div :class="{ 'blur-overlay': isLoading }">  
-              <DataTable 
-              :data="processedOrders" 
-              :columns="columns" 
-              class="w-full relative display" 
+          <div :class="{ 'blur-overlay': isLoading }">
+              <DataTable
+              :data="processedOrders"
+              :columns="columns"
+              class="w-full relative display"
               :options="options"
               >
-              
+
               <template #action="data">
                 <div class="flex justify-start">
                 </div>
@@ -721,7 +620,7 @@ const SYNCFG = () => {
             </DataTable>
           </div>
         </div>
-        
+
       </TableContainer>
     </template>
   </Main>
@@ -750,10 +649,10 @@ const SYNCFG = () => {
   position: sticky;
   top: 0;
   z-index: 2;
-  height: auto; /* Allow the height to adjust */
-  padding: 10px 5px; /* Increase padding */
-  white-space: normal; /* Allow text to wrap */
-  vertical-align: top; /* Align text to top */
+  height: auto;
+  padding: 10px 5px;
+  white-space: normal;
+  vertical-align: top;
 }
 
 .custom-datatable ::v-deep .dataTables_scrollHead th.frozen-column,
@@ -763,7 +662,7 @@ const SYNCFG = () => {
   z-index: 1;
 }
 
-.custom-datatable ::v-deep th, 
+.custom-datatable ::v-deep th,
 .custom-datatable ::v-deep td {
   white-space: nowrap;
   overflow: hidden;
@@ -829,7 +728,6 @@ const SYNCFG = () => {
 .custom-datatable ::v-deep tbody tr:hover {
   background-color: #e5e7eb;
 }
-
 
 .blur-overlay {
   filter: blur(5px);

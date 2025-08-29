@@ -29,7 +29,7 @@ export default {
 
 <style scoped>
 .digital-clock {
-    font-size: 1rem; /* Adjust size as needed */
+    font-size: 1rem;
     font-weight: bold;
     margin-left: 200px;
     color: rgb(25, 0, 168);

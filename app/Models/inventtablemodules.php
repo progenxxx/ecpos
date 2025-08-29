@@ -27,7 +27,6 @@ class inventtablemodules extends Model
         'inventlocationid',
         'pricedate',
         'taxitemgroupid',
-        // Added new price fields
         'manilaprice',
         'grabfood',
         'foodpanda',

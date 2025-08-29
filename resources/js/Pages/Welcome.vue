@@ -25,7 +25,7 @@ onMounted(() => {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
     </Head>
-    
+
     <div class="min-h-screen bg-gray-50">
         <!-- Header -->
         <header class="fixed w-full bg-white shadow-md z-50">

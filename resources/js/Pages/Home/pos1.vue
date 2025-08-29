@@ -113,7 +113,7 @@ const showTab = (showThisParam, titleParam) => {
                             {{ window123.DESCRIPTION }}
                         </window>
                     </div>
-                    
+
                     <!-- <window :show-this="showThis == 'purchase'" url="/purchase">
                         Purchase Window 2
                     </window>
@@ -123,7 +123,6 @@ const showTab = (showThisParam, titleParam) => {
                     <window :show-this="showThis == 'purchase'" url="/purchase">
                         Purchase Window 4
                     </window> -->
-
 
                     <window :show-this="showThis == 'party-cake'" url="/party_cake" >
                         Party Cake Window 1
@@ -138,7 +137,6 @@ const showTab = (showThisParam, titleParam) => {
                         Party Cake Window 4
                     </window>
 
-
                     <window :show-this="showThis == 'reseller'" url="/reseller" >
                         Reseller Window 1
                     </window>
@@ -151,7 +149,6 @@ const showTab = (showThisParam, titleParam) => {
                     <window :show-this="showThis == 'reseller'" url="/reseller">
                         Reseller Window 4
                     </window>
-
 
                     <window :show-this="showThis == 'tie-up'" url="/tie_up" >
                         Tie up Window 1
@@ -166,7 +163,6 @@ const showTab = (showThisParam, titleParam) => {
                         Tie up Window 4
                     </window>
 
-
                     <window :show-this="showThis == 'advance-order'" url="/advance_order">
                         Advance Order Window 1
                     </window>
@@ -179,7 +175,6 @@ const showTab = (showThisParam, titleParam) => {
                     <window :show-this="showThis == 'advance-order'" url="/advance_order">
                         Advance Order Window 4
                     </window>
-                    
 
                 </div>
             </section>
@@ -190,6 +185,6 @@ const showTab = (showThisParam, titleParam) => {
 
 <style >
 .vue-slide {
-  transition: transform 0.3s ease; /* Adjust duration and easing as needed */
+  transition: transform 0.3s ease;
 }
 </style>

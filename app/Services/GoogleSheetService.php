@@ -11,7 +11,7 @@ class GoogleSheetService
     public function __construct()
     {
         $this->client = new Client();
-        $this->client->setAuthConfig(storage_path('app/public/API/finished-goods-9b2565bb6e35.json')); // Adjust path as needed
+        $this->client->setAuthConfig(storage_path('app/public/API/finished-goods-9b2565bb6e35.json'));
         $this->client->addScope(Sheets::SPREADSHEETS_READONLY);
         $this->client->setAccessType('offline');
         $this->client->setPrompt('select_account consent');

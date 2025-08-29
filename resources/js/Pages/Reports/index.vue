@@ -24,8 +24,7 @@ const props = defineProps({
 });
 
 const layoutComponent = computed(() => {
-    console.log('userRole value:', props.userRole);
-    console.log('Is Store?:', props.userRole.toUpperCase() === 'STORE');
+
     return props.userRole.toUpperCase() === 'STORE' ? StorePanel : Main;
 });
 
@@ -34,34 +33,34 @@ const cards = ref([
     id: 1,
     title: 'VARIANCE',
     description: 'Track daily sales variations and trends',
-    icon: '💰',
+    icon: '',
     animationClass: 'variance-animation',
     route: 'reports.inventory',
-    /* stats: '+2.5% from last week' */
+
   },
   {
     id: 2,
     title: 'ACCOUNT RECEIVABLE',
     description: 'Monitor pending payments and collections',
-    icon: '📊',
+    icon: '',
     animationClass: 'receivable-animation',
     route: 'reports.ar',
-    /* stats: '₱145,230 pending' */
+
   },
   {
     id: 3,
     title: 'EMPLOYEE CHARGES',
     description: 'Track employee sales performance',
-    icon: '👥',
+    icon: '',
     animationClass: 'employee-animation',
     route: 'reports.ec',
-    /* stats: '32 active employees' */
+
   },
   {
     id: 4,
     title: 'BAD ORDERS',
     description: 'Monitor and analyze rejected orders',
-    icon: '⚠️',
+    icon: '',
     animationClass: 'bad-orders-animation',
     route: 'reports.bo',
   },
@@ -69,7 +68,7 @@ const cards = ref([
     id: 5,
     title: 'REGULAR DISCOUNT',
     description: 'Track standard discount applications',
-    icon: '🏷️',
+    icon: '',
     animationClass: 'discount-animation',
     route: 'reports.rd',
   },
@@ -77,7 +76,7 @@ const cards = ref([
     id: 6,
     title: 'MARKETING DISCOUNT',
     description: 'Monitor promotional campaign results',
-    icon: '📢',
+    icon: '',
     animationClass: 'marketing-animation',
     route: 'reports.md',
   },
@@ -85,10 +84,10 @@ const cards = ref([
     id: 7,
     title: 'SALES',
     description: 'View overall sales performance',
-    icon: '📈',
+    icon: '',
     animationClass: 'sales-animation',
     route: 'reports.sales',
-    /* stats: '₱1.2M today' */
+
   },
   {
     id: 8,
@@ -97,43 +96,43 @@ const cards = ref([
     icon: '⏰',
     animationClass: 'hourly-animation',
     route: 'reports.test',
-    /* stats: 'Peak: 2-4 PM' */
+
   },
   {
     id: 9,
     title: 'Transaction Sales',
     description: 'Analyze transaction sales to identify trends and growth.',
-    icon: '📊',
+    icon: '',
     animationClass: 'comparison-animation',
     route: 'reports.tsales',
-    /* stats: '+15% vs last month' */
+
   },
   {
     id: 10,
     title: 'ORDERS',
     description: 'Track order volume and status',
-    icon: '📦',
+    icon: '',
     animationClass: 'orders-animation',
     route: 'orderingconso.index',
-    /* stats: '234 today' */
+
   },
   {
     id: 11,
     title: 'DELIVERY',
     description: 'Monitor delivery performance',
-    icon: '🚚',
+    icon: '',
     animationClass: 'delivery-animation',
     route: 'receivedorderconso.ro',
-    /* stats: '98% on-time' */
+
   },
   {
     id: 12,
     title: 'ITEM SALES',
     description: 'Analyze Item Sales',
-    icon: '📦',
+    icon: '',
     animationClass: 'stocks-animation',
     route: 'reports.itemsales',
-    /* stats: '1,234 items' */
+
   }
 ]);
 </script>
@@ -170,14 +169,14 @@ const cards = ref([
                 </div>
               </div>
             </div>
-            
+
             <div class="p-6">
               <h3 class="text-xl font-bold text-gray-900 mb-2">{{ card.title }}</h3>
               <p class="text-gray-600 text-sm mb-4">{{ card.description }}</p>
-              
+
               <div class="flex justify-between items-center">
                 <span class="text-sm font-semibold text-purple-600">{{ card.stats }}</span>
-                <span class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 
+                <span class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600
                            transition-colors duration-200 text-sm">
                   View Report
                 </span>
@@ -209,7 +208,6 @@ const cards = ref([
   align-items: center;
 }
 
-/* Variance Animation */
 .variance-animation .animation-elements::before,
 .variance-animation .animation-elements::after {
   content: '₱';
@@ -229,7 +227,6 @@ const cards = ref([
   animation-delay: 1s;
 }
 
-/* Receivable Animation */
 .receivable-animation .animation-elements {
   position: absolute;
   width: 100%;
@@ -238,13 +235,12 @@ const cards = ref([
 }
 
 .receivable-animation .animation-elements::before {
-  content: '📋';
+  content: '';
   position: absolute;
   font-size: 24px;
   animation: bounce 1s infinite;
 }
 
-/* Employee Animation */
 .employee-animation .animation-elements {
   position: absolute;
   width: 100%;
@@ -253,21 +249,19 @@ const cards = ref([
 
 .employee-animation .animation-elements::before,
 .employee-animation .animation-elements::after {
-  content: '🌟';
+  content: '';
   position: absolute;
   font-size: 20px;
   animation: sparkle 1.5s infinite;
 }
 
-/* Bad Orders Animation */
 .bad-orders-animation .animation-elements::before {
-  content: '❌';
+  content: '';
   position: absolute;
   font-size: 24px;
   animation: shake 0.5s infinite;
 }
 
-/* Discount Animation */
 .discount-animation .animation-elements::before {
   content: '%';
   position: absolute;
@@ -276,47 +270,41 @@ const cards = ref([
   animation: pulse 1s infinite;
 }
 
-/* Marketing Animation */
 .marketing-animation .animation-elements::before {
-  content: '🎯';
+  content: '';
   position: absolute;
   font-size: 24px;
   animation: targetBounce 1.5s infinite;
 }
 
-/* Sales Animation */
 .sales-animation .animation-elements::before {
-  content: '📈';
+  content: '';
   position: absolute;
   font-size: 24px;
   animation: growUp 2s infinite;
 }
 
-/* Orders Animation */
 .orders-animation .animation-elements::before {
-  content: '📦';
+  content: '';
   position: absolute;
   font-size: 24px;
   animation: slide 2s infinite;
 }
 
-/* Delivery Animation */
 .delivery-animation .animation-elements::before {
-  content: '🚚';
+  content: '';
   position: absolute;
   font-size: 24px;
   animation: drive 3s infinite linear;
 }
 
-/* Stocks Animation */
 .stocks-animation .animation-elements::before {
-  content: '📦';
+  content: '';
   position: absolute;
   font-size: 24px;
   animation: stack 2s infinite;
 }
 
-/* Hourly Animation */
 .hourly-animation .animation-elements::before {
   content: '⏰';
   position: absolute;
@@ -324,9 +312,8 @@ const cards = ref([
   animation: tick 1s infinite;
 }
 
-/* Comparison Animation */
 .comparison-animation .animation-elements::before {
-  content: '📊';
+  content: '';
   position: absolute;
   font-size: 24px;
   animation: compare 2s infinite;

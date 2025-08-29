@@ -7,8 +7,8 @@ import PrimaryButton from "@/Components/Buttons/PrimaryButton.vue";
 import DangerButton from "@/Components/Buttons/DangerButton.vue";
 import Main from "@/Layouts/AdminPanel.vue";
 import Excel from "@/Components/Exports/Excel.vue";
-import Add from "@/Components/Svgs/Add.vue";    
-import TrashRed from "@/Components/Svgs/TrashRed.vue";   
+import Add from "@/Components/Svgs/Add.vue";
+import TrashRed from "@/Components/Svgs/TrashRed.vue";
 import editblue from "@/Components/Svgs/editblue.vue";
 import moreblue from "@/Components/Svgs/moreblue.vue";
 import TableContainer from "@/Components/Tables/TableContainer.vue";
@@ -35,12 +35,12 @@ const props = defineProps({
 const columns = [
     { data: 'id', title: 'ID' },
     { data: 'SUBJECT', title: 'SUBJECT' },
-    { 
-        data: 'created_at', 
+    {
+        data: 'created_at',
         title: 'DATE',
         render: function(data, type, row) {
             if (type === 'display' || type === 'filter') {
-                return data.split('T')[0]; 
+                return data.split('T')[0];
             }
             return data;
         }
@@ -94,15 +94,15 @@ const router = useRouter();
     <Main active-tab="ANNOUNCEMENT">
         <template v-slot:modals>
             <Create :show-modal="showCreateModal" @toggle-active="createModalHandler"  />
-            <Update 
-                :show-modal="showModalUpdate"  
-                :ID="id" 
-                :SUBJECT="subject"  
-                :DESCRIPTION="description" 
+            <Update
+                :show-modal="showModalUpdate"
+                :ID="id"
+                :SUBJECT="subject"
+                :DESCRIPTION="description"
                 @toggle-active="updateModalHandler"
             />
             <Delete :show-modal="showDeleteModal" :ID="id" @toggle-active="deleteModalHandler"  />
-            
+
         </template>
 
         <template v-slot:main>
@@ -122,9 +122,9 @@ const router = useRouter();
                 <DataTable :data="announcements" :columns="columns" class="w-full relative display" :options="options">
                     <template #action="data">
                         <div class="flex justify-start">
-                            <TransparentButton 
-                                type="button" 
-                                @click="toggleUpdateModal(data.cellData.id, data.cellData.SUBJECT, data.cellData.DESCRIPTION)" 
+                            <TransparentButton
+                                type="button"
+                                @click="toggleUpdateModal(data.cellData.id, data.cellData.SUBJECT, data.cellData.DESCRIPTION)"
                                 class="me-1 mr-20"
                             >
                                 <editblue class="h-6 cursor-pointer"></editblue>

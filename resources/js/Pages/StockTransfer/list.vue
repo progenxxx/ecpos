@@ -2,7 +2,7 @@
     <Head title="Stock Transfers">
       <meta name="description" content="Stock Transfer Management System" />
     </Head>
-  
+
     <AdminPanel :active-tab="'STOCKTRANSFER'" :user="$page.props.auth.user">
       <template #main>
     <div class="py-6">
@@ -91,8 +91,8 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th 
-                                    v-for="column in columns" 
+                                <th
+                                    v-for="column in columns"
                                     :key="column.key"
                                     @click="column.sortable ? sortBy(column.key) : null"
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
@@ -101,28 +101,28 @@
                                     <div class="flex items-center">
                                         {{ column.label }}
                                         <template v-if="column.sortable">
-                                            <svg 
-                                                class="ml-2 h-4 w-4" 
+                                            <svg
+                                                class="ml-2 h-4 w-4"
                                                 :class="{
                                                     'text-gray-400': sortKey !== column.key,
                                                     'text-indigo-600': sortKey === column.key
                                                 }"
-                                                fill="none" 
-                                                viewBox="0 0 24 24" 
+                                                fill="none"
+                                                viewBox="0 0 24 24"
                                                 stroke="currentColor"
                                             >
-                                                <path 
-                                                    v-if="sortKey === column.key && sortOrder === 'desc'" 
-                                                    stroke-linecap="round" 
-                                                    stroke-linejoin="round" 
-                                                    stroke-width="2" 
+                                                <path
+                                                    v-if="sortKey === column.key && sortOrder === 'desc'"
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
                                                     d="M19 9l-7 7-7-7"
                                                 />
-                                                <path 
+                                                <path
                                                     v-else
-                                                    stroke-linecap="round" 
-                                                    stroke-linejoin="round" 
-                                                    stroke-width="2" 
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
                                                     d="M5 15l7-7 7 7"
                                                 />
                                             </svg>
@@ -149,7 +149,7 @@
                                     {{ transfer.to_store?.NAME }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span 
+                                    <span
                                         class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
                                         :class="getStatusClass(transfer.status)"
                                     >
@@ -163,20 +163,20 @@
                                     {{ formatCurrency(transfer.total_amount) }}
                                 </td> -->
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button 
+                                    <button
                                         @click="viewTransfer(transfer)"
                                         class="text-indigo-600 hover:text-indigo-900 mr-3"
                                     >
                                         View
                                     </button>
                                     <template v-if="transfer.status === 'request' && canManageTransfer(transfer)">
-                                        <button 
+                                        <button
                                             @click="updateStatus(transfer.id, 'approved')"
                                             class="text-green-600 hover:text-green-900 mr-3"
                                         >
                                             Approve
                                         </button>
-                                        <button 
+                                        <button
                                             @click="updateStatus(transfer.id, 'rejected')"
                                             class="text-red-600 hover:text-red-900"
                                         >
@@ -446,7 +446,7 @@
                                     </div>
                                     <div>
                                         <p class="text-sm text-gray-500">Status</p>
-                                        <span 
+                                        <span
                                             class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
                                             :class="getStatusClass(selectedTransfer?.status)"
                                         >
@@ -567,7 +567,6 @@ const props = defineProps({
   }
 })
 
-// Column definitions
 const columns = [
     { key: 'transfer_number', label: 'Transfer #', sortable: true },
     { key: 'created_at', label: 'Date', sortable: true },
@@ -575,10 +574,9 @@ const columns = [
     { key: 'to_store', label: 'To Store', sortable: true },
     { key: 'status', label: 'Status', sortable: true },
     { key: 'items_count', label: 'Items', sortable: true },
-    /* { key: 'total_amount', label: 'Total Amount', sortable: true } */
+
 ]
 
-// State
 const showModal = ref(false)
 const showViewModal = ref(false)
 const loading = ref(false)
@@ -593,13 +591,11 @@ const sortOrder = ref('desc')
 const selectedTransfer = ref(null)
 const formErrors = ref({})
 
-// Form state
 const form = reactive({
     destinationStore: '',
     notes: ''
 })
 
-// Filters state
 const filters = ref({
     search: '',
     status: '',
@@ -607,7 +603,6 @@ const filters = ref({
     dateTo: ''
 })
 
-// Computed Properties
 const currentStoreName = computed(() => {
     const store = props.stores.find(s => s.STOREID === props.currentStore)
     return store ? store.NAME : props.currentStore || 'No Store Selected'
@@ -618,7 +613,7 @@ const filteredData = computed(() => {
 
     if (filters.value.search) {
         const searchTerm = filters.value.search.toLowerCase()
-        data = data.filter(item => 
+        data = data.filter(item =>
             item.transfer_number?.toLowerCase().includes(searchTerm) ||
             item.from_store?.NAME?.toLowerCase().includes(searchTerm) ||
             item.to_store?.NAME?.toLowerCase().includes(searchTerm)
@@ -640,11 +635,10 @@ const filteredData = computed(() => {
         data = data.filter(item => new Date(item.created_at) <= toDate)
     }
 
-    // Apply sorting
     data.sort((a, b) => {
         let aValue = a[sortKey.value]
         let bValue = b[sortKey.value]
-        
+
         if (sortKey.value === 'from_store' || sortKey.value === 'to_store') {
             aValue = a[sortKey.value]?.NAME
             bValue = b[sortKey.value]?.NAME
@@ -652,11 +646,11 @@ const filteredData = computed(() => {
             aValue = getTransferTotal(a)
             bValue = getTransferTotal(b)
         }
-        
+
         if (sortOrder.value === 'desc') {
             [aValue, bValue] = [bValue, aValue]
         }
-        
+
         return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
     })
 
@@ -668,7 +662,7 @@ const paginatedData = computed(() => {
     return filteredData.value.slice(start, start + itemsPerPage)
 })
 
-const totalPages = computed(() => 
+const totalPages = computed(() =>
     Math.ceil(filteredData.value.length / itemsPerPage)
 )
 
@@ -676,7 +670,7 @@ const displayedPages = computed(() => {
     const total = totalPages.value
     const current = currentPage.value
     const pages = []
-    
+
     if (total <= 7) {
         for (let i = 1; i <= total; i++) {
             pages.push(i)
@@ -698,29 +692,29 @@ const displayedPages = computed(() => {
             pages.push(total)
         }
     }
-    
+
     return pages
 })
 
-const paginationStart = computed(() => 
+const paginationStart = computed(() =>
     ((currentPage.value - 1) * itemsPerPage) + 1
 )
 
-const paginationEnd = computed(() => 
+const paginationEnd = computed(() =>
     Math.min(currentPage.value * itemsPerPage, filteredData.value.length)
 )
 
 const filteredItems = computed(() => {
     if (!searchQuery.value) return props.items
-    
+
     const query = searchQuery.value.toLowerCase()
-    return props.items.filter(item => 
+    return props.items.filter(item =>
         item.itemname.toLowerCase().includes(query) ||
         item.itemid.toString().toLowerCase().includes(query)
     )
 })
 
-const selectedItemsCount = computed(() => 
+const selectedItemsCount = computed(() =>
     Object.values(quantities.value).filter(qty => qty > 0).length
 )
 
@@ -728,7 +722,7 @@ const totalAmount = computed(() => {
     return Object.entries(quantities.value).reduce((sum, [itemId, quantity]) => {
         if (quantity > 0) {
             const item = props.items.find(i => i.itemid === itemId)
-            // Price is now priceincltax from the backend
+
             return sum + (quantity * (item?.price || 0))
         }
         return sum
@@ -739,7 +733,6 @@ const isValid = computed(() => {
     return form.destinationStore && selectedItemsCount.value > 0
 })
 
-// Methods
 const handleQuantityChange = (itemId) => {
     if (quantities.value[itemId] < 0) {
         quantities.value[itemId] = 0
@@ -748,7 +741,7 @@ const handleQuantityChange = (itemId) => {
 
 const createTransfer = async () => {
     if (!isValid.value) return
-    
+
     try {
         loading.value = true
         formErrors.value = {}
@@ -770,125 +763,5 @@ const createTransfer = async () => {
         closeModal()
         window.location.reload()
     } catch (err) {
-        console.error('Transfer creation error:', err)
-        if (err.response?.data?.errors) {
-            formErrors.value = err.response.data.errors
-        } else {
-            error.value = err.response?.data?.message || 'Failed to create transfer'
-        }
-    } finally {
-        loading.value = false
-    }
-}
 
-const updateStatus = async (transferId, status) => {
-    if (!transferId) return
-    
-    try {
-        loading.value = true
-        await axios.patch(`/stock-transfer/${transferId}/status`, { status })
-        
-        successMessage.value = `Transfer ${status} successfully`
-        if (showViewModal.value) {
-            closeViewModal()
-        }
-        
-        window.location.reload()
-    } catch (err) {
-        console.error('Status update error:', err)
-        error.value = err.response?.data?.message || `Failed to ${status} transfer`
-    } finally {
-        loading.value = false
-    }
-}
-
-const resetForm = () => {
-    form.destinationStore = ''
-    form.notes = ''
-    quantities.value = {}
-    formErrors.value = {}
-    searchQuery.value = ''
-}
-
-const closeModal = () => {
-    showModal.value = false
-    resetForm()
-}
-
-const closeViewModal = () => {
-    showViewModal.value = false
-    selectedTransfer.value = null
-}
-
-const viewTransfer = (transfer) => {
-    selectedTransfer.value = transfer
-    showViewModal.value = true
-}
-
-const sortBy = (key) => {
-    if (sortKey.value === key) {
-        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-    } else {
-        sortKey.value = key
-        sortOrder.value = 'asc'
-    }
-}
-
-const getStatusClass = (status) => {
-    const classes = {
-        request: 'bg-yellow-100 text-yellow-800',
-        approved: 'bg-green-100 text-green-800',
-        rejected: 'bg-red-100 text-red-800'
-    }
-    return classes[status] || 'bg-gray-100 text-gray-800'
-}
-
-const formatDate = (date) => {
-    if (!date) return ''
-    return format(new Date(date), 'MMM dd, yyyy HH:mm')
-}
-
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('en-PH', {
-        style: 'currency',
-        currency: 'PHP'
-    }).format(value || 0)
-}
-
-const getItemName = (itemId) => {
-    return props.items.find(item => item.itemid === itemId)?.itemname || ''
-}
-
-const getItemUnit = (itemId) => {
-    return props.items.find(item => item.itemid === itemId)?.unitid || ''
-}
-
-const getTransferTotal = (transfer) => {
-    if (!transfer?.items) return 0
-    return transfer.items.reduce((sum, item) => 
-        sum + (item.quantity * item.unit_price), 0
-    )
-}
-
-const canManageTransfer = (transfer) => {
-    return transfer.to_store_id === props.currentStore
-}
-
-// Watchers
-watch(showModal, (newValue) => {
-    if (!newValue) {
-        resetForm()
-    }
-})
-
-watch([filters, sortKey, sortOrder], () => {
-    currentPage.value = 1
-})
-
-// Lifecycle hooks
-onMounted(() => {
-    if (!props.currentStore) {
-        error.value = 'Store information not found. Please refresh the page.'
-    }
-})
 </script>

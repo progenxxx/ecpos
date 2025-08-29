@@ -19,14 +19,6 @@ class sptables extends Model
         'DELETEPOSTEDLINES',
         'CREATEDDATETIME'
 
-        /* 'journalid',
-        'storeid',
-        'description',
-        'posted',
-        'posteddatetime',
-        'journaltype',
-        'deletedpostedlines',
-        'createddatetime' */
         
     ];
 }

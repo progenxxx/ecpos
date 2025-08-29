@@ -56,7 +56,6 @@ const submit = () => {
                 </span>
             </div>
 
-
             <div v-if="canLogin" class="flex items-center gap-4">
                 <Link v-if="$page.props.auth.user" :href="route('dashboard')" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
                     Dashboard
@@ -102,8 +101,8 @@ const submit = () => {
                     />
                     <InputError class="mt-2" :message="form.errors.email" />
                 </div>
-                
-                <div class="mt-7">                
+
+                <div class="mt-7">
                     <TextInput
                         id="password"
                         v-model="form.password"
@@ -121,13 +120,13 @@ const submit = () => {
                         <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" name="remember">
                         <span class="ml-2 text-sm text-gray-600">Remember me</span>
                     </label>
-                    <div class="w-full text-right">     
-                        <a class="underline text-sm text-gray-600 hover:text-gray-900" href="#">Forgot your password?</a>                                  
+                    <div class="w-full text-right">
+                        <a class="underline text-sm text-gray-600 hover:text-gray-900" href="#">Forgot your password?</a>
                     </div>
                 </div>
 
                 <div class="mt-7">
-                    <button 
+                    <button
                         class="bg-blue-500 w-full py-3 rounded-xl text-white shadow-xl hover:shadow-inner focus:outline-none transition duration-500 ease-in-out transform hover:-translate-x hover:scale-105"
                         :class="{ 'opacity-25': form.processing }" :disabled="form.processing"
                     >

@@ -152,7 +152,6 @@ const props = defineProps({
   }
 })
 
-// Toast Configuration
 const Toast = Swal.mixin({
   toast: true,
   position: 'top-end',
@@ -166,8 +165,6 @@ const filters = ref({
   period: 'all'
 })
 
-// Form handlers remain the same
-
 const getStatusClass = (status) => {
   const classes = {
     active: 'bg-green-100 text-green-800',
@@ -178,7 +175,7 @@ const getStatusClass = (status) => {
 }
 
 const getTransactionTypeClass = (type) => {
-  return type === 'earn' 
+  return type === 'earn'
     ? 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800'
     : 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800'
 }
@@ -211,60 +208,17 @@ const canRedeemPoints = computed(() => {
 
 const filteredTransactions = computed(() => {
   if (!Array.isArray(props.transactions)) {
-    console.warn('transactions prop is not an array:', props.transactions)
-    return []
-  }
-
-  let filtered = [...props.transactions]
-
-  // Filter by type
-  if (filters.value.type) {
-    filtered = filtered.filter(t => t.type === filters.value.type)
-  }
-
-  // Filter by period
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const thisWeek = new Date(today)
-  thisWeek.setDate(today.getDate() - today.getDay())
-  const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-  const thisYear = new Date(now.getFullYear(), 0, 1)
-
-  switch (filters.value.period) {
-    case 'today':
-      filtered = filtered.filter(t => new Date(t.created_at) >= today)
-      break
-    case 'week':
-      filtered = filtered.filter(t => new Date(t.created_at) >= thisWeek)
-      break
-    case 'month':
-      filtered = filtered.filter(t => new Date(t.created_at) >= thisMonth)
-      break
-    case 'year':
-      filtered = filtered.filter(t => new Date(t.created_at) >= thisYear)
-      break
-  }
-
-  return filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-})
-
-// Form submission methods remain the same
-</script>
-
-<style scoped>
-/* Responsive adjustments */
-@media (max-width: 640px) {
+     {
   .container {
     padding: 1rem;
   }
 }
 
-/* Table adjustments for mobile */
 @media (max-width: 768px) {
   .overflow-x-auto {
     margin: 0 -1rem;
   }
-  
+
   .table-container {
     padding: 0 1rem;
   }

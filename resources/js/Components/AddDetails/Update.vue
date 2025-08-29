@@ -61,7 +61,7 @@ const submitForm = () => {
     form.patch("/updatedetails/patch", {
         preserveScroll: true,
     });
-    /* location.reload(); */
+
 };
 
 const emit = defineEmits();
@@ -121,7 +121,7 @@ onMounted(() => {
                         autofocus
                     />
                     <InputError :message="form.errors.PLENCODER" class="mt-2" />
-                    </div> 
+                    </div>
 
                     <div class="col-span-3 mt-4">
                     <InputLabel for="PACKINGLIST ENCODER" value="PACKINGLIST ENCODER" />
@@ -134,7 +134,7 @@ onMounted(() => {
                         autofocus
                     />
                     <InputError :message="form.errors.PLENCODER" class="mt-2" />
-                    </div> 
+                    </div>
 
                     <div class="col-span-3 mt-4">
                     <InputLabel for="DISPATCHER" value="DISPATCHER" />
@@ -198,7 +198,7 @@ onMounted(() => {
                     />
                     <InputError :message="form.errors.DELIVERYDATE" class="mt-2" />
                     </div>
-                    
+
                 </div>
             </form>
         </template>

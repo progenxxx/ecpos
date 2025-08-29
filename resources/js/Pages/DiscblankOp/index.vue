@@ -16,7 +16,6 @@ const ID = ref('');
 const DISCTYPE = ref('');
 const ISPRECENTAGE = ref('');
 
-
 const showModalUpdate = ref(false);
 const showCreateModal = ref(false);
 const showDeleteModal = ref(false);
@@ -32,7 +31,7 @@ const columns = [
     { data: 'ID', title: 'ID' },
     { data: 'DISCTYPE', title: 'DISCTYPE' },
     { data: 'ISPRECENTAGE', title: 'ISPRECENTAGE' },
-   
+
     {
         data: null,
         render: '#action',
@@ -47,12 +46,11 @@ const options = {
     scrollCollapse: true,
 };
 
-
 const toggleUpdateModal = (newID, newDISCTYPE, newISPRECENTAGE) => {
     ID.value = newID;
     DISCTYPE.value = newDISCTYPE;
     ISPRECENTAGE.value = newISPRECENTAGE;
-  
+
     showModalUpdate.value = true;
 };
 const toggleDeleteModal = (newID) => {
@@ -63,7 +61,6 @@ const toggleDeleteModal = (newID) => {
 const toggleCreateModal = () => {
     showCreateModal.value = true;
 };
-
 
 const updateModalHandler = () => {
     showModalUpdate.value = false;

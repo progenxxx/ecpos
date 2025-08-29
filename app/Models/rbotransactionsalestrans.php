@@ -11,13 +11,6 @@ class rbotransactionsalestrans extends Model
 
     protected $table = 'rbotransactionsalestrans';
 
-    /* protected $primaryKey = ['transactionid', 'linenum'];
-
-    public $incrementing = false;
-
-    protected $keyType = 'array';
-
-    public $timestamps = false; */
 
     protected $fillable = [
         'id',
@@ -111,13 +104,4 @@ class rbotransactionsalestrans extends Model
         'taxexempt' => 'decimal:2',
     ];
 
-    /* public function getKeyType()
-    {
-        return 'array';
-    }
-
-    public function getIncrementing()
-    {
-        return false;
-    } */
 }

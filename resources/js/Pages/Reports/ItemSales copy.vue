@@ -1,6 +1,6 @@
 <script setup>
 import Main from "@/Layouts/AdminPanel.vue";
-import StorePanel from "@/Layouts/Main.vue";  
+import StorePanel from "@/Layouts/Main.vue";
 import MultiSelectDropdown from "@/Components/MultiSelect/MultiSelectDropdown.vue";
 import TableContainer from "@/Components/Tables/TableContainer.vue";
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
@@ -42,8 +42,7 @@ const props = defineProps({
 });
 
 const layoutComponent = computed(() => {
-    console.log('userRole value:', props.userRole);
-    console.log('Is Store?:', props.userRole.toUpperCase() === 'STORE');
+
     return props.userRole.toUpperCase() === 'STORE' ? StorePanel : Main;
 });
 
@@ -52,30 +51,28 @@ const footerTotals = computed(() => {
         const netAmount = Number(curr.total_netamount || 0);
         const discAmount = Number(curr.total_discamount || 0);
         const grossAmount = Number(curr.total_grossamount || 0);
-        const qty = Number(curr.total_qty || 0);  // Make sure total_qty is always treated as a number
+        const qty = Number(curr.total_qty || 0);
 
         return {
             total_netamount: (acc.total_netamount * 100 + netAmount * 100) / 100,
             total_discamount: (acc.total_discamount * 100 + discAmount * 100) / 100,
             total_grossamount: (acc.total_grossamount * 100 + grossAmount * 100) / 100,
-            total_qty: acc.total_qty + qty  // Summing up total_qty
+            total_qty: acc.total_qty + qty
         };
     }, {
         total_netamount: 0,
         total_discamount: 0,
         total_grossamount: 0,
-        total_qty: 0  // Initialize total_qty properly here
+        total_qty: 0
     });
 });
 
-// Initialize filters from props
 onMounted(() => {
     selectedStores.value = props.filters.selectedStores || [];
     startDate.value = props.filters.startDate || '';
     endDate.value = props.filters.endDate || '';
 });
 
-// Handle filter changes
 const handleFilterChange = () => {
     if (startDate.value && endDate.value && new Date(startDate.value) > new Date(endDate.value)) {
         alert('Start date cannot be later than end date');
@@ -83,7 +80,7 @@ const handleFilterChange = () => {
         endDate.value = '';
         return;
     }
-    
+
     const params = {
         startDate: startDate.value || null,
         endDate: endDate.value || null,
@@ -100,19 +97,16 @@ const handleFilterChange = () => {
     );
 };
 
-// Watch for filter changes with debounce
 let filterTimeout;
 watch([selectedStores, startDate, endDate], () => {
     clearTimeout(filterTimeout);
     filterTimeout = setTimeout(handleFilterChange, 500);
 }, { deep: true });
 
-// Cleanup on component unmount
 onUnmounted(() => {
     clearTimeout(filterTimeout);
 });
 
-// Formatter function
 const formatCurrency = (value) => {
     return `₱${parseFloat(value).toLocaleString(undefined, {
         minimumFractionDigits: 2,
@@ -120,38 +114,37 @@ const formatCurrency = (value) => {
     })}`;
 };
 
-// Columns for DataTable
 const columns = [
-    { 
-        data: 'itemname', 
-        title: 'ITEMNAME', 
+    {
+        data: 'itemname',
+        title: 'ITEMNAME',
         footer: 'Grand Total'
     },
-    { 
-        data: 'itemgroup', 
+    {
+        data: 'itemgroup',
         title: 'Category',
         footer: ''
     },
-    { 
-        data: 'total_qty', 
+    {
+        data: 'total_qty',
         title: 'QTY',
-        render: (data) => `${Math.floor(data)}`, // Truncate decimals without rounding
+        render: (data) => `${Math.floor(data)}`,
         footer: `${Math.floor(footerTotals.value.total_qty)}`
     },
-    { 
-        data: 'total_netamount', 
+    {
+        data: 'total_netamount',
         title: 'Net Amount',
         render: (data) => formatCurrency(data),
         footer: formatCurrency(footerTotals.value.total_netamount)
     },
-    { 
-        data: 'total_discamount', 
+    {
+        data: 'total_discamount',
         title: 'Discount Amount',
         render: (data) => formatCurrency(data),
         footer: formatCurrency(footerTotals.value.total_discamount)
     },
-    { 
-        data: 'total_grossamount', 
+    {
+        data: 'total_grossamount',
         title: 'Gross Amount',
         render: (data) => formatCurrency(data),
         footer: formatCurrency(footerTotals.value.total_grossamount)
@@ -182,46 +175,40 @@ const exportToExcel = () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Sales Report');
 
-    // Add header row with column titles
     worksheet.addRow(['Item Name', 'Category', 'QTY', 'Net Amount', 'Discount Amount', 'Gross Amount']);
 
-    // Set column widths and formats
     worksheet.columns = [
         { header: 'Item Name', key: 'itemname', width: 30 },
         { header: 'Category', key: 'itemgroup', width: 20 },
-        { header: 'QTY', key: 'total_qty', width: 15, style: { numFmt: '#,##0' } }, // Format QTY as integers
-        { header: 'Net Amount', key: 'netAmount', width: 20, style: { numFmt: '#,##0.00' } }, // Format as currency
+        { header: 'QTY', key: 'total_qty', width: 15, style: { numFmt: '#,##0' } },
+        { header: 'Net Amount', key: 'netAmount', width: 20, style: { numFmt: '#,##0.00' } },
         { header: 'Discount Amount', key: 'discountAmount', width: 20, style: { numFmt: '#,##0.00' } },
         { header: 'Gross Amount', key: 'grossAmount', width: 20, style: { numFmt: '#,##0.00' } }
     ];
 
-    // Add data rows
     props.ar.forEach(item => {
         worksheet.addRow({
             itemname: item.itemname,
             itemgroup: item.itemgroup,
-            total_qty: Math.floor(item.total_qty || 0), // Make sure qty is an integer
+            total_qty: Math.floor(item.total_qty || 0),
             netAmount: item.total_netamount,
             discountAmount: item.total_discamount,
             grossAmount: item.total_grossamount
         });
     });
 
-    // Add totals row
     worksheet.addRow({
         itemname: 'Grand Total',
         itemgroup: '',
-        total_qty: Math.floor(footerTotals.value.total_qty), // Grand total of QTY
+        total_qty: Math.floor(footerTotals.value.total_qty),
         netAmount: footerTotals.value.total_netamount,
         discountAmount: footerTotals.value.total_discamount,
         grossAmount: footerTotals.value.total_grossamount
     });
 
-    // Styling the "Grand Total" row
     const lastRow = worksheet.lastRow;
     lastRow.font = { bold: true };
 
-    // Create a buffer and download the Excel file
     workbook.xlsx.writeBuffer().then((buffer) => {
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const url = window.URL.createObjectURL(blob);
@@ -235,7 +222,6 @@ const exportToExcel = () => {
 
 </script>
 
-
 <template>
     <component :is="layoutComponent" active-tab="REPORTS">
         <template v-slot:main>
@@ -248,7 +234,7 @@ const exportToExcel = () => {
                     label="Stores"
                   />
                 </div>
-                
+
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">Start Date</label>
                     <input
@@ -257,7 +243,7 @@ const exportToExcel = () => {
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
                 </div>
-                
+
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
                     <input
@@ -278,10 +264,10 @@ const exportToExcel = () => {
             </div>
 
             <TableContainer>
-                <DataTable 
-                    :data="props.ar" 
-                    :columns="columns" 
-                    class="w-full relative display" 
+                <DataTable
+                    :data="props.ar"
+                    :columns="columns"
+                    class="w-full relative display"
                     :options="options"
                 />
             </TableContainer>
@@ -290,7 +276,7 @@ const exportToExcel = () => {
 </template>
 
 <style>
-/* General Styling for DataTable */
+
 table.dataTable {
     width: 100%;
     border-collapse: collapse;
@@ -332,7 +318,6 @@ table.dataTable td {
     font-size: 13px;
 }
 
-/* Styling for Footer */
 .dataTable tfoot {
     background-color: #007bff;
     color: white;
@@ -344,7 +329,6 @@ table.dataTable td {
     padding: 12px 15px;
 }
 
-/* Styling for DataTable Buttons */
 .dt-buttons {
     display: flex;
     justify-content: flex-start;
@@ -367,7 +351,6 @@ table.dataTable td {
     background-color: #218838;
 }
 
-/* Copy, Print, Export to Excel Button Styling */
 .dt-buttons .buttons-copy,
 .dt-buttons .buttons-print,
 .dt-buttons .buttons-excel {
@@ -384,7 +367,6 @@ table.dataTable td {
     background-color: #0056b3;
 }
 
-/* Search Box Styling */
 .dataTables_filter {
     float: right;
     margin-bottom: 20px;
@@ -397,7 +379,6 @@ table.dataTable td {
     font-size: 14px;
 }
 
-/* Clear Filters Button */
 button.clear-filters {
     padding: 10px 15px;
     background-color: #ffc107;
@@ -413,7 +394,6 @@ button.clear-filters:hover {
     background-color: #e0a800;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     table.dataTable th, table.dataTable td {
         padding: 8px 10px;
@@ -429,11 +409,10 @@ button.clear-filters:hover {
     }
 }
 
-/* Styling for DataTable Buttons */
 .dt-buttons {
-    display: flex;                 /* Align buttons horizontally */
-    justify-content: flex-start;   /* Align buttons to the left */
-    gap: 10px;                     /* Add space between buttons */
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
     margin: 10px 0;
 }
 
@@ -452,12 +431,11 @@ button.clear-filters:hover {
     background-color: #218838;
 }
 
-/* Search Box Styling */
 .dataTables_filter {
-    display: flex;                 /* Display search box inline with buttons */
-    align-items: center;           /* Align vertically */
-    gap: 10px;                     /* Add space between search input and buttons */
-    margin-left: auto;             /* Align search box to the right */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
 }
 
 .dataTables_filter input {
@@ -467,24 +445,23 @@ button.clear-filters:hover {
     font-size: 14px;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .dt-buttons {
-        flex-wrap: wrap;            /* Allow buttons to wrap on smaller screens */
-        justify-content: center;    /* Center the buttons */
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .dataTables_filter {
-        margin: 0;                  /* Remove margin when wrapping */
+        margin: 0;
     }
 }
 
 .dt-buttons {
-    display: flex;               
-    justify-content: flex-start; 
-    align-items: center;    
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
     position: absolute;
-    z-index: 1;  
+    z-index: 1;
 }
 
 .dt-buttons .buttons-copy{
@@ -512,7 +489,7 @@ button.clear-filters:hover {
     float: right;
     padding-bottom: 20px;
     position: relative;
-    z-index: 999;  
+    z-index: 999;
 }
 
 </style>

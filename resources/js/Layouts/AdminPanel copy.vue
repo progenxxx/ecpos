@@ -45,7 +45,6 @@ const logoutModalHandler = () => {
         <meta name="mobile-web-app-capable" content="yes" />
     </Head>
 
-    
     <div class="relative inset-0 h-screen w-screen">
         <!-- <section class="bg-gray-200 text-black inset-0 w-screen h-screen absolute overflow-x-hidden">
             <aside class="bg-gray-200 text-black h-screen w-28 relative">
@@ -71,7 +70,7 @@ const logoutModalHandler = () => {
                 </div>
                 <FullScreenIcon />
             </nav>
-            
+
         </section>
         <section :class="['bg-blue-50 text-black inset-0 absolute overflow-x-hidden transition-all duration-500 ease-in-out']">
             <FlashMessage />

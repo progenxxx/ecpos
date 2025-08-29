@@ -59,7 +59,7 @@ const toggleActive = () => {
                         autofocus
                     />
                     <InputError :message="form.errors.number" class="mt-2" />
-                    </div>  
+                    </div>
                     <div class="col-span-2">
                     <InputLabel for="postingdate" value="postingdate" />
                     <TextInput
@@ -132,7 +132,7 @@ const toggleActive = () => {
                     />
                     <InputError :message="form.errors.reasoncode" class="mt-2" />
                     </div>
-                    
+
                     <div class="col-span-1 ml-4">
                         <InputLabel for="currency" value="currency" />
                     <TextInput

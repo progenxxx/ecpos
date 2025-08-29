@@ -10,8 +10,8 @@ class rbostoretables extends Model
     use HasFactory;
 
     protected $primaryKey = 'STOREID';
-    protected $keyType = 'string';  // Add this line to specify the key type
-    public $incrementing = false;   // Add this since STOREID is not auto-incrementing
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     protected $fillable = [
         'STOREID',

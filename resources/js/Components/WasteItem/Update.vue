@@ -49,7 +49,6 @@ const toggleActive = () => {
 onMounted(() => {
     form.JOURNALID = props.JOURNALID;
     form.LINENUM = props.LINENUM;
-    /* form.COUNTED = props.COUNTED; */
 
     watch(() => props.JOURNALID, (newValue) => {
         form.JOURNALID = newValue;
@@ -57,9 +56,6 @@ onMounted(() => {
     watch(() => props.LINENUM, (newValue) => {
         form.LINENUM = newValue;
     });
-    /* watch(() => props.COUNTED, (newValue) => {
-        form.COUNTED = newValue;
-    }); */
 
 });
 </script>
@@ -82,7 +78,7 @@ onMounted(() => {
                         disabled
                     />
                     <InputError :message="form.errors.JOURNALID" class="mt-2" />
-                    </div>  
+                    </div>
 
                     <div class="col-span-3 ">
                     <InputLabel for="LINENUM" value="LINENUM" />
@@ -96,7 +92,7 @@ onMounted(() => {
                         disabled
                     />
                     <InputError :message="form.errors.LINENUM" class="mt-2" />
-                    </div> 
+                    </div>
 
                     <div class="col-span-3 mt-4">
                     <InputLabel for="COUNTED" value="QTY" />
@@ -109,7 +105,7 @@ onMounted(() => {
                     />
                     <InputError :message="form.errors.COUNTED" class="mt-2" />
                     </div>
-                    
+
                 </div>
             </form>
         </template>

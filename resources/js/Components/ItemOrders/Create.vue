@@ -7,7 +7,7 @@ import InputLabel from '@/Components/Inputs/InputLabel.vue';
 import TextInput from '@/Components/Inputs/TextInput.vue';
 import InputError from '@/Components/Inputs/InputError.vue';
 
-const emit = defineEmits(['toggleActive']); 
+const emit = defineEmits(['toggleActive']);
 
 const props = defineProps({
     showModal: Boolean,
@@ -64,7 +64,7 @@ const toggleActive = () => {
 
 onMounted(() => {
     form.JOURNALID = props.JOURNALID;
-    
+
     watch(() => props.JOURNALID, (newValue) => {
         form.JOURNALID = newValue;
     });
@@ -88,7 +88,7 @@ onMounted(() => {
                             disabled
                         />
                         <InputError :message="form.errors.JOURNALID" class="mt-2" />
-                    </div>  
+                    </div>
 
                     <div class="col-span-3">
                         <InputLabel for="itemname" value="ITEMNAME" />
@@ -140,5 +140,5 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Scoped styles here */
+
 </style>

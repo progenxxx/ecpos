@@ -17,9 +17,6 @@ use Illuminate\Support\Facades\Storage;
 
 class ReportController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $currentDateTime = Carbon::now('Asia/Manila')->toDateString();
@@ -230,14 +227,14 @@ public function mgcount()
             'd.itemname AS ITEMNAME',
             'e.ITEMGROUP AS CATEGORY',
             'c.ADJUSTMENT AS COUNTED',
-            /* DB::raw('(SELECT MGCOUNT FROM inventjournaltrans WHERE ITEMID = d.itemid ORDER BY createddatetime DESC LIMIT 1) as MGCOUNT') */
+            
             DB::raw('(SELECT FGCOUNT FROM rboinventtables WHERE ITEMID = d.itemid ORDER BY createddatetime DESC LIMIT 1) as MGCOUNT')
         )
         ->leftJoin('inventjournaltrans AS c', 'b.JOURNALID', '=', 'c.JOURNALID')
         ->leftJoin('inventtables AS d', 'c.ITEMID', '=', 'd.itemid')
         ->leftJoin('rboinventtables AS e', 'd.ITEMID', '=', 'e.itemid')
         ->leftJoin('rbostoretables AS f', 'b.STOREID', '=', 'f.NAME')
-        /* ->where('f.routes', '=', 'SOUTH 1') */
+        
         ->whereRaw("DATE(b.createddatetime) = ?", [$currentDateTime])
         ->whereNotIn('f.NAME', $excludedNames)
         ->where('e.itemdepartment','REGULAR PRODUCT')
@@ -679,7 +676,7 @@ public function mgcount()
 
     public function create()
     {
-        //
+        
     }
 
     public function store(Request $request)
@@ -728,23 +725,23 @@ public function mgcount()
 
     public function show(string $id)
     {
-        //
+        
     }
 
     public function edit(string $id)
     {
-        //
+        
     }
 
 
     public function update(Request $request, string $id)
     {
-        //
+        
     }
 
     public function destroy(string $id)
     {
-        //
+        
     }
 
     public function resetorder(Request $request)
@@ -753,7 +750,7 @@ public function mgcount()
             $utcDateTime = Carbon::now('UTC');
             $beijingDateTime = $utcDateTime->setTimezone('Asia/Manila')->toDateString();
 
-            /* dd($request->passcode); */
+            
 
             if($request->passcode === '0123456789'){
                 DB::beginTransaction();

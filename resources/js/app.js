@@ -2,7 +2,6 @@ import './bootstrap';
 import '../css/app.css';
 import '@fortawesome/fontawesome-free/js/all.js';
 
-
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
@@ -24,15 +23,12 @@ createInertiaApp({
     },
 });
 
-// PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js', { scope: '/' })
             .then(registration => {
-                console.log('Service Worker registered with scope:', registration.scope);
             })
             .catch(error => {
-                console.error('Service Worker registration failed:', error);
             });
     });
 }

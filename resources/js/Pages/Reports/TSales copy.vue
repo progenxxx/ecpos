@@ -19,13 +19,13 @@
                         Filters & Options
                     </h3>
                 </div> -->
-                
+
                 <div class="mb-6">
                     <div class="p-6 z-1">
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                             <!-- Store Selection -->
-                            <div 
-                                v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'" 
+                            <div
+                                v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'"
                                 class="store-dropdown-container relative"
                             >
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">
@@ -80,8 +80,8 @@
 
                                         <!-- Store options -->
                                         <div class="max-h-48 overflow-y-auto">
-                                            <label 
-                                                v-for="store in filteredStores" 
+                                            <label
+                                                v-for="store in filteredStores"
                                                 :key="store"
                                                 class="flex items-center px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors"
                                             >
@@ -116,7 +116,7 @@
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                                 >
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">
                                     <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,16 +203,16 @@
                         <span class="mt-4 text-lg text-gray-600 block">Loading sales data...</span>
                     </div>
                 </div>
-                
+
                 <!-- Mobile View with Enhanced Cards -->
                 <div v-if="isMobile && !isTableLoading" class="overflow-hidden">
                     <div class="max-h-96 overflow-y-auto">
-                        <div v-for="(item, index) in filteredData" :key="`${item.transactionid}-${index}`" 
+                        <div v-for="(item, index) in filteredData" :key="`${item.transactionid}-${index}`"
                              class="border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors cursor-pointer select-none mobile-sales-item"
                              @touchstart="handleTouchStart(item, $event)"
                              @touchend="handleTouchEnd($event)"
                              @touchcancel="handleTouchEnd($event)">
-                            
+
                             <div class="space-y-3">
                                 <!-- Header Info -->
                                 <div class="flex justify-between items-start">
@@ -236,7 +236,7 @@
                                         <div class="text-xs text-gray-400">{{ item?.timeonly || '' }}</div>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Key Financial Info -->
                                 <div class="grid grid-cols-2 gap-3">
                                     <div class="bg-green-50 p-3 rounded-lg">
@@ -270,7 +270,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div v-if="filteredData.length === 0" class="text-center py-12 text-gray-500">
                             <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -283,11 +283,11 @@
                 <!-- Enhanced Desktop DataTable -->
                 <div v-if="!isMobile && !isTableLoading" class="overflow-hidden">
                     <TableContainer class="max-h-[75vh] overflow-x-auto overflow-y-auto">
-                        <DataTable 
+                        <DataTable
                             v-if="filteredData.length > 0"
-                            :data="filteredData" 
-                            :columns="columns" 
-                            class="w-full relative display enhanced-table" 
+                            :data="filteredData"
+                            :columns="columns"
+                            class="w-full relative display enhanced-table"
                             :options="options"
                         />
 
@@ -307,12 +307,12 @@
             <div v-if="isMobile" class="fixed bottom-6 right-6 z-40">
                 <!-- Floating Menu Options -->
                 <div v-if="showFloatingMenu" class="absolute bottom-16 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-2 w-56 transform transition-all duration-200 ease-out">
-                    
+
                     <!-- Export Options -->
                     <div class="px-4 py-2 border-b border-gray-200">
                         <p class="text-sm font-medium text-gray-700">Export Data</p>
                     </div>
-                    
+
                     <button
                         @click="exportToCsv"
                         class="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
@@ -382,7 +382,7 @@
             <div v-if="showFloatingMenu" @click="closeFloatingMenu" class="fixed inset-0 bg-black bg-opacity-25 z-30"></div>
 
             <!-- Enhanced Mobile Item Detail Modal -->
-            <div v-if="showItemDetail && selectedItem" 
+            <div v-if="showItemDetail && selectedItem"
                  class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
                  @click="closeItemDetail">
                 <div class="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl" @click.stop>
@@ -564,7 +564,7 @@
                             </div>
 
                             <!-- Product Categories -->
-                            <div v-if="Number(selectedItem.bw_products || 0) > 0 || Number(selectedItem.merchandise || 0) > 0 || Number(selectedItem.partycakes || 0) > 0" 
+                            <div v-if="Number(selectedItem.bw_products || 0) > 0 || Number(selectedItem.merchandise || 0) > 0 || Number(selectedItem.partycakes || 0) > 0"
                                  class="bg-yellow-50 rounded-lg p-4">
                                 <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
                                     <svg class="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -619,7 +619,6 @@ import 'datatables.net-buttons/js/buttons.print.mjs';
 import Swal from 'sweetalert2';
 import ExcelJS from 'exceljs';
 
-// Import icons for mobile menu
 import MenuIcon from "@/Components/Svgs/Menu.vue";
 import CloseIcon from "@/Components/Svgs/Close.vue";
 
@@ -631,26 +630,21 @@ const endDate = ref('');
 const isLoading = ref(false);
 const isTableLoading = ref(true);
 
-// Mobile responsive state
 const showFloatingMenu = ref(false);
 const isMobile = ref(false);
 
-// Mobile item detail modal
 const showItemDetail = ref(false);
 const selectedItem = ref(null);
 const longPressTimer = ref(null);
 
-// Store search functionality
 const storeSearchQuery = ref('');
 const showStoreDropdown = ref(false);
 const storeSearchInput = ref(null);
 
-// Handle store search input
 const handleStoreSearch = () => {
     storeSearchQuery.value = storeSearchQuery.value;
 };
 
-// Watch for dropdown open to focus search input
 watch(showStoreDropdown, (newVal) => {
     if (newVal) {
         nextTick(() => {
@@ -695,19 +689,18 @@ const layoutComponent = computed(() => {
     return props.userRole.toUpperCase() === 'STORE' ? StorePanel : Main;
 });
 
-// Mobile long press handlers
 const handleTouchStart = (item, event) => {
     event.preventDefault();
-    
+
     const element = event.currentTarget;
     element.classList.add('touching', 'long-press-indicator', 'pressing');
-    
+
     longPressTimer.value = setTimeout(() => {
         selectedItem.value = item;
         showItemDetail.value = true;
-        
+
         element.classList.remove('touching', 'pressing');
-        
+
         if (navigator.vibrate) {
             navigator.vibrate([50, 30, 50]);
         }
@@ -719,7 +712,7 @@ const handleTouchEnd = (event) => {
         clearTimeout(longPressTimer.value);
         longPressTimer.value = null;
     }
-    
+
     if (event && event.currentTarget) {
         const element = event.currentTarget;
         element.classList.remove('touching', 'long-press-indicator', 'pressing');
@@ -731,16 +724,15 @@ const closeItemDetail = () => {
     selectedItem.value = null;
 };
 
-// Filtered stores based on search
 const filteredStores = computed(() => {
     let stores = [];
-    
+
     if (Array.isArray(props.stores)) {
         stores = props.stores.map(store => {
             if (typeof store === 'string') {
                 return store;
             }
-            
+
             if (typeof store === 'object' && store !== null) {
                 if (store.NAME) {
                     return store.NAME;
@@ -754,33 +746,32 @@ const filteredStores = computed(() => {
                 if (store.store_name) {
                     return store.store_name;
                 }
-                
+
                 const storeStr = JSON.stringify(store);
                 const nameMatch = storeStr.match(/"NAME"\s*:\s*"([^"]+)"/);
                 if (nameMatch) {
                     return nameMatch[1];
                 }
-                
+
                 return storeStr.replace(/[{}":]/g, '').replace(/STOREID[^,]*,?\s*/g, '').replace(/NAME/g, '').trim() || 'Unknown Store';
             }
-            
+
             return String(store);
         });
     }
-    
+
     stores = [...new Set(stores)].sort();
-    
+
     if (!storeSearchQuery.value || storeSearchQuery.value.trim() === '') {
         return stores;
     }
-    
+
     const searchTerm = storeSearchQuery.value.toLowerCase().trim();
-    return stores.filter(store => 
+    return stores.filter(store =>
         store.toLowerCase().includes(searchTerm)
     );
 });
 
-// Store selection functions
 const toggleStoreSelection = (store) => {
     const index = selectedStores.value.indexOf(store);
     if (index > -1) {
@@ -804,7 +795,7 @@ const selectAllStores = () => {
         if (typeof store === 'string') {
             return store;
         }
-        
+
         if (typeof store === 'object' && store !== null) {
             if (store.NAME) {
                 return store.NAME;
@@ -818,28 +809,26 @@ const selectAllStores = () => {
             if (store.store_name) {
                 return store.store_name;
             }
-            
+
             const storeStr = JSON.stringify(store);
             const nameMatch = storeStr.match(/"NAME"\s*:\s*"([^"]+)"/);
             if (nameMatch) {
                 return nameMatch[1];
             }
-            
+
             return storeStr.replace(/[{}":]/g, '').replace(/STOREID[^,]*,?\s*/g, '').replace(/NAME/g, '').trim() || 'Unknown Store';
         }
         return String(store);
     });
-    
+
     selectedStores.value = [...new Set(allStores)];
     showStoreDropdown.value = false;
 };
 
-// Detect mobile screen size
 const checkScreenSize = () => {
     isMobile.value = window.innerWidth < 768;
 };
 
-// Mobile menu functions
 const toggleFloatingMenu = () => {
     showFloatingMenu.value = !showFloatingMenu.value;
 };
@@ -848,7 +837,6 @@ const closeFloatingMenu = () => {
     showFloatingMenu.value = false;
 };
 
-// Clear all filters
 const clearFilters = () => {
     selectedStores.value = [];
     startDate.value = '';
@@ -860,17 +848,16 @@ onMounted(() => {
     selectedStores.value = props.filters.selectedStores || [];
     startDate.value = props.filters.startDate || '';
     endDate.value = props.filters.endDate || '';
-    
+
     window.addEventListener('resize', checkScreenSize);
     document.addEventListener('click', handleClickOutside);
     checkScreenSize();
-    
+
     setTimeout(() => {
         isTableLoading.value = false;
     }, 500);
 });
 
-// Click outside handlers
 const handleClickOutside = (event) => {
     if (showStoreDropdown.value && !event.target.closest('.store-dropdown-container')) {
         showStoreDropdown.value = false;
@@ -887,13 +874,13 @@ onUnmounted(() => {
 
 const filteredData = computed(() => {
     let filtered = [...props.ec];
-    
+
     if (selectedStores.value.length > 0) {
-        filtered = filtered.filter(item => 
+        filtered = filtered.filter(item =>
             selectedStores.value.includes(item.storename)
         );
     }
-    
+
     if (startDate.value && endDate.value) {
         filtered = filtered.filter(item => {
             const itemDate = new Date(item.createddate);
@@ -902,7 +889,7 @@ const filteredData = computed(() => {
             return itemDate >= start && itemDate <= end;
         });
     }
-    
+
     return filtered;
 });
 
@@ -918,7 +905,6 @@ const footerTotals = computed(() => {
         acc.total_qty += Math.round(row.qty || 0);
         acc.commission += (parseFloat(row.commission) || 0);
 
-        // Payment method totals
         acc.cash += (parseFloat(row.cash) || 0);
         acc.charge += (parseFloat(row.charge) || 0);
         acc.representation += (parseFloat(row.representation) || 0);
@@ -946,8 +932,7 @@ const footerTotals = computed(() => {
         total_grossamount: 0,
         total_costamount: 0,
         commission: 0,
-        
-        // Payment method totals
+
         cash: 0,
         charge: 0,
         representation: 0,
@@ -967,234 +952,232 @@ const footerTotals = computed(() => {
 });
 
 const columns = [
-    { 
-        data: 'storename', 
-        title: 'Store', 
+    {
+        data: 'storename',
+        title: 'Store',
         footer: 'Grand Total',
         className: 'min-w-[100px] max-w-[120px] font-medium'
     },
-    { 
-        data: 'staff', 
-        title: 'Staff', 
+    {
+        data: 'staff',
+        title: 'Staff',
         footer: '',
         className: 'min-w-[100px] max-w-[140px]'
     },
-    { 
-        data: 'createddate', 
-        title: 'Date', 
+    {
+        data: 'createddate',
+        title: 'Date',
         footer: '',
         className: 'min-w-[85px] max-w-[100px] text-center'
     },
-    { 
-        data: 'timeonly', 
-        title: 'Time', 
+    {
+        data: 'timeonly',
+        title: 'Time',
         footer: '',
         className: 'min-w-[70px] max-w-[80px] text-center'
     },
-    { 
-        data: 'transactionid', 
-        title: 'Transaction ID', 
+    {
+        data: 'transactionid',
+        title: 'Transaction ID',
         footer: '',
         className: 'min-w-[120px] max-w-[140px] font-mono text-sm'
     },
-    { 
-        data: 'receiptid', 
-        title: 'Receipt ID', 
+    {
+        data: 'receiptid',
+        title: 'Receipt ID',
         footer: '',
         className: 'min-w-[100px] max-w-[120px] font-mono text-sm'
     },
-    { 
-        data: 'custaccount', 
-        title: 'Customer', 
+    {
+        data: 'custaccount',
+        title: 'Customer',
         footer: '',
         className: 'min-w-[120px] max-w-[150px]'
     },
-    { 
-        data: 'itemname', 
-        title: 'Item Name', 
+    {
+        data: 'itemname',
+        title: 'Item Name',
         footer: '',
         className: 'min-w-[150px] max-w-[200px] font-medium'
     },
-    { 
-        data: 'itemgroup', 
-        title: 'Item Group', 
+    {
+        data: 'itemgroup',
+        title: 'Item Group',
         footer: '',
         className: 'min-w-[100px] max-w-[120px]'
     },
-    { 
-        data: 'discofferid', 
-        title: 'PROMO', 
+    {
+        data: 'discofferid',
+        title: 'PROMO',
         footer: '',
         className: 'min-w-[100px] max-w-[200px] text-sm'
     },
-    
-    // Columns with footer calculations
-    { 
-        data: 'qty', 
+
+    {
+        data: 'qty',
         title: 'Qty',
         render: (data) => Math.round(data || 0),
         footer: '',
         className: 'text-right min-w-[60px] max-w-[80px] font-semibold'
     },
-    { 
-        data: 'total_costprice', 
+    {
+        data: 'total_costprice',
         title: 'Cost Price',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[90px] max-w-[110px]'
     },
-    { 
-        data: 'total_grossamount', 
+    {
+        data: 'total_grossamount',
         title: 'Gross Amount',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[100px] max-w-[120px] font-semibold'
     },
-    { 
-        data: 'total_costamount', 
+    {
+        data: 'total_costamount',
         title: 'Cost Amount',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[100px] max-w-[120px]'
     },
-    { 
-        data: 'total_discamount', 
+    {
+        data: 'total_discamount',
         title: 'Discount Amount',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[110px] max-w-[130px] text-red-600'
     },
-    { 
-        data: 'total_netamount', 
+    {
+        data: 'total_netamount',
         title: 'Net Amount',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[100px] max-w-[120px] font-bold text-green-600'
     },
-    { 
-        data: 'commission', 
+    {
+        data: 'commission',
         title: 'Commission',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[100px] max-w-[120px] font-bold text-orange-600'
     },
-    { 
-        data: 'vatablesales', 
+    {
+        data: 'vatablesales',
         title: 'Vatable Sales',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[100px] max-w-[120px]'
     },
-    { 
-        data: 'vat', 
+    {
+        data: 'vat',
         title: 'VAT',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[80px] max-w-[100px]'
     },
 
-    // Payment Method Columns
-    { 
-        data: 'cash', 
+    {
+        data: 'cash',
         title: 'Cash',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[80px] max-w-[100px]'
     },
-    { 
-        data: 'charge', 
+    {
+        data: 'charge',
         title: 'Charge',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[80px] max-w-[100px]'
     },
-    { 
-        data: 'representation', 
+    {
+        data: 'representation',
         title: 'Representation',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[100px] max-w-[120px]'
     },
-    { 
-        data: 'gcash', 
+    {
+        data: 'gcash',
         title: 'GCash',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[80px] max-w-[100px]'
     },
-    { 
-        data: 'paymaya', 
+    {
+        data: 'paymaya',
         title: 'PayMaya',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[80px] max-w-[100px]'
     },
-    { 
-        data: 'card', 
+    {
+        data: 'card',
         title: 'Card',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[80px] max-w-[100px]'
     },
-    { 
-        data: 'loyaltycard', 
+    {
+        data: 'loyaltycard',
         title: 'Loyalty Card',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[90px] max-w-[110px]'
     },
-    { 
-        data: 'foodpanda', 
+    {
+        data: 'foodpanda',
         title: 'FoodPanda',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[90px] max-w-[110px]'
     },
-    { 
-        data: 'grabfood', 
+    {
+        data: 'grabfood',
         title: 'GrabFood',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[90px] max-w-[110px]'
     },
-    { 
-        data: 'mrktgdisc', 
+    {
+        data: 'mrktgdisc',
         title: 'Mktg Disc',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[80px] max-w-[100px] text-purple-600'
     },
-    { 
-        data: 'rddisc', 
+    {
+        data: 'rddisc',
         title: 'RD Disc',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[80px] max-w-[100px] text-blue-600'
     },
-    { 
-        data: 'bw_products', 
+    {
+        data: 'bw_products',
         title: 'BW PRODUCTS',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[100px] max-w-[120px]'
     },
-    { 
-        data: 'merchandise', 
+    {
+        data: 'merchandise',
         title: 'MERCHANDISE',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[100px] max-w-[120px]'
     },
-    { 
-        data: 'partycakes', 
+    {
+        data: 'partycakes',
         title: 'PARTYCAKES',
         render: (data) => (parseFloat(data) || 0).toFixed(2),
         footer: '',
         className: 'text-right min-w-[100px] max-w-[120px]'
     },
-    { 
-        data: 'remarks', 
-        title: 'NOTE', 
+    {
+        data: 'remarks',
+        title: 'NOTE',
         footer: '',
         className: 'min-w-[120px] max-w-[150px] text-sm'
     }
@@ -1209,14 +1192,14 @@ const options = {
     scrollY: "60vh",
     autoWidth: false,
     columnDefs: [
-        // Numeric columns - right align
-        { 
-            targets: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32], 
+
+        {
+            targets: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32],
             className: 'text-right'
         },
-        // Date column - center align
+
         { targets: [2], className: 'text-center' },
-        // Time column - center align  
+
         { targets: [3], className: 'text-center' }
     ],
     buttons: [
@@ -1246,8 +1229,7 @@ const options = {
     drawCallback: function(settings) {
         const api = new DataTablesCore.Api(settings);
         isTableLoading.value = false;
-        
-        // Initialize totals object for filtered data
+
         const filteredTotals = {
             total_qty: 0,
             total_costprice: 0,
@@ -1274,7 +1256,6 @@ const options = {
             partycakes: 0
         };
 
-        // Calculate totals only for filtered/searched rows
         api.rows({ search: 'applied' }).every(function(rowIdx) {
             const data = this.data();
             filteredTotals.total_qty += Math.round(Number(data.qty) || 0);
@@ -1302,7 +1283,6 @@ const options = {
             filteredTotals.partycakes += Number(data.partycakes) || 0;
         });
 
-        // Helper function to format numbers with commas and 2 decimal places
         function formatNumber(num, isInteger = false) {
             if (isInteger) {
                 return Math.round(num).toLocaleString('en-US');
@@ -1313,12 +1293,10 @@ const options = {
             });
         }
 
-        // Update footer with new totals
         const footerRow = api.table().footer();
         if (footerRow) {
             const footerCells = footerRow.querySelectorAll('td, th');
-            
-            // Map of column indices to their corresponding total keys
+
             const columnMappings = [
                 { index: 10, key: 'total_qty', round: true },
                 { index: 11, key: 'total_costprice' },
@@ -1345,7 +1323,6 @@ const options = {
                 { index: 32, key: 'partycakes' }
             ];
 
-            // Update footer cells with filtered totals
             columnMappings.forEach(({ index, key, round }) => {
                 const total = filteredTotals[key];
                 if (footerCells[index]) {
@@ -1356,7 +1333,6 @@ const options = {
     }
 };
 
-// Export functions for mobile menu
 const exportToCsv = () => {
     if (window.DataTable) {
         const table = window.DataTable.tables()[0];
@@ -1370,8 +1346,7 @@ const exportToCsv = () => {
 const exportToExcel = (dt) => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Transaction Sales Data');
-    
-    // Define columns with proper width and number formats
+
     const excelColumns = [
         { header: 'STORE', key: 'storename', width: 20 },
         { header: 'STAFF', key: 'staff', width: 15 },
@@ -1411,7 +1386,6 @@ const exportToExcel = (dt) => {
 
     worksheet.columns = excelColumns;
 
-    // Style the header row
     const headerRow = worksheet.getRow(1);
     headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
     headerRow.fill = {
@@ -1420,13 +1394,11 @@ const exportToExcel = (dt) => {
         fgColor: { argb: 'FF4F46E5' }
     };
 
-    // Get filtered data from DataTable or use filteredData
     let dataToExport = filteredData.value;
     if (dt) {
         dataToExport = dt.rows({ search: 'applied' }).data().toArray();
     }
-    
-    // Add filtered data to worksheet
+
     dataToExport.forEach(row => {
         worksheet.addRow({
             storename: row.storename || '',
@@ -1466,7 +1438,6 @@ const exportToExcel = (dt) => {
         });
     });
 
-    // Calculate totals for filtered data
     const filteredTotals = dataToExport.reduce((acc, row) => ({
         total_qty: acc.total_qty + Math.round(Number(row.qty) || 0),
         total_costprice: acc.total_costprice + Number(row.total_costprice || 0),
@@ -1517,7 +1488,6 @@ const exportToExcel = (dt) => {
         partycakes: 0
     });
 
-    // Add totals row
     const totalsRow = worksheet.addRow({
         storename: 'GRAND TOTAL',
         staff: '',
@@ -1555,7 +1525,6 @@ const exportToExcel = (dt) => {
         remarks: ''
     });
 
-    // Style totals row
     totalsRow.font = { bold: true };
     totalsRow.fill = {
         type: 'pattern',
@@ -1563,16 +1532,13 @@ const exportToExcel = (dt) => {
         fgColor: { argb: 'FFE5E7EB' }
     };
 
-    // Format date cells
     worksheet.getColumn('createddate').numFmt = 'yyyy-mm-dd';
 
-    // Add autofilter
     worksheet.autoFilter = {
         from: { row: 1, column: 1 },
         to: { row: 1, column: worksheet.columns.length }
     };
 
-    // Apply borders to all cells
     worksheet.eachRow((row, rowNumber) => {
         row.eachCell((cell) => {
             cell.border = {
@@ -1584,17 +1550,15 @@ const exportToExcel = (dt) => {
         });
     });
 
-    // Freeze the header row
     worksheet.views = [
         { state: 'frozen', xSplit: 0, ySplit: 1, topLeftCell: 'A2', activeCell: 'A2' }
     ];
 
-    // Generate and download the file
     try {
         workbook.xlsx.writeBuffer()
             .then(buffer => {
-                const blob = new Blob([buffer], { 
-                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                const blob = new Blob([buffer], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
@@ -1606,7 +1570,7 @@ const exportToExcel = (dt) => {
                 URL.revokeObjectURL(url);
             })
             .catch(error => {
-                console.error('Error generating Excel file:', error);
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Export Failed',
@@ -1614,14 +1578,14 @@ const exportToExcel = (dt) => {
                 });
             });
     } catch (error) {
-        console.error('Error in Excel export:', error);
+
         Swal.fire({
             icon: 'error',
             title: 'Export Failed',
             text: 'An error occurred while exporting to Excel.'
         });
     }
-    
+
     closeFloatingMenu();
 };
 
@@ -1651,13 +1615,12 @@ const formatCurrency = (value) => {
 </script>
 
 <style scoped>
-/* Store dropdown styling */
+
 .store-dropdown-container .relative > div {
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     border: 1px solid #e2e8f0;
 }
 
-/* Smooth transitions for dropdown arrow */
 .transition-transform {
     transition: transform 0.2s ease-in-out;
 }
@@ -1666,7 +1629,6 @@ const formatCurrency = (value) => {
     transform: rotate(180deg);
 }
 
-/* Ensure proper z-index layering */
 .z-40 {
     z-index: 40;
 }
@@ -1675,7 +1637,6 @@ const formatCurrency = (value) => {
     z-index: 50;
 }
 
-/* Enhanced scrollbar for dropdown */
 .overflow-y-auto::-webkit-scrollbar {
     width: 6px;
 }

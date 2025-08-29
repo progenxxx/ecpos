@@ -25,13 +25,11 @@ class Customer extends Model
         'GENDER',
     ];
 
-    // Add the relationship
     public function loyaltyCard()
     {
         return $this->hasOne(LoyaltyCard::class);
     }
 
-    // Helper method to check if customer can have a loyalty card
     public function canHaveLoyaltyCard()
     {
         return !$this->BLOCKED && !$this->loyaltyCard()->exists();

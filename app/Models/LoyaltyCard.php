@@ -26,7 +26,6 @@ class LoyaltyCard extends Model
 
     protected $appends = ['is_active'];
 
-    // Relationships
     public function customer()
     {
         return $this->belongsTo(Customer::class);
@@ -37,13 +36,11 @@ class LoyaltyCard extends Model
         return $this->hasMany(LoyaltyCardTransaction::class);
     }
 
-    // Accessors
     public function getIsActiveAttribute()
     {
         return $this->status === 'active';
     }
 
-    // Card number generation
     public static function generateCardNumber()
     {
         $prefix = 'LC';
@@ -51,7 +48,6 @@ class LoyaltyCard extends Model
         $random = strtoupper(Str::random(6));
         $number = $prefix . $year . $random;
         
-        // Add checksum digit
         $sum = 0;
         for ($i = 0; $i < strlen($number); $i++) {
             $digit = ord($number[$i]);
@@ -62,7 +58,6 @@ class LoyaltyCard extends Model
         return $number . $checksum;
     }
 
-    // Methods for points management
     public function addPoints($points, $description)
     {
         if (!$this->is_active) {
@@ -78,7 +73,6 @@ class LoyaltyCard extends Model
 
         $this->increment('points', $points);
         
-        // Check for tier upgrades
         $this->checkAndUpdateTier();
     }
 
@@ -116,20 +110,6 @@ class LoyaltyCard extends Model
         }
     }
 
-    /* protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($card) {
-            if (empty($card->card_number)) {
-                $card->card_number = self::generateCardNumber();
-            }
-            
-            $card->points = $card->points ?? 0;
-            $card->tier = $card->tier ?? 'bronze';
-            $card->expiry_date = $card->expiry_date ?? now()->addYears(2);
-        });
-    } */
 
     protected static function boot()
     {

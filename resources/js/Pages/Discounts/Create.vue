@@ -16,14 +16,12 @@ const props = defineProps({
     }
 });
 
-// Computed properties
 const user = computed(() => props.auth?.user || {});
 const userRole = computed(() => user.value?.role || '');
 const layoutComponent = computed(() => {
     return userRole.value === 'STORE' ? StorePanel : Main;
 });
 
-// Form setup
 const form = useForm({
     DISCOFFERNAME: '',
     PARAMETER: '',
@@ -51,14 +49,12 @@ const platformFields = [
     { key: 'MALLPRICE_PARAMETER', label: 'Mall Price', color: 'indigo' }
 ];
 
-// Reactive state
 const previewAmount = ref(100);
 const selectedPlatform = ref('default');
 const showFloatingMenu = ref(false);
 const showPreviewPanel = ref(false);
 const showPlatformSettings = ref(false);
 
-// Computed properties for form validation and preview
 const isPercentage = computed(() => form.DISCOUNTTYPE === 'PERCENTAGE');
 const parameterLabel = computed(() => {
     switch (form.DISCOUNTTYPE) {
@@ -106,7 +102,7 @@ const getParameterForPlatform = (platform) => {
 
 const discountPreview = computed(() => {
     const parameter = getParameterForPlatform(selectedPlatform.value);
-    
+
     if (!parameter || !form.DISCOUNTTYPE || !previewAmount.value) {
         return null;
     }
@@ -142,7 +138,7 @@ const discountPreview = computed(() => {
 
 const platformOptions = computed(() => {
     const options = [{ value: 'default', label: 'Default', color: 'gray' }];
-    
+
     platformFields.forEach(field => {
         const key = field.key.replace('_PARAMETER', '').toLowerCase();
         options.push({
@@ -151,23 +147,22 @@ const platformOptions = computed(() => {
             color: field.color
         });
     });
-    
+
     return options;
 });
 
-// Validation rules
 const getParameterError = (fieldName, value) => {
     if (!value) return null;
-    
+
     const paramValue = parseFloat(value);
     if (isNaN(paramValue) || paramValue < 0) {
         return 'Value must be a positive number';
     }
-    
+
     if (form.DISCOUNTTYPE === 'PERCENTAGE' && paramValue > 100) {
         return 'Percentage cannot exceed 100%';
     }
-    
+
     return null;
 };
 
@@ -181,7 +176,6 @@ const hasPlatformSpecificValues = computed(() => {
     return platformFields.some(field => form[field.key] && form[field.key] !== '');
 });
 
-// Watch for form changes to update preview
 watch(() => form.DISCOUNTTYPE, () => {
     form.PARAMETER = '';
     platformFields.forEach(field => {
@@ -189,12 +183,11 @@ watch(() => form.DISCOUNTTYPE, () => {
     });
 });
 
-// Methods
 const submitForm = () => {
     form.post(route('discountsv2.store'), {
         preserveScroll: true,
         onSuccess: () => {
-            // Success handled by redirect
+
         }
     });
 };
@@ -339,7 +332,7 @@ const getPlatformColorClass = (color) => {
                 </div>
 
                 <!-- Flash Messages -->
-                <div v-if="flash.message" 
+                <div v-if="flash.message"
                      :class="[
                          'mb-4 lg:mb-6 px-4 py-2 rounded-md mx-4 lg:mx-0',
                          flash.isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -352,7 +345,7 @@ const getPlatformColorClass = (color) => {
                         <!-- Form Section -->
                         <div class="bg-white rounded-lg shadow-sm p-4 lg:p-6">
                             <h2 class="text-lg font-medium text-gray-900 mb-4 lg:mb-6">Discount Information</h2>
-                            
+
                             <form @submit.prevent="submitForm" class="space-y-4 lg:space-y-6">
                                 <!-- Discount Name -->
                                 <div>
@@ -393,7 +386,7 @@ const getPlatformColorClass = (color) => {
                                     <p v-if="form.errors.DISCOUNTTYPE" class="mt-1 text-sm text-red-600">
                                         {{ form.errors.DISCOUNTTYPE }}
                                     </p>
-                                    
+
                                     <!-- Type Description -->
                                     <div v-if="form.DISCOUNTTYPE" class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
                                         <p class="text-sm text-blue-800">
@@ -461,7 +454,7 @@ const getPlatformColorClass = (color) => {
                                             </button>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="grid grid-cols-1 gap-3">
                                         <div v-for="field in platformFields" :key="field.key" class="relative">
                                             <label :for="field.key" class="block text-xs font-medium text-gray-600 mb-1">
@@ -497,7 +490,7 @@ const getPlatformColorClass = (color) => {
                                 </div>
 
                                 <!-- Mobile Preview Summary (Only visible on mobile) -->
-                                <div v-if="form.DISCOUNTTYPE && form.PARAMETER && discountPreview" 
+                                <div v-if="form.DISCOUNTTYPE && form.PARAMETER && discountPreview"
                                      class="lg:hidden p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
                                     <h3 class="text-sm font-medium text-gray-900 mb-3 flex items-center justify-between">
                                         Quick Preview
@@ -548,7 +541,7 @@ const getPlatformColorClass = (color) => {
                             <!-- Discount Preview -->
                             <div class="bg-white rounded-lg shadow-sm p-6">
                                 <h2 class="text-lg font-medium text-gray-900 mb-4">Discount Preview</h2>
-                                
+
                                 <div v-if="!form.DISCOUNTTYPE" class="text-center py-8 text-gray-500">
                                     <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -624,9 +617,9 @@ const getPlatformColorClass = (color) => {
                             <!-- Platform Configuration Guide -->
                             <div class="bg-white rounded-lg shadow-sm p-6">
                                 <h2 class="text-lg font-medium text-gray-900 mb-4">Platform Configuration</h2>
-                                
+
                                 <div class="space-y-4">
-                                    <div v-for="field in platformFields" :key="field.key" 
+                                    <div v-for="field in platformFields" :key="field.key"
                                          class="flex items-center justify-between p-3 border rounded-md"
                                          :class="form[field.key] ? 'border-blue-200 bg-blue-50' : 'border-gray-200'">
                                         <div class="flex items-center space-x-3">
@@ -637,9 +630,9 @@ const getPlatformColorClass = (color) => {
                                             <span class="text-sm font-medium text-gray-900">{{ field.label }}</span>
                                         </div>
                                         <span class="text-sm text-gray-600">
-                                            {{ form[field.key] ? 
-                                                (isPercentage ? form[field.key] + '%' : '₱' + Number(form[field.key]).toFixed(2)) : 
-                                                'Using default' 
+                                            {{ form[field.key] ?
+                                                (isPercentage ? form[field.key] + '%' : '₱' + Number(form[field.key]).toFixed(2)) :
+                                                'Using default'
                                             }}
                                         </span>
                                     </div>
@@ -647,7 +640,7 @@ const getPlatformColorClass = (color) => {
 
                                 <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                                     <p class="text-xs text-yellow-800">
-                                        <strong>Note:</strong> Platform-specific values override the default value. 
+                                        <strong>Note:</strong> Platform-specific values override the default value.
                                         If not set, the default value will be used for that platform.
                                     </p>
                                 </div>
@@ -656,14 +649,14 @@ const getPlatformColorClass = (color) => {
                             <!-- Discount Type Guide -->
                             <div class="bg-white rounded-lg shadow-sm p-6">
                                 <h2 class="text-lg font-medium text-gray-900 mb-4">Discount Types Guide</h2>
-                                
+
                                 <div class="space-y-4">
-                                    <div v-for="type in discountTypes" :key="type.value" 
+                                    <div v-for="type in discountTypes" :key="type.value"
                                          class="p-4 border rounded-md"
                                          :class="form.DISCOUNTTYPE === type.value ? 'border-blue-500 bg-blue-50' : 'border-gray-200'">
                                         <h3 class="font-medium text-gray-900 mb-2">{{ type.label }}</h3>
                                         <p class="text-sm text-gray-600 mb-3">{{ type.description }}</p>
-                                        
+
                                         <!-- Examples -->
                                         <div class="text-xs text-gray-500">
                                             <strong>Example:</strong>
@@ -755,7 +748,7 @@ const getPlatformColorClass = (color) => {
                     >
                         <!-- Platform Settings indicator -->
                         <div v-if="hasPlatformSpecificValues && !showFloatingMenu" class="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full animate-pulse border-2 border-white"></div>
-                        
+
                         <svg v-if="!showFloatingMenu" class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
@@ -841,7 +834,7 @@ const getPlatformColorClass = (color) => {
                             <!-- Info -->
                             <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                                 <p class="text-xs text-yellow-800">
-                                    <strong>Note:</strong> Platform-specific values override the default value. 
+                                    <strong>Note:</strong> Platform-specific values override the default value.
                                     Leave empty to use the default value for that platform.
                                 </p>
                             </div>
@@ -941,8 +934,8 @@ const getPlatformColorClass = (color) => {
                                         @click="selectedPlatform = option.value"
                                         :class="[
                                             'px-3 py-2 text-xs rounded-lg transition-colors border',
-                                            selectedPlatform === option.value ? 
-                                                getPlatformColorClass(option.color) + ' border-current' : 
+                                            selectedPlatform === option.value ?
+                                                getPlatformColorClass(option.color) + ' border-current' :
                                                 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
                                         ]"
                                     >

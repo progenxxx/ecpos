@@ -30,7 +30,7 @@ const props = defineProps({
     },
     items: {
         type: Array,
-        required: true, 
+        required: true,
     },
     isPosted: {
         type: Number,
@@ -38,7 +38,6 @@ const props = defineProps({
     },
 });
 
-// State management
 const JOURNALID = ref('');
 const isLoading = ref(false);
 const showGetCFModal = ref(false);
@@ -51,7 +50,6 @@ const message = reactive({
     type: ''
 });
 
-// Column visibility state
 const showColumnMenu = ref(false);
 const columnVisibility = ref({
     ITEMID: true,
@@ -66,24 +64,22 @@ const columnVisibility = ref({
     COUNTED: true
 });
 
-// DataTable reference
 const dataTableRef = ref(null);
 
-// Column definitions
 const columns = ref([
-    { 
+    {
         data: 'ITEMID',
         title: 'ITEMID',
         width: '120px',
         visible: columnVisibility.value.ITEMID
     },
-    { 
+    {
         data: 'itemname',
         title: 'ITEMNAME',
         width: '200px',
         visible: columnVisibility.value.itemname
     },
-    { 
+    {
         data: 'itemgroup',
         title: 'CATEGORY',
         width: '150px',
@@ -97,9 +93,9 @@ const columns = ref([
         render: function(data, type, row) {
             if (type === 'display') {
                 const count = Number(data);
-                // Always disable the order column
+
                 return `
-                    <input type="number" 
+                    <input type="number"
                         class="counted-input form-input w-full rounded-md"
                         value="${count.toFixed(0)}"
                         min="0"
@@ -123,15 +119,13 @@ const columns = ref([
                 const now = new Date();
                 const currentHour = now.getHours();
                 const isCurrentDate = row.TRANSDATE === now.toISOString().split('T')[0];
-                
-                // Disable if time is between 12 PM (12) and 12 AM (0)
+
                 const isWithinDisabledHours = currentHour >= 12 || currentHour === 0;
-                
-                // Combine all conditions for disabling
+
                 const isDisabled = row.posted === 1 || !isCurrentDate || isWithinDisabledHours;
-                
+
                 return `
-                    <input type="number" 
+                    <input type="number"
                         class="counted-input form-input w-full rounded-md"
                         value="${count.toFixed(0)}"
                         min="0"
@@ -154,10 +148,10 @@ const columns = ref([
                 const order = Number(row.ADJUSTMENT);
                 const received = Number(row.RECEIVEDCOUNT);
                 const variance = order - received;
-                const backgroundColor = variance === 0 ? '#f3f3f3' : 
+                const backgroundColor = variance === 0 ? '#f3f3f3' :
                                       variance < 0 ? '#ffebee' : '#e8f5e9';
                 return `
-                    <div class="text-center p-2" 
+                    <div class="text-center p-2"
                          style="background-color: ${backgroundColor}">
                         ${variance}
                     </div>
@@ -174,15 +168,15 @@ const columns = ref([
     render: function(data, type, row) {
         if (type === 'display') {
             const count = Number(data);
-            // Get current date in YYYY-MM-DD format
+
             const currentDate = new Date().toISOString().split('T')[0];
-            // Check if row date matches current date
+
             const isCurrentDate = row.TRANSDATE === currentDate;
-            // Disable if posted or not current date
+
             const isDisabled = row.posted === 1 || !isCurrentDate;
-            
+
             return `
-                <input type="number" 
+                <input type="number"
                     class="counted-input form-input w-full rounded-md"
                     value="${count.toFixed(0)}"
                     min="0"
@@ -228,9 +222,9 @@ const columns = ref([
                 const isDisabled = row.posted === 1 || data !== null;
                 const options = ['throw_away', 'early_molds', 'pull_out', 'rat_bites', 'ant_bites'];
                 const currentValue = data || '';
-                
+
                 return `
-                    <select 
+                    <select
                         class="waste-type-select form-select w-full rounded-md"
                         data-field="WASTETYPE"
                         ${isDisabled ? 'disabled' : ''}>
@@ -254,7 +248,7 @@ const columns = ref([
         render: function(data, type, row) {
             if (type === 'display') {
                 const count = Number(data);
-                /* const isDisabled = row.posted === 1; */
+
                 const isCurrentDate = row.TRANSDATE === new Date().toISOString().split('T')[0];
                 const isDisabled = row.posted === 1 || !isCurrentDate;
                 return `
@@ -286,7 +280,7 @@ const options = {
         processing: "Loading...",
     },
     initComplete: function(settings, json) {
-        // Store reference to DataTable instance
+
         if (dataTableRef.value) {
             dataTableRef.value.dtInstance = this.api();
         }
@@ -296,7 +290,7 @@ const options = {
         api.rows().every(function() {
             const rowData = this.data();
             const node = this.node();
-            
+
             const inputs = node.querySelectorAll('.counted-input, .waste-type-select');
             inputs.forEach(input => {
                 if (!rowData.posted) {
@@ -308,16 +302,14 @@ const options = {
 };
 
 const toggleColumnVisibility = (columnKey) => {
-    // Update the visibility state
+
     columnVisibility.value[columnKey] = !columnVisibility.value[columnKey];
-    
-    // Find and update the column in our reactive columns array
+
     const column = columns.value.find(col => col.data === columnKey);
     if (column) {
         column.visible = columnVisibility.value[columnKey];
     }
-    
-    // Update the DataTable visibility if table is initialized
+
     if (dataTableRef.value) {
         try {
             const dtInstance = dataTableRef.value.dt;
@@ -328,7 +320,7 @@ const toggleColumnVisibility = (columnKey) => {
                 }
             }
         } catch (error) {
-            console.error('Error updating column visibility:', error);
+
         }
     }
 };
@@ -344,8 +336,6 @@ const handleClickOutside = (event) => {
     }
 };
 
-
-// Event handlers
 const handleCountedChange = (event, rowData) => {
     const field = event.target.dataset.field;
     if (!field || rowData.posted) return;
@@ -354,13 +344,12 @@ const handleCountedChange = (event, rowData) => {
         updatedValues[rowData.ITEMID] = {};
     }
 
-    const value = event.target.type === 'number' ? 
-                 parseFloat(event.target.value) || 0 : 
+    const value = event.target.type === 'number' ?
+                 parseFloat(event.target.value) || 0 :
                  event.target.value;
 
     updatedValues[rowData.ITEMID][field] = value;
 
-    // Update UI
     if (event.target.type === 'number') {
         const backgroundColor = value === 0 ? '#f3f3f3' : 'white';
         event.target.style.backgroundColor = backgroundColor;
@@ -387,21 +376,18 @@ const updateAllCountedValues = async () => {
         if (response.data.success) {
             message.text = response.data.message;
             message.type = 'success';
-            
-            // Update local data
+
             Object.entries(updatedValues).forEach(([itemId, values]) => {
                 const row = tableData.value.find(r => r.ITEMID === itemId);
                 if (row) Object.assign(row, values);
             });
-            
-            // Clear updates
+
             Object.keys(updatedValues).forEach(key => delete updatedValues[key]);
-            
-            // Reload page after successful update
+
             setTimeout(() => window.location.reload(), 1000);
         }
     } catch (error) {
-        console.error('Update error:', error);
+
         message.text = error.response?.data?.message || 'Update failed';
         message.type = 'error';
     } finally {
@@ -413,7 +399,6 @@ const updateAllCountedValues = async () => {
     }
 };
 
-// Navigation functions
 const StockCounting = () => {
     window.location.href = '/StockCounting';
 };
@@ -426,7 +411,6 @@ const TransferOrder = (journalid) => {
     window.location.href = `/getstocktransfer/${journalid}`;
 };
 
-// Modal handlers
 const toggleCreateModal = (journalid) => {
     JOURNALID.value = journalid;
     showCreateModal.value = true;
@@ -455,38 +439,29 @@ const GetCFModalHandler = () => {
 };
 
 const handleSelectedItem = (item) => {
-    console.log('Selected Item:', item);
+
 };
-
-
-/* const isActionDisabled = computed(() => props.isPosted === 1); */
-
-/* const isActionDisabled = computed(() => {
-    const currentDate = new Date().toISOString().split('T')[0];
-    const hasCurrentDateRow = tableData.value.some(row => row.TRANSDATE === currentDate);
-    return !hasCurrentDateRow;
-}); */
 
 const initializeDataTable = () => {
     if (dataTableRef.value && dataTableRef.value.dt) {
         const table = dataTableRef.value.dt;
-        
+
         window.dataTableInstance = table;
-        
+
         const toggleColumnVisibility = (columnKey) => {
             columnVisibility.value[columnKey] = !columnVisibility.value[columnKey];
-            
+
             const column = columns.value.find(col => col.data === columnKey);
             if (column) {
                 column.visible = columnVisibility.value[columnKey];
             }
-            
+
             if (window.dataTableInstance) {
                 const columnIndex = columns.value.findIndex(col => col.data === columnKey);
                 if (columnIndex !== -1) {
                     window.dataTableInstance.column(columnIndex)
                         .visible(columnVisibility.value[columnKey])
-                        .draw(false); 
+                        .draw(false);
                 }
             }
         };
@@ -496,7 +471,7 @@ const initializeDataTable = () => {
 onMounted(() => {
     tableData.value = props.stockcountingtrans;
     document.addEventListener('click', handleClickOutside);
-    // Initialize after a short delay to ensure DataTable is ready
+
     setTimeout(initializeDataTable, 0);
 });
 
@@ -532,12 +507,12 @@ onBeforeUnmount(() => {
         <template v-slot:main>
             <TableContainer>
                 <!-- Loading Overlay -->
-                <div v-if="isLoading" 
+                <div v-if="isLoading"
                      class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-50 backdrop-filter backdrop-blur-sm">
                     <div class="text-white text-2xl">Loading...</div>
                 </div>
 
-                <div v-if="message.text" 
+                <div v-if="message.text"
                      :class="[
                          'p-4 mb-4 rounded-md',
                          message.type === 'success' ? 'bg-green-100 text-green-700' :
@@ -548,7 +523,7 @@ onBeforeUnmount(() => {
                 </div>
 
                 <!-- <div class="relative mb-4 pl-10 column-visibility-dropdown">
-                    <button 
+                    <button
                         @click="toggleColumnMenu"
                         class="bg-navy px-4 py-2 rounded-md text-white flex items-center space-x-2"
                     >
@@ -558,15 +533,15 @@ onBeforeUnmount(() => {
                         </svg>
                     </button>
 
-                    <div v-if="showColumnMenu" 
+                    <div v-if="showColumnMenu"
                          class="column-visibility-menu">
                         <div class="py-1" role="menu">
-                            <label 
-                                v-for="(visible, columnKey) in columnVisibility" 
+                            <label
+                                v-for="(visible, columnKey) in columnVisibility"
                                 :key="columnKey"
                                 class="column-checkbox-label"
                             >
-                                <input 
+                                <input
                                     type="checkbox"
                                     :checked="visible"
                                     @change="toggleColumnVisibility(columnKey)"
@@ -625,7 +600,7 @@ onBeforeUnmount(() => {
                     <div class="flex space-x-2">
                         <!-- Column Visibility Dropdown -->
                         <div class="relative column-visibility-dropdown">
-                            <button 
+                            <button
                                 @click="toggleColumnMenu"
                                 class="bg-navy px-4 py-2 rounded-md text-white flex items-center space-x-2"
                             >
@@ -636,15 +611,15 @@ onBeforeUnmount(() => {
                             </button>
 
                             <!-- Column visibility menu -->
-                            <div v-if="showColumnMenu" 
+                            <div v-if="showColumnMenu"
                                 class="absolute z-50 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                                 <div class="py-1" role="menu">
-                                    <label 
-                                        v-for="(visible, columnKey) in columnVisibility" 
+                                    <label
+                                        v-for="(visible, columnKey) in columnVisibility"
                                         :key="columnKey"
                                         class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                                     >
-                                        <input 
+                                        <input
                                             type="checkbox"
                                             :checked="visible"
                                             @change="toggleColumnVisibility(columnKey)"
@@ -708,8 +683,8 @@ onBeforeUnmount(() => {
                 >
                     <template #action="data">
                         <label class="inline-flex items-center">
-                            <input 
-                                type="checkbox" 
+                            <input
+                                type="checkbox"
                                 class="form-checkbox h-5 w-5 text-blue-600 rounded"
                                 :checked="data.selected"
                                 @change="toggleRowSelection(data)"
@@ -731,7 +706,6 @@ onBeforeUnmount(() => {
     min-height: 400px;
 }
 
-/* Column visibility dropdown styles */
 .column-visibility-dropdown {
     @apply relative;
 }
@@ -748,7 +722,6 @@ onBeforeUnmount(() => {
     @apply mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500;
 }
 
-/* Table Styles */
 :deep(.dataTables_wrapper) {
     padding: 1rem;
 }
@@ -757,7 +730,6 @@ onBeforeUnmount(() => {
     min-height: 400px;
 }
 
-/* Input and Select Styles */
 :deep(.counted-input),
 :deep(.waste-type-select) {
     @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500;
@@ -768,12 +740,10 @@ onBeforeUnmount(() => {
     @apply bg-gray-100 cursor-not-allowed opacity-75;
 }
 
-/* Button Styles */
 .bg-navy {
     @apply bg-blue-900 hover:bg-blue-800 text-white;
 }
 
-/* Loading and Message Styles */
 .loading-overlay {
     @apply fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm;
 }
@@ -794,7 +764,6 @@ onBeforeUnmount(() => {
     @apply bg-blue-100 text-blue-800 border border-blue-300;
 }
 
-/* Table Cell Styles */
 :deep(.variance-cell) {
     @apply text-center p-2;
 }
@@ -811,7 +780,6 @@ onBeforeUnmount(() => {
     @apply bg-gray-50;
 }
 
-/* Animation for messages */
 @keyframes fadeOut {
     from {
         opacity: 1;
@@ -827,16 +795,15 @@ onBeforeUnmount(() => {
     animation: fadeOut 0.3s ease-out forwards;
 }
 
-/* Responsive Adjustments */
 @media (max-width: 768px) {
     :deep(.dataTables_wrapper) {
         padding: 0.5rem;
     }
-    
+
     .button-group {
         @apply flex-wrap gap-2;
     }
-    
+
     :deep(.counted-input),
     :deep(.waste-type-select) {
         @apply text-sm;
@@ -845,28 +812,27 @@ onBeforeUnmount(() => {
 </style>
 
 <script>
-// Exported component definition
+
 export default {
     name: 'StockCountingLine',
     inheritAttrs: false,
     mounted() {
-        // Additional initialization if needed
+
         this.initializeTooltips();
         this.setupKeyboardShortcuts();
     },
     methods: {
         initializeTooltips() {
-            // Initialize tooltips for better UX
+
             const tooltips = document.querySelectorAll('[data-tooltip]');
             tooltips.forEach(tooltip => {
-                // Add tooltip functionality
-                // You can use a library like tippy.js or implement custom logic
+
             });
         },
         setupKeyboardShortcuts() {
-            // Add keyboard shortcuts for power users
+
             window.addEventListener('keydown', (e) => {
-                // Ctrl/Cmd + S to save
+
                 if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                     e.preventDefault();
                     if (!this.isActionDisabled) {
@@ -876,12 +842,12 @@ export default {
             });
         },
         toggleRowSelection(data) {
-            // Implement row selection logic if needed
+
             this.$emit('row-selection-change', data);
         }
     },
     beforeUnmount() {
-        // Cleanup
+
         window.removeEventListener('keydown', this.setupKeyboardShortcuts);
     }
 };

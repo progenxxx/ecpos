@@ -56,7 +56,7 @@ const toggleActive = () => {
                         autofocus
                     />
                     <InputError :message="form.errors.NUMBERSEQUENCE" class="mt-2" />
-                    </div>  
+                    </div>
 
                     <div class="col-span-2">
                     <InputLabel for="TXT" value="TXT" />
@@ -130,7 +130,7 @@ const toggleActive = () => {
                     />
                     <InputError :message="form.errors.CANBEDELETED" class="mt-2" />
                     </div>
-                    
+
                 </div>
             </form>
         </template>

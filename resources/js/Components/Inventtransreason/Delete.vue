@@ -14,8 +14,7 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-    
-    
+
     showModal: {
         type: Boolean,
         default: false,
@@ -25,7 +24,7 @@ const props = defineProps({
 const form = useForm({
     REASONID: (''),
     REASONTEXT: (''),
-    
+
 });
 
 const submitForm = () => {

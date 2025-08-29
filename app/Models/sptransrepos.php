@@ -21,7 +21,6 @@ class sptransrepos extends Model
         'STORENAME',
     ];
 
-    // This is necessary for composite keys
     protected function setKeysForSaveQuery($query)
     {
         $query

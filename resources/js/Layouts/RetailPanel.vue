@@ -22,12 +22,10 @@ import SpecialGroup from "@/Components/Svgs/SpecialGroup.vue";
 
 import { ref, onMounted, onUnmounted } from 'vue';
 
-// Check if screen is small or mobile portrait
 const isSmallScreen = () => {
     return window.innerWidth <= 768 || (window.innerWidth <= 1024 && window.innerHeight > window.innerWidth);
 };
 
-// Initialize sidebar state based on screen size
 const isSidebarOpen = ref(!isSmallScreen());
 const showModalLogout = ref(false);
 
@@ -70,7 +68,6 @@ const BODeclaration = () => {
     window.location.href = '/bo-declaration';
 };
 
-// Handle window resize
 const handleResize = () => {
     if (isSmallScreen()) {
         isSidebarOpen.value = false;
@@ -79,11 +76,10 @@ const handleResize = () => {
     }
 };
 
-// Handle orientation change
 const handleOrientationChange = () => {
     setTimeout(() => {
         handleResize();
-    }, 100); // Small delay to ensure dimensions are updated
+    }, 100);
 };
 
 onMounted(() => {
