@@ -23,7 +23,7 @@
           <span class="text-gray-700 font-bold">Amount Due:</span>
           <span class="font-bold text-black">₱ {{ remainingAmount.toFixed(2) }}</span>
         </div>
-
+        
         <div v-if="currentAmount && isCashPayment" class="flex justify-between">
           <span class="text-gray-700">Cash Received: </span>
           <span class="font-bold text-green-600">₱ {{ parseFloat(currentAmount).toFixed(2) }}</span>
@@ -34,25 +34,25 @@
           <span class="font-bold text-blue-600">₱ {{ changeDue.toFixed(2) }}</span>
         </div>
       </div>
-
+      
       <input
         v-model="displayAmount"
         type="number"
         placeholder="Enter cash amount"
         class="w-full p-2 border rounded mb-4 text-black"
         @input="handleInput"
-        @keyup.enter="handleEnter"
+        @keyup.enter="handleEnter" 
         :class="{ 'bg-gray-100': !isCashPayment }"
         :readonly="!isCashPayment"
       />
 
       <div v-if="errorMessage" class="text-red-500 mb-2">{{ errorMessage }}</div>
-
+      
       <div class="flex justify-end">
         <button @click="cancel" class="px-4 py-2 bg-gray-300 rounded mr-2">Cancel</button>
-        <button
-          @click="submit"
-          class="px-4 py-2 bg-blue-500 text-white rounded"
+        <button 
+          @click="submit" 
+          class="px-4 py-2 bg-blue-500 text-white rounded" 
         >
           Submit
         </button>
@@ -88,10 +88,12 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'submit']);
 
+// Reactive references
 const currentAmount = ref('');
 const errorMessage = ref('');
 const isValidAmount = ref(false);
 
+// Computed properties
 const remainingAmount = computed(() => {
   return props.totalAmount - props.totalPartial;
 });
@@ -118,7 +120,7 @@ const displayAmount = computed({
   set: (value) => {
     if (isCashPayment.value) {
       currentAmount.value = value;
-
+      console.log('Amount entered:', value);
     }
   }
 });
@@ -129,7 +131,13 @@ const handleEnter = () => {
   }
 };
 
+// Methods
 const handleInput = () => {
+  console.log('Input changed:', {
+    currentAmount: currentAmount.value,
+    remainingAmount: remainingAmount.value,
+    paymentMethod: props.selectedAR
+  });
 
   if (isCashPayment.value) {
     validateAmount();
@@ -140,7 +148,7 @@ const handleInput = () => {
 
 const validateAmount = () => {
   const parsedAmount = parseFloat(currentAmount.value);
-
+  
   if (isNaN(parsedAmount) || parsedAmount < 0) {
     errorMessage.value = 'Please enter a valid amount.';
     isValidAmount.value = false;
@@ -154,8 +162,8 @@ const validateAmount = () => {
 };
 
 const submit = () => {
-  const amount = isCashPayment.value ?
-    parseFloat(currentAmount.value) :
+  const amount = isCashPayment.value ? 
+    parseFloat(currentAmount.value) : 
     remainingAmount.value;
 
   emit('submit', amount);
@@ -173,8 +181,9 @@ const reset = () => {
   isValidAmount.value = false;
 };
 
+// Watchers
 watch(() => props.selectedAR, (newValue) => {
-
+  console.log('Payment method changed:', newValue);
   if (!isCashPayment.value) {
     reset();
     isValidAmount.value = true;
@@ -182,7 +191,7 @@ watch(() => props.selectedAR, (newValue) => {
 });
 
 watch(() => props.isOpen, (newValue) => {
-
+  console.log('Modal opened:', newValue);
   if (newValue) {
     reset();
     if (!isCashPayment.value) {

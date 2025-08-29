@@ -43,8 +43,8 @@ const logout = () => {
 
 <template>
     <!-- Overlay for mobile to close sidebar when clicking outside -->
-    <div
-        v-if="isSidebarOpen"
+    <div 
+        v-if="isSidebarOpen" 
         class="fixed inset-0 bg-black bg-opacity-50 z-10 md:hidden"
         @click="$emit('toggle-sidebar')"
     ></div>
@@ -60,25 +60,25 @@ const logout = () => {
 
             <li v-if="$page.props.auth.user.role != 'DISPATCH'" class="tooltip tooltip-right tooltip-primary z-40 " data-tip="Master">
                 <List :active-tab="activeTab" tabName="DASHBOARD" url="/admin">
-                    <Dashboard class="h-6 lg:h-8"/>
+                    <Dashboard class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
             <li v-if="$page.props.auth.user.role != 'DISPATCH'" class="tooltip tooltip-right tooltip-primary z-40" data-tip="Retails">
                 <List :active-tab="activeTab" tabName="RETAILITEMS" url="/items">
-                    <RetailItems class="h-6 lg:h-8"/>
+                    <RetailItems class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
             <li v-if="$page.props.auth.user.role === 'STORE' && $page.props.auth.user.role != 'DISPATCH'" class="tooltip tooltip-right tooltip-primary" data-tip="Create Order">
                 <List :active-tab="activeTab" tabName="ORDER" url="/order">
-                    <Order class="h-6 lg:h-8"/>
+                    <Order class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
             <li v-if="$page.props.auth.user.role === 'DISPATCH' || $page.props.auth.user.role === 'OPIC' || $page.props.auth.user.role === 'PLANNING'" class="tooltip tooltip-right tooltip-primary" data-tip="FINISHED GOODS">
                 <List :active-tab="activeTab" tabName="FG" url="/dispatch-inventory">
-                    <Manage class="h-6 lg:h-8"/>
+                    <Manage class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
@@ -92,19 +92,19 @@ const logout = () => {
 
             <li v-if="$page.props.auth.user.role != 'DISPATCH'" class="tooltip tooltip-right tooltip-primary" data-tip="REPORTS">
                 <List :active-tab="activeTab" tabName="REPORTS" url="/reports">
-                    <Reports class="h-6 lg:h-8"/>
+                    <Reports class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
             <li v-if="$page.props.auth.user.role === 'OPIC' || $page.props.auth.user.role === 'PLANNING'" class="tooltip tooltip-right tooltip-primary" data-tip="Process">
                 <List :active-tab="activeTab" tabName="FGCOUNT" url="/mgcount">
-                    <Opic class="h-6 lg:h-8"/>
+                    <Opic class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
             <li v-if="$page.props.auth.user.role === 'OPIC' || $page.props.auth.user.role === 'PLANNING'" class="tooltip tooltip-right tooltip-primary" data-tip="FINAL DR">
-                    <List :active-tab="activeTab" tabName="FINALDR" url="/fdr-daterange?EndDate=1997-08-23&STORE=MRPA">
-                    <Receipt class="h-6 lg:h-8"/>
+                    <List :active-tab="activeTab" tabName="FINALDR" url="/fdr-daterange?EndDate=1997-08-23&STORE=MRPA"> 
+                    <Receipt class="h-6 lg:h-8"/> 
                 </List>
             </li>
 

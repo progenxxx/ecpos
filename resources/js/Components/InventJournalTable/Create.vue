@@ -53,7 +53,7 @@ const toggleActive = () => {
                         autofocus
                     />
                     <InputError :message="form.errors.ITEMID" class="mt-2" />
-                    </div>
+                    </div>  
 
                     <div class="col-span-2">
                     <InputLabel for="DESCRIPTION" value="DESCRIPTION" />
@@ -116,6 +116,7 @@ const toggleActive = () => {
                     <InputError :message="form.errors.DELETEPOSTEDLINES" class="mt-2" />
                     </div>
 
+                  
                 </div>
             </form>
         </template>

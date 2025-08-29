@@ -56,6 +56,7 @@ onMounted(() => {
     form.STARTINGDATE = props.STARTINGDATE;
     form.ENDINGDATE = props.ENDINGDATE;
 
+
     watch(() => props.ID, (newValue) => {
         form.ID = newValue;
     });
@@ -90,7 +91,7 @@ onMounted(() => {
                         disabled
                     />
                     <InputError :message="form.errors.ID" class="mt-2" />
-                    </div>
+                    </div>  
 
                     <div class="col-span-3 mt-4">
                     <InputLabel for="DESCRIPTION" value="DESCRIPTION" />
@@ -127,7 +128,7 @@ onMounted(() => {
                     />
                     <InputError :message="form.errors.ENDINGDATE" class="mt-2" />
                     </div>
-
+                    
                 </div>
             </form>
         </template>

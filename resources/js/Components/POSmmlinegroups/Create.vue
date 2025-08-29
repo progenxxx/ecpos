@@ -41,7 +41,7 @@ const toggleActive = () => {
 
 onMounted(() => {
     form.OFFERID = props.OFFERID;
-
+    
     watch(() => props.OFFERID, (newValue) => {
         form.OFFERID = newValue;
     });
@@ -67,7 +67,7 @@ onMounted(() => {
                         disabled
                     />
                     <InputError :message="form.errors.OFFERID" class="mt-2" />
-                    </div>
+                    </div>  
 
                     <div class="col-span-3 mt-4">
                     <InputLabel for="DESCRIPTION" value="DESCRIPTION" />
@@ -92,7 +92,7 @@ onMounted(() => {
                         />
                         <InputError :message="form.errors.NOOFITEMSNEEDED" class="mt-2" />
                     </div>
-
+                    
                 </div>
             </form>
         </template>

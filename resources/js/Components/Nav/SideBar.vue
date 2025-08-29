@@ -99,8 +99,9 @@ const logout = () => {
                 </List>
             </div>
 
-        </ul>
 
+        </ul>
+        
     </div>
 </template>
 

@@ -20,7 +20,9 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-
+    
+    
+    
     showModal: {
         type: Boolean,
         default: false,
@@ -31,7 +33,7 @@ const form = useForm({
     NUMBERSEQUENCE: (''),
     NEXTREC: (''),
     TXT: (''),
-
+    
 });
 
 const submitForm = () => {

@@ -1,6 +1,7 @@
 <script setup>
 import { router } from '@inertiajs/vue3';
 
+
 const props = defineProps({
     activeTab: {
         type: String,

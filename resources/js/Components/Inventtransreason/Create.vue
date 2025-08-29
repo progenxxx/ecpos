@@ -16,7 +16,7 @@ const props = defineProps({
 const form = useForm({
     REASONID: (''),
     REASONTEXT: (''),
-
+    
 });
 
 const submitForm = () => {
@@ -51,8 +51,8 @@ const toggleActive = () => {
                         autofocus
                     />
                     <InputError :message="form.errors.REASONID" class="mt-2" />
-                    </div>
-
+                    </div>  
+                    
                     <div class="col-span-1 ml-4">
                         <InputLabel for="REASONTEXT" value="REASONTEXT" />
                     <TextInput

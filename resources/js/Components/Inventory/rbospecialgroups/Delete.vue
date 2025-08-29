@@ -14,7 +14,8 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-
+    
+    
     showModal: {
         type: Boolean,
         default: false,
@@ -24,7 +25,7 @@ const props = defineProps({
 const form = useForm({
     GROUPID: (''),
     NAME: (''),
-
+    
 });
 
 const submitForm = () => {

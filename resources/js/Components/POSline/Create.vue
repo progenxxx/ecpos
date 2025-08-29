@@ -45,10 +45,10 @@ const searchInputRef = ref(null);
 const filteredItems = computed(() => {
     const query = searchQuery.value.toLowerCase().trim();
     if (!query) return [];
-    return props.items.filter(item =>
+    return props.items.filter(item => 
         item.itemname.toLowerCase().includes(query) ||
         item.itemid.toString().toLowerCase().includes(query)
-    ).slice(0, 8);
+    ).slice(0, 8); // Limit to 8 results for better performance
 });
 
 const selectItem = (item) => {
@@ -72,7 +72,7 @@ const submitForm = () => {
     }
 
     form.itemid = selectedItemId.value;
-
+    
     form.post("/posperiodicdiscountlines", {
         preserveScroll: true,
         onSuccess: () => {
@@ -126,7 +126,7 @@ watch(() => props.offerid, (newValue) => {
                             :is-error="form.errors.offerid ? true : false"
                             disabled
                             hidden
-
+                            
                         />
                         <InputError :message="form.errors.offerid" class="mt-2" />
                     </div>
@@ -162,9 +162,9 @@ watch(() => props.offerid, (newValue) => {
                             </button>
                         </div>
                         <InputError :message="form.errors.itemid" class="mt-2" />
-
+                        
                         <!-- Dropdown Results -->
-                        <div v-if="showDropdown && searchQuery"
+                        <div v-if="showDropdown && searchQuery" 
                              class="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-60 z-50 overflow-y-auto">
                             <div v-if="filteredItems.length === 0" class="px-4 py-3 text-sm text-gray-500">
                                 No items found matching "{{ searchQuery }}"
@@ -179,7 +179,7 @@ watch(() => props.offerid, (newValue) => {
                                             <div class="font-medium text-gray-900">{{ item.itemname }}</div>
                                             <div class="text-sm text-gray-500">ID: {{ item.itemid }}</div>
                                         </div>
-                                        <Check
+                                        <Check 
                                             v-if="item.itemid === selectedItemId"
                                             class="h-5 w-5 text-indigo-600"
                                         />
@@ -190,7 +190,7 @@ watch(() => props.offerid, (newValue) => {
                     </div>
 
                     <!-- Selected Item Details -->
-                    <div v-if="selectedItem"
+                    <div v-if="selectedItem" 
                          class="rounded-lg bg-gray-50 p-4 border border-gray-200 shadow-sm z-index">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
@@ -207,7 +207,7 @@ watch(() => props.offerid, (newValue) => {
                     <!-- Discount Type -->
                     <div v-if="isLineSpecific">
                         <InputLabel for="disctype" value="Discount Type" />
-                        <select
+                        <select 
                             id="disctype"
                             v-model="form.disctype"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -222,9 +222,9 @@ watch(() => props.offerid, (newValue) => {
 
                     <!-- Deal Price / Discount Percentage -->
                     <div v-if="isLineSpecific && form.disctype !== '0'">
-                        <InputLabel
-                            for="dealpriceordiscpct"
-                            :value="form.disctype === '3' ? 'Deal Price' : 'Discount Percentage'"
+                        <InputLabel 
+                            for="dealpriceordiscpct" 
+                            :value="form.disctype === '3' ? 'Deal Price' : 'Discount Percentage'" 
                         />
                         <TextInput
                             id="dealpriceordiscpct"
@@ -253,7 +253,7 @@ watch(() => props.offerid, (newValue) => {
             </form>
         </template>
         <template #buttons>
-            <PrimaryButton
+            <PrimaryButton 
                 type="button"
                 @click="submitForm"
                 :disabled="form.processing"

@@ -32,6 +32,10 @@ const props = defineProps({
     },
 });
 
+/* const user = props.auth ? toRefs(props.auth).user : null;
+const userRole = ref(user ? user.value.role : 'ADMIN');
+const isAdmin = computed(() => userRole.value === 'ADMIN'); */
+
 const emit = defineEmits();
 
 const logout = () => {
@@ -40,6 +44,7 @@ const logout = () => {
 </script>
 
 <!-- <template>
+
 
         <div :class="[
             'rounded-tr-3xl rounded-br-3xl p-4 bg-navy top-0 bottom-0 left-0 w-28  text-black font-bold absolute z-20 pt-12 pb-2 flex flex-col justify-between transition-all duration-500 ease-in-out px-2 ',
@@ -66,7 +71,7 @@ const logout = () => {
 
             <div class="tooltip tooltip-right tooltip-primary" data-tip="Order">
                 <List :active-tab="activeTab" tabName="ORDER" url="/order" v-if="$page.props.auth.user.role === 'STORE'">
-                    <Order class="h-6 lg:h-8"/>
+                    <Order class="h-6 lg:h-8"/> 
                 </List>
             </div>
 
@@ -104,11 +109,13 @@ const logout = () => {
                 </List>
             </div>
 
-        </ul>
 
+        </ul>
+        
     </div>
 </template>
  -->
+
 
  <!-- <template>
     <div :class="[
@@ -122,13 +129,13 @@ const logout = () => {
 
             <div class="tooltip tooltip-right tooltip-primary z-40" data-tip="Master">
                 <List :active-tab="activeTab" tabName="DASHBOARD" url="/admin">
-                    <Dashboard class="h-6 lg:h-8"/>
+                    <Dashboard class="h-6 lg:h-8"/> 
                 </List>
             </div>
 
             <div class="tooltip tooltip-right tooltip-primary z-40" data-tip="Retails">
                 <List :active-tab="activeTab" tabName="RETAILITEMS" url="/items">
-                    <RetailItems class="h-6 lg:h-8"/>
+                    <RetailItems class="h-6 lg:h-8"/> 
                 </List>
             </div>
 
@@ -140,13 +147,13 @@ const logout = () => {
 
             <div class="tooltip tooltip-right tooltip-primary" data-tip="Order">
                 <List :active-tab="activeTab" tabName="ORDER" url="/order" v-if="$page.props.auth.user.role === 'STORE'">
-                    <Order class="h-6 lg:h-8"/>
+                    <Order class="h-6 lg:h-8"/> 
                 </List>
             </div>
 
             <div class="tooltip tooltip-right tooltip-primary" data-tip="Reports">
                 <List :active-tab="activeTab" tabName="REPORTS" url="/orderingconso">
-                    <Reports class="h-6 lg:h-8"/>
+                    <Reports class="h-6 lg:h-8"/> 
                 </List>
             </div>
 
@@ -183,6 +190,7 @@ const logout = () => {
     </div>
 </template> -->
 
+
 <template>
     <div :class="[
         'rounded-tr-3xl rounded-br-3xl p-4 bg-navy top-0 bottom-0 left-0 w-28 text-black font-bold absolute z-20 pt-12 pb-2 flex flex-col justify-between transition-all duration-500 ease-in-out px-2 overflow-y-auto h-full',
@@ -195,13 +203,13 @@ const logout = () => {
 
             <li class="tooltip tooltip-right tooltip-primary z-40">
                 <List :active-tab="activeTab" tabName="DASHBOARD" url="/admin">
-                    <Dashboard class="h-6 lg:h-8"/>
+                    <Dashboard class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
             <li class="tooltip tooltip-right tooltip-primary z-40" >
                 <List :active-tab="activeTab" tabName="RETAILITEMS" url="/items">
-                    <RetailItems class="h-6 lg:h-8"/>
+                    <RetailItems class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
@@ -213,13 +221,13 @@ const logout = () => {
 
             <li v-if="$page.props.auth.user.role === 'STORE'" class="tooltip tooltip-right tooltip-primary" >
                 <List :active-tab="activeTab" tabName="ORDER" url="/order">
-                    <Order class="h-6 lg:h-8"/>
+                    <Order class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
             <li class="tooltip tooltip-right tooltip-primary" >
                 <List :active-tab="activeTab" tabName="REPORTS" url="/orderingconso">
-                    <Cart class="h-6 lg:h-8"/>
+                    <Cart class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
@@ -266,13 +274,13 @@ const logout = () => {
 
             <li class="tooltip tooltip-right tooltip-primary z-40" data-tip="Master">
                 <List :active-tab="activeTab" tabName="DASHBOARD" url="/admin">
-                    <Dashboard class="h-6 lg:h-8"/>
+                    <Dashboard class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
             <li class="tooltip tooltip-right tooltip-primary z-40" data-tip="Retails">
                 <List :active-tab="activeTab" tabName="RETAILITEMS" url="/items">
-                    <RetailItems class="h-6 lg:h-8"/>
+                    <RetailItems class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
@@ -284,37 +292,37 @@ const logout = () => {
 
             <li v-if="$page.props.auth.user.role === 'STORE'" class="tooltip tooltip-right tooltip-primary" data-tip="Create Order">
                 <List :active-tab="activeTab" tabName="ORDER" url="/order">
-                    <Order class="h-6 lg:h-8"/>
+                    <Order class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
             <li class="tooltip tooltip-right tooltip-primary" data-tip="Orders">
                 <List :active-tab="activeTab" tabName="REPORTS" url="/orderingconso">
-                    <Cart class="h-6 lg:h-8"/>
+                    <Cart class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
             <li v-if="$page.props.auth.user.role === 'OPIC' || $page.props.auth.user.role === 'PLANNING'" class="tooltip tooltip-right tooltip-primary" data-tip="Process">
                 <List :active-tab="activeTab" tabName="FGCOUNT" url="/mgcount">
-                    <Opic class="h-6 lg:h-8"/>
+                    <Opic class="h-6 lg:h-8"/> 
                 </List>
             </li>
 
             <!-- <li v-if="$page.props.auth.user.role === 'OPIC'" class="tooltip tooltip-right tooltip-primary" data-tip="INVENTORY RECORDS">
                 <List :active-tab="activeTab" tabName="INVENTORY" url="/f-mgcount">
-                    <Finish class="h-6 lg:h-8"/>
+                    <Finish class="h-6 lg:h-8"/> 
                 </List>
             </li> -->
 
             <!-- <li v-if="$page.props.auth.user.role === 'SUPERADMIN' || $page.props.auth.user.role === 'ADMIN'" class="tooltip tooltip-right tooltip-primary" data-tip="PICK LIST">
                 <List :active-tab="activeTab" tabName="PICKLIST" url="/picklist">
-                    <Receipt class="h-6 lg:h-8"/>
+                    <Receipt class="h-6 lg:h-8"/> 
                 </List>
             </li> -->
 
             <li v-if="$page.props.auth.user.role === 'OPIC' || $page.props.auth.user.role === 'PLANNING'" class="tooltip tooltip-right tooltip-primary" data-tip="FINAL DR">
                 <List :active-tab="activeTab" tabName="FINALDR" url="/finalDR">
-                    <Receipt class="h-6 lg:h-8"/>
+                    <Receipt class="h-6 lg:h-8"/> 
                 </List>
             </li>
 

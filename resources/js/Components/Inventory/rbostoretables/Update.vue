@@ -266,7 +266,7 @@ onMounted(() => {
                         autofocus
                     />
                     <InputError :message="form.errors.STOREID" class="mt-2" />
-                    </div>
+                    </div>  
                     <div class="col-span-2">
                     <InputLabel for="NAME" value="NAME" />
                     <TextInput
@@ -339,7 +339,7 @@ onMounted(() => {
                     />
                     <InputError :message="form.errors.COUNTY" class="mt-2" />
                     </div>
-
+                    
                     <div class="col-span-1 ml-4">
                         <InputLabel for="STATE" value="STATE" />
                     <TextInput
@@ -400,6 +400,8 @@ onMounted(() => {
                     <InputError :message="form.errors.SQLSERVERNAME" class="mt-2" />
                     </div>
 
+                    
+
                     <div class="col-span-1 ml-4">
                         <InputLabel for="DATABASENAME" value="DATABASENAME" />
                     <TextInput
@@ -448,7 +450,7 @@ onMounted(() => {
                     />
                     <InputError :message="form.errors.WINDOWSAUTHENTICATION" class="mt-2" />
                     </div>
-
+                    
                     <div class="col-span-1 ml-4">
                         <InputLabel for="LAYOUTNAME" value="LAYOUTNAME" />
                     <TextInput
@@ -508,7 +510,7 @@ onMounted(() => {
                     />
                     <InputError :message="form.errors.FORMINFOFIELD1" class="mt-2" />
                     </div>
-
+                    
                     <div class="col-span-3">
                         <InputLabel for="FORMINFOFIELD2" value="FORMINFOFIELD2" />
                     <TextInput

@@ -81,7 +81,7 @@ const toggleActive = () => {
                     <!-- Status -->
                     <div class="col-span-1">
                         <InputLabel for="status" value="Status" />
-                        <select
+                        <select 
                             class="w-full p-2 border rounded"
                             id="status"
                             name="status"
@@ -98,7 +98,7 @@ const toggleActive = () => {
                     <!-- Discount Type -->
                     <div class="col-span-1">
                         <InputLabel for="discountType" value="Discount Type" />
-                        <select
+                        <select 
                             class="w-full p-2 border rounded"
                             id="discountType"
                             name="discountType"
@@ -126,9 +126,9 @@ const toggleActive = () => {
                         >
                             <option disabled value="">Select Period</option>
                             <option value="">None</option>
-                            <option
-                                v-for="period in discvalidperiodid"
-                                :key="period.id"
+                            <option 
+                                v-for="period in discvalidperiodid" 
+                                :key="period.id" 
                                 :value="period.id"
                             >
                                 {{ period.description }}
@@ -180,10 +180,10 @@ const toggleActive = () => {
             </form>
         </template>
         <template #buttons>
-            <PrimaryButton
-                type="submit"
-                @click="submitForm"
-                :disabled="form.processing"
+            <PrimaryButton 
+                type="submit"   
+                @click="submitForm" 
+                :disabled="form.processing" 
                 class="w-full sm:w-auto"
                 :class="{ 'opacity-25': form.processing }"
             >

@@ -55,7 +55,7 @@ const toggleActive = () => {
     <Modal title="CREATE NEW ITEM" @toggle-active="toggleActive" :show-modal="showModal">
         <template #content >
             <FormComponent @submit.prevent="submitForm"  >
-
+                
                 <div class="grid grid-cols-1">
                     <div class="col-span-1">
                         <div class="grid gap-4">
@@ -87,9 +87,9 @@ const toggleActive = () => {
 
                             <!-- <div>
                                 <InputLabel for="CATEGORY" value="CATEGORY" />
-                                <SelectOption
+                                <SelectOption 
                                     id="itemgroup"
-                                    v-model="form.itemgroup"
+                                    v-model="form.itemgroup" 
                                     :is-error="form.errors.itemgroup ? true : false"
                                     class="mt-1 block w-full"
                                     >
@@ -102,9 +102,9 @@ const toggleActive = () => {
 
                             <div class="col-span-1">
                                 <InputLabel for="RETAILGROUP" value="RETAILGROUP" />
-                                <SelectOption
+                                <SelectOption 
                                     id="itemdepartment"
-                                    v-model="form.itemdepartment"
+                                    v-model="form.itemdepartment" 
                                     :is-error="form.errors.itemdepartment ? true : false"
                                     class="mt-1 block w-full !bg-white"
                                     >
@@ -119,9 +119,9 @@ const toggleActive = () => {
                                 <InputLabel for="Category" value="Category" />
                                 <select
                                     id="itemgroup"
-                                    v-model="form.itemgroup"
+                                    v-model="form.itemgroup" 
                                     class="input input-bordered w-full !bg-white"
-                                    @change="selectitemgroup"
+                                    @change="selectitemgroup" 
                                 >
                                     <option v-for="cat in rboinventitemretailgroups" :key="cat.GROUPID" :value="cat.NAME">
                                         {{ cat.NAME }}
@@ -142,6 +142,7 @@ const toggleActive = () => {
                                 <InputError :message="form.errors.barcode" class="mt-2" />
                             </div>
                             </div>
+                            
 
                             <div class="col-span-1">
                                 <InputLabel for="COSTPRICE" value="COSTPRICE" />
@@ -166,11 +167,12 @@ const toggleActive = () => {
                                 />
                                 <InputError :message="form.errors.price" class="mt-2" />
                             </div>
+                            
 
                         </div>
                     </div>
                 </div>
-
+                
             </FormComponent>
         </template>
         <template #buttons>

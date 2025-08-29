@@ -13,7 +13,7 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-
+    
     email:{
             type: [String, Number],
             required: true,
@@ -116,6 +116,7 @@ onMounted(() => {
                 <InputError class="mt-2" :message="form.errors.password_confirmation" />
             </div>
 
+                
             </FormComponent>
         </template>
         <template #buttons>

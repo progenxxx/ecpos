@@ -9,12 +9,17 @@ import SelectOption from '@/Components/SelectOption/SelectOption.vue';
 import InputError from '@/Components/Inputs/InputError.vue';
 import FormComponent from '@/Components/Form/FormComponent.vue';
 
+
 const props = defineProps({
     showModal: {
         type: Boolean,
         default: false,
     }
 });
+
+/* const initialStoreId = computed(() => {
+  return $page.props.auth.user.storeid;
+}); */
 
 const form = useForm({
     subject: '',
@@ -45,7 +50,7 @@ const toggleActive = () => {
     <Modal title="CREATE NEW ANNOUNCEMENT" @toggle-active="toggleActive" :show-modal="showModal">
         <template #content >
             <FormComponent @submit.prevent="submitForm" >
-
+                
                 <div class="grid grid-cols-1">
                     <div class="col-span-1">
                         <div class="grid grid-cols-1 gap-4">
@@ -68,7 +73,7 @@ const toggleActive = () => {
                                     v-model="form.description"
                                     :is-error="form.errors.description ? true : false"
                                     type="text"
-                                    class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                    class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
                                 >
                             </textarea>
                                 <InputError :message="form.errors.description" class="mt-2" />
@@ -88,7 +93,7 @@ const toggleActive = () => {
                         </div>
                     </div>
                 </div>
-
+                
             </FormComponent>
         </template>
         <template #buttons>

@@ -8,7 +8,7 @@
     >
       <span class="block truncate">{{ displayValue }}</span>
       <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-        <svg class="h-5 w-5 text-gray-400" xmlns="http:
+        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
         </svg>
       </span>
@@ -29,8 +29,8 @@
           <span class="ml-2 font-medium">Select All</span>
         </div>
       </div>
-
-      <div v-for="option in (options || [])" :key="option.STOREID"
+      
+      <div v-for="option in (options || [])" :key="option.STOREID" 
         class="px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center"
         @click="toggleOption(option.NAME)"
       >
@@ -51,11 +51,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 const props = defineProps({
   options: {
     type: Array,
-    default: () => []
+    default: () => [] // Provide a default empty array
   },
   modelValue: {
     type: Array,
-    default: () => []
+    default: () => [] // Provide a default empty array
   },
   label: {
     type: String,
@@ -86,13 +86,13 @@ const handleClickOutside = (event) => {
 const toggleOption = (value) => {
   const selected = [...props.modelValue];
   const index = selected.indexOf(value);
-
+  
   if (index === -1) {
     selected.push(value);
   } else {
     selected.splice(index, 1);
   }
-
+  
   emit('update:modelValue', selected);
 };
 

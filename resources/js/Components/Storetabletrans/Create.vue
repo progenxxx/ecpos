@@ -7,7 +7,7 @@ import InputLabel from '@/Components/Inputs/InputLabel.vue';
 import TextInput from '@/Components/Inputs/TextInput.vue';
 import InputError from '@/Components/Inputs/InputError.vue';
 
-const emit = defineEmits();
+const emit = defineEmits(); 
 
 const props = defineProps({
     showModal: {
@@ -25,7 +25,7 @@ const props = defineProps({
 });
 
 const selectItem = (itemName) => {
-  form.itemname = itemName;
+  form.itemname = itemName; 
 };
 
 const form = useForm({
@@ -50,7 +50,7 @@ const toggleActive = () => {
 
 onMounted(() => {
     form.JOURNALID = props.JOURNALID;
-
+    
     watch(() => props.JOURNALID, (newValue) => {
         form.JOURNALID = newValue;
     });
@@ -76,15 +76,15 @@ onMounted(() => {
                         disabled
                     />
                     <InputError :message="form.errors.JOURNALID" class="mt-2" />
-                    </div>
+                    </div>  
 
                     <div class="col-span-3 mt-4">
                         <InputLabel for="itemname" value="ITEMNAME" />
                         <select
                         id="itemname"
-                        v-model="form.itemname"
+                        v-model="form.itemname" 
                         class="input input-bordered w-full"
-                        @change="selectItem(form.itemname)"
+                        @change="selectItem(form.itemname)" 
                         >
                         <option v-for="item in items" :key="item.itemid" :value="item.itemid">
                             {{ item.itemname }}
@@ -121,7 +121,7 @@ onMounted(() => {
                     </select>
                     <InputError class="mt-2" :message="form.errors.unitid" />
                 </div>
-
+                    
                 </div>
             </form>
         </template>

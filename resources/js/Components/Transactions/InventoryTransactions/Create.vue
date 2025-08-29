@@ -59,7 +59,7 @@ const toggleActive = () => {
                         autofocus
                     />
                     <InputError :message="form.errors.ITEMID" class="mt-2" />
-                    </div>
+                    </div>  
                     <div class="col-span-2">
                     <InputLabel for="ITEMID" value="ITEMID" />
                     <TextInput
@@ -132,7 +132,7 @@ const toggleActive = () => {
                     />
                     <InputError :message="form.errors.SALESPRICEWITHOUTTAXPERITEM" class="mt-2" />
                     </div>
-
+                    
                     <div class="col-span-1 ml-4">
                         <InputLabel for="SALESPRICEWITHTAXPERITEM" value="SALESPRICEWITHTAXPERITEM" />
                     <TextInput

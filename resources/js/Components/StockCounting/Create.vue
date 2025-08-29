@@ -9,6 +9,7 @@ import SelectOption from '@/Components/SelectOption/SelectOption.vue';
 import InputError from '@/Components/Inputs/InputError.vue';
 import FormComponent from '@/Components/Form/FormComponent.vue';
 
+
 const props = defineProps({
     showModal: {
         type: Boolean,
@@ -44,7 +45,7 @@ const toggleActive = () => {
     <Modal title="GENERATE STOCK COUNTING" @toggle-active="toggleActive" :show-modal="showModal">
         <template #content >
             <FormComponent @submit.prevent="submitForm"  >
-
+                
                 <div class="grid grid-cols-1">
                     <div class="col-span-1">
                         <div class="grid grid-cols-1 gap-4">
@@ -74,11 +75,12 @@ const toggleActive = () => {
                                 />
                                 <InputError :message="form.errors.description" class="mt-2" />
                             </div> -->
+                            
 
                         </div>
                     </div>
                 </div>
-
+                
             </FormComponent>
         </template>
         <template #buttons>

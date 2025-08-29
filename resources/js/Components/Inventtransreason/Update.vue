@@ -16,7 +16,8 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-
+    
+    
     showModal: {
         type: Boolean,
         default: false,
@@ -26,8 +27,9 @@ const props = defineProps({
 const form = useForm({
     REASONID: (''),
     REASONTEXT: (''),
-
+    
 });
+
 
 const submitForm = () => {
     form.patch("/inventtransreasons/patch", {
@@ -44,6 +46,7 @@ const toggleActive = () => {
 onMounted(() => {
     form.REASONID = props.REASONID;
     form.REASONTEXT = props.REASONTEXT;
+    
 
     watch(() => props.REASONID, (newValue) => {
         form.REASONID = newValue;
@@ -71,8 +74,8 @@ onMounted(() => {
                         autofocus
                     />
                     <InputError :message="form.errors.REASONID" class="mt-2" />
-                    </div>
-
+                    </div>  
+                    
                     <div class="col-span-1 ml-4">
                         <InputLabel for="REASONTEXT" value="REASONTEXT" />
                     <TextInput

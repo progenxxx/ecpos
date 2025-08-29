@@ -30,47 +30,50 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-
+    
     blocked: {
         type: [String, Number],
         required: true,
     },
-
+    
     creditmax: {
         type: [String, Number],
         required: true,
     },
-
+    
+    
     country: {
         type: [String, Number],
         required: true,
     },
-
+    
     zipcode: {
         type: [String, Number],
         required: true,
     },
-
+    
     state: {
         type: [String, Number],
         required: true,
     },
-
+    
     email: {
         type: [String, Number],
         required: true,
     },
-
+    
     cellularphone: {
         type: [String, Number],
         required: true,
     },
-
+    
+    
     gender: {
         type: [String, Number],
         required: true,
     },
-
+    
+    
     showModal: {
         type: Boolean,
         default: false,
@@ -93,6 +96,7 @@ const form = useForm({
     gender: (''),
 });
 
+
 const submitForm = () => {
     form.patch("/customers/patch", {
         preserveScroll: true,
@@ -104,6 +108,7 @@ const emit = defineEmits();
 const toggleActive = () => {
     emit('toggleActive');
 };
+
 
 onMounted(() => {
     form.accountnum = props.accountnum;
@@ -179,7 +184,7 @@ onMounted(() => {
                         disabled
                     />
                     <InputError :message="form.errors.number" class="mt-2" />
-                    </div>
+                    </div>  
 
                     <div class="col-span-3 mt-2">
                     <InputLabel for="name" value="Name" />
@@ -218,7 +223,7 @@ onMounted(() => {
                     </div>
 
                     <div class="col-span-1 mt-2 ml-4">
-                        <select
+                        <select 
                         className="select select-bordered w-full max-w-xs mt-5"
                         id="gender"
                         v-model="form.gender"
@@ -319,7 +324,7 @@ onMounted(() => {
                     </div>
 
                     <div class="col-span-1 mt-2 ml-4">
-                        <select
+                        <select 
                         className="select select-bordered w-full max-w-xs mt-5"
                         id="blocked"
                         v-model="form.blocked"
@@ -333,8 +338,9 @@ onMounted(() => {
                         <InputError :message="form.errors.blocked" class="mt-2" />
                     </div>
 
+                    
                     </div>
-
+                    
             </form>
         </template>
         <template #buttons>

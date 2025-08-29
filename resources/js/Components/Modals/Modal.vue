@@ -37,6 +37,10 @@ const toggleActive = () => {
     emit('toggleActive');
 };
 
+
+
+
+
 </script>
 
 <template>
@@ -71,17 +75,17 @@ const toggleActive = () => {
             <div class="absolute inset-0 h-screen w-screen z-[900]" v-if="showModal">
                 <div class="relative inset-0 h-full w-full flex justify-center overflow-hidden">
                     <div class="absolute inset-0 h-full w-full bg-gray-300 opacity-80 z-[41]" @click="callAnimateShake"></div>
-
+                    
                     <div class="relative z-[42] mt-5 h-fit w-fit w-full max-w-md">
                         <div :class="['bg-white rounded-lg shadow-md shadow-gray-600 overflow-hidden', animateShake ? 'animate-shake' : '']">
                             <div class="w-full border-b border-gray-400 p-2">
                                 <Title :title="title" />
                             </div>
-
+                            
                             <div class="p-2">
                                 <slot name="content" />
                             </div>
-
+                            
                             <div class="bg-gray-200 flex justify-end items-center p-3 gap-2">
                                 <SecondaryButton @click="toggleActive">CLOSE</SecondaryButton>
                                 <slot name="buttons" />

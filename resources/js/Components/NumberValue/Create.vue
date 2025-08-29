@@ -17,7 +17,7 @@ const form = useForm({
     NUMBERSEQUENCE: (''),
     NEXTREC: (''),
     STOREID: (''),
-
+    
 });
 
 const submitForm = () => {
@@ -53,7 +53,7 @@ const toggleActive = () => {
                     />
                     <InputError :message="form.errors.NUMBERSEQUENCE" class="mt-2" />
                     </div>
-
+                    
                     <div class="col-span-2 ">
                     <InputLabel for="NEXTREC" value="NEXTREC" />
                     <TextInput
@@ -66,7 +66,7 @@ const toggleActive = () => {
                     />
                     <InputError :message="form.errors.NEXTREC" class="mt-2" />
                     </div>
-
+                    
                     <div class="col-span-1 ml-4">
                         <InputLabel for="STOREID" value="STOREID" />
                     <TextInput

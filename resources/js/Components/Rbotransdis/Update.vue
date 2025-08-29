@@ -158,7 +158,7 @@ onMounted(() => {
                         autofocus
                     />
                     <InputError :message="form.errors.LINENUM" class="mt-2" />
-                    </div>
+                    </div>  
                     <div class="col-span-2">
                     <InputLabel for="LINENUM" value="LINENUM" />
                     <TextInput
@@ -231,7 +231,7 @@ onMounted(() => {
                     />
                     <InputError :message="form.errors.DISCOUNTAMT" class="mt-2" />
                     </div>
-
+                    
                     <div class="col-span-1 ml-4">
                         <InputLabel for="DISCOUNTAMTWITHTAX" value="DISCOUNTAMTWITHTAX" />
                     <TextInput

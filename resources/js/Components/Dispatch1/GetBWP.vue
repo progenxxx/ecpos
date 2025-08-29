@@ -7,7 +7,7 @@ import InputLabel from '@/Components/Inputs/InputLabel.vue';
 import TextInput from '@/Components/Inputs/TextInput.vue';
 import InputError from '@/Components/Inputs/InputError.vue';
 
-const emit = defineEmits(['toggleActive']);
+const emit = defineEmits(['toggleActive']); 
 
 const props = defineProps({
     showModal: Boolean,
@@ -53,15 +53,15 @@ function closeDropdown() {
 }
 
 const submitForm = () => {
-
+    console.log('Submitting form...');
     form.patch("/Dispatch/getbwproducts", {
         preserveScroll: true,
         onSuccess: () => {
-
+            console.log('Form submission successful.');
             toggleActive();
         },
         onError: (error) => {
-
+            console.error('Form submission error:', error);
         }
     });
 };
@@ -72,7 +72,7 @@ const toggleActive = () => {
 
 onMounted(() => {
     form.JOURNALID = props.JOURNALID;
-
+    
     watch(() => props.JOURNALID, (newValue) => {
         form.JOURNALID = newValue;
     });
@@ -96,8 +96,8 @@ onMounted(() => {
                             disabled
                         />
                         <InputError :message="form.errors.JOURNALID" class="mt-2" />
-                    </div>
-
+                    </div>  
+                    
                 </div>
             </form>
         </template>

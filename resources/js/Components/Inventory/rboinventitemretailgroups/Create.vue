@@ -16,7 +16,7 @@ const props = defineProps({
 const form = useForm({
     GROUPID: (''),
     NAME: (''),
-
+    
 });
 
 const submitForm = () => {
@@ -51,7 +51,7 @@ const toggleActive = () => {
                     />
                     <InputError :message="form.errors.GROUPID" class="mt-2" />
                     </div>   -->
-
+                    
                     <div class="col-span-3">
                         <InputLabel for="CATEGORY NAME" value="CATEGORY NAME" />
                     <TextInput

@@ -23,5 +23,5 @@ const goToOtherRoutes = (url) => {
             <slot></slot>
         </span>
     </div>
-
+    
 </template>

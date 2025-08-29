@@ -29,57 +29,63 @@ const props = defineProps({
         type: [String, Number],
         required: true,
     },
-
+    
     COSTPRICE: {
         type: [String, Number],
         required: true,
     },
-
+    
     PRICEUNIT: {
         type: [String, Number],
         required: true,
     },
-
+    
+    
     SALESAMOUNT: {
         type: [String, Number],
         required: true,
     },
-
+    
     INVENTONHAND: {
         type: [String, Number],
         required: true,
     },
-
+    
     COUNTED: {
         type: [String, Number],
         required: true,
     },
-
+    
     REASONREFRECID: {
         type: [String, Number],
         required: true,
     },
 
+    
     VARIANTID: {
         type: [String, Number],
         required: true,
     },
-
+    
     POSTED: {
         type: [String, Number],
         required: true,
     },
+    
 
+    
     POSTEDDATETIME: {
         type: [String, Number],
         required: true,
     },
-
+    
+    
     UNITID: {
         type: [String, Number],
         required: true,
     },
-
+    
+    
     showModal: {
         type: Boolean,
         default: false,
@@ -103,6 +109,7 @@ const form = useForm({
     POSTEDDATETIME:(''),
     UNITID: (''),
 });
+
 
 const submitForm = () => {
     form.patch("/inventjournaltrans/patch", {
@@ -197,7 +204,7 @@ onMounted(() => {
                         autofocus
                     />
                     <InputError :message="form.errors.JOURNALID" class="mt-2" />
-                    </div>
+                    </div>  
                     <div class="col-span-2">
                     <InputLabel for="LINENUM" value="LINENUM" />
                     <TextInput
@@ -270,7 +277,7 @@ onMounted(() => {
                     />
                     <InputError :message="form.errors.PRICEUNIT" class="mt-2" />
                     </div>
-
+                    
                     <div class="col-span-1 ml-4">
                         <InputLabel for="SALESAMOUNT" value="SALESAMOUNT" />
                     <TextInput
@@ -355,6 +362,7 @@ onMounted(() => {
                     <InputError :message="form.errors.POSTEDDATETIME" class="mt-2" />
                     </div>
 
+                    
                     <div class="col-span-1 ml-4">
                         <InputLabel for="UNITID" value="UNITID" />
                     <TextInput

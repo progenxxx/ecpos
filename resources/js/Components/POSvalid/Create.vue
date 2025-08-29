@@ -99,10 +99,10 @@ const toggleActive = () => {
             </form>
         </template>
         <template #buttons>
-            <PrimaryButton
-                type="submit"
-                @click="submitForm"
-                :disabled="form.processing"
+            <PrimaryButton 
+                type="submit" 
+                @click="submitForm" 
+                :disabled="form.processing" 
                 class="px-6 py-2 transition-opacity duration-200"
                 :class="{ 'opacity-25': form.processing }"
             >

@@ -17,7 +17,11 @@ import MenuDot from "@/Components/Svgs/MenuDot.vue";
 import ClearCart from "@/Components/Svgs/ClearCart.vue";
 import ModalDaisy from "@/Components/DaisyUI/Modal.vue";
 
+
+
+
 </script>
+
 
 <template>
     <div class="relative bg-white border-s border-gray-400 shadow-md shadow-gray-600 w-full h-full lg:w-full lg:h-full max-w-sm lg:max-w-full">
@@ -41,6 +45,7 @@ import ModalDaisy from "@/Components/DaisyUI/Modal.vue";
 
             <section class="h-5/6 px-1 py-3">
                 <div class="h-full w-full overflow-y-auto bg-white p-3 top-0 right:0 left: 0 m-0">
+                    
 
                     <ul class=" grid grid-cols-3 text-sm font-bold lg:grid-cols-3">
                         <li class="p-2 flex justify-center"><a>Item</a></li>
@@ -76,10 +81,11 @@ import ModalDaisy from "@/Components/DaisyUI/Modal.vue";
                         </div>
                     </div>
                     <hr class="h-px-10 bg-gray-100">
+                                       
 
                     <!-- <details class="collapse collapse-plus bg-gray-100 rounded-none">
                     <summary class="collapse-title text-sm font-medium">Actions</summary>
-                    <div class="collapse-content">
+                    <div class="collapse-content"> 
                         <ul class="w-full flex justify-center">
                             <div class="inline-flex p-1 gap-5">
                                 <button class="rounded-full w-8 h-8 m-1 px-2 py-1 bg-red-900 text-white"><Setting></Setting></button>
@@ -91,6 +97,7 @@ import ModalDaisy from "@/Components/DaisyUI/Modal.vue";
                         <hr>
                     </div>
                     </details> -->
+                    
 
                     <!-- <Items v-for="items in 10" /> -->
                 </div>
@@ -117,27 +124,27 @@ import ModalDaisy from "@/Components/DaisyUI/Modal.vue";
                 <p class="text-sm">PAYMENT METHODS</p>
                 <div class="flex flex-wrap gap-1 pt-2 justify-center ">
                     <PurpleButton type="button" class="w-2/5 justify-center">
-                        <a>Home</a>
+                        <a>Home</a> 
                     </PurpleButton>
 
                     <PurpleButton type="button" class="w-2/5 justify-center">
-                        <a>Payment</a>
+                        <a>Payment</a> 
                     </PurpleButton>
 
                     <PurpleButton type="button" class="w-2/5 justify-center">
-                        <a>Adjust</a>
+                        <a>Adjust</a> 
                     </PurpleButton>
 
                     <PurpleButton type="button" class="w-2/5 justify-center">
-                        <a>Discount</a>
+                        <a>Discount</a> 
                     </PurpleButton>
 
                     <PurpleButton type="button" class="w-2/5 justify-center">
-                        <a>Xread</a>
+                        <a>Xread</a> 
                     </PurpleButton>
 
                     <PurpleButton type="button" class="w-2/5 justify-center">
-                      Zread
+                      Zread 
                     </PurpleButton>
 
                 </div>

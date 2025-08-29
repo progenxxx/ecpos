@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { useForm, usePage } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3'; // Add usePage import
 import Modal from "@/Components/Modals/DaisyModal.vue";
 import PrimaryButton from '@/Components/Buttons/PrimaryButton.vue';
 import InputLabel from '@/Components/Inputs/InputLabel.vue';
@@ -16,7 +16,7 @@ const props = defineProps({
     }
 });
 
-const page = usePage();
+const page = usePage(); // Initialize usePage
 
 const stores = computed(() => {
     return page.props.stores || [];
@@ -32,6 +32,7 @@ const form = useForm({
     description: ''
 });
 
+// Set the from_storeid to the current user's store
 form.from_storeid = currentStoreId.value;
 
 const submitForm = () => {
@@ -78,9 +79,9 @@ const toggleActive = () => {
                             :is-error="form.errors.to_storeid ? true : false"
                         >
                             <option value="">Select Store</option>
-                            <option
-                                v-for="store in stores"
-                                :key="store.STOREID"
+                            <option 
+                                v-for="store in stores" 
+                                :key="store.STOREID" 
                                 :value="store.NAME"
                                 :disabled="store.STOREID === currentStoreId"
                             >
@@ -89,6 +90,7 @@ const toggleActive = () => {
                         </SelectOption>
                         <InputError :message="form.errors.to_storeid" class="mt-2" />
                     </div>
+
 
                     <div>
                         <InputLabel for="description" value="Description" />
@@ -106,10 +108,10 @@ const toggleActive = () => {
             </FormComponent>
         </template>
         <template #buttons>
-            <PrimaryButton
-                type="submit"
-                @click="submitForm"
-                :disabled="form.processing"
+            <PrimaryButton 
+                type="submit" 
+                @click="submitForm" 
+                :disabled="form.processing" 
                 :class="{ 'opacity-25': form.processing }"
             >
                 Create

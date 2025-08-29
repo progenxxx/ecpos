@@ -7,7 +7,7 @@ import InputLabel from '@/Components/Inputs/InputLabel.vue';
 import TextInput from '@/Components/Inputs/TextInput.vue';
 import InputError from '@/Components/Inputs/InputError.vue';
 
-const emit = defineEmits(['toggleActive']);
+const emit = defineEmits(['toggleActive']); 
 
 const props = defineProps({
     showModal: Boolean,
@@ -53,16 +53,25 @@ function closeDropdown() {
   }, 100)
 }
 
-const submitForm = () => {
-
+/* const submitForm = () => {
     form.patch("/ItemOrders/getbwproducts", {
         preserveScroll: true,
         onSuccess: () => {
+            toggleActive();
+        },
+    });
+}; */
 
+const submitForm = () => {
+    console.log('Submitting form...');
+    form.patch("/ItemOrders/getbwproducts", {
+        preserveScroll: true,
+        onSuccess: () => {
+            console.log('Form submission successful.');
             toggleActive();
         },
         onError: (error) => {
-
+            console.error('Form submission error:', error);
         }
     });
 };
@@ -73,7 +82,7 @@ const toggleActive = () => {
 
 onMounted(() => {
     form.JOURNALID = props.JOURNALID;
-
+    
     watch(() => props.JOURNALID, (newValue) => {
         form.JOURNALID = newValue;
     });
@@ -97,12 +106,12 @@ onMounted(() => {
                             disabled
                         />
                         <InputError :message="form.errors.JOURNALID" class="mt-2" />
-                    </div>
+                    </div> 
 
                     <div class="col-span-3">
                         <div class="relative">
                             <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                                <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                             </div>
 
                             <input
@@ -116,7 +125,7 @@ onMounted(() => {
                             />
                             <InputError :message="form.errors.EndDate" class="mt-2" />
                         </div>
-                    </div>
+                    </div> 
                 </div>
             </form>
         </template>
