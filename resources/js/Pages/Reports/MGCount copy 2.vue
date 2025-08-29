@@ -52,9 +52,35 @@ const options = {
   scrollY: "60vh",
   scrollCollapse: true,
   error: function (xhr, error, thrown) {
-
+    console.error("DataTables error:", error);
   }
 };
+
+/* const groupedOrders = reactive(props.orders.reduce((acc, order) => {
+  const { STORENAME, ITEMID, ITEMNAME, CATEGORY, COUNTED } = order;
+  const counted = parseInt(COUNTED) || 0;
+
+  if (!acc[ITEMID]) {
+    acc[ITEMID] = {
+      ITEMID,
+      ITEMNAME,
+      CATEGORY,
+      TOTAL: 0,
+      MGCount: 0,
+      BalanceCount: 0,
+    };
+  }
+
+  if (!acc[ITEMID][STORENAME]) {
+    acc[ITEMID][STORENAME] = 0;
+  }
+
+  acc[ITEMID][STORENAME] += counted;
+  acc[ITEMID].TOTAL += counted;
+  acc[ITEMID].BalanceCount = acc[ITEMID].TOTAL - acc[ITEMID].MGCount;
+
+  return acc;
+}, {})); */
 
 const groupedOrders = reactive(props.orders.reduce((acc, order) => {
   const { STORENAME, ITEMID, ITEMNAME, CATEGORY, COUNTED, MGCOUNT } = order;
@@ -97,40 +123,12 @@ const storeNames = computed(() => {
   return names;
 });
 
-const columns = computed(() => [
-  {
-    title: 'ITEMID',
-    data: 'ITEMID',
-    render: (data, type, row) => {
-      if (type === 'display') {
-        return `<span>${data}</span>`;
-      }
-      return data;
-    }
-  },
-  {
-    title: 'ITEMS',
-    data: 'ITEMNAME',
-    render: (data, type, row) => {
-      if (type === 'display') {
-        return `<span>${data}</span>`;
-      }
-      return data;
-    }
-  },
-  {
-    title: 'CATEGORY',
-    data: 'CATEGORY',
-    render: (data, type, row) => {
-      if (type === 'display') {
-        return `<span>${data}</span>`;
-      }
-      return data;
-    }
-  },
-
-  {
-    title: 'ACTUAL INV COUNT',
+/* const columns = computed(() => [
+  { title: 'ITEMID', data: 'ITEMID' },
+  { title: 'ITEMS', data: 'ITEMNAME' },
+  { title: 'CATEGORY', data: 'CATEGORY' },
+  { 
+    title: 'ACTUAL INV COUNT', 
     data: 'MGCount',
     render: (data, type, row) => {
       if (type === 'display') {
@@ -139,8 +137,73 @@ const columns = computed(() => [
       return data;
     }
   },
-  {
-    title: 'REMAINING STOCKS',
+  { title: 'REMAINING STOCKS', data: 'BalanceCount' },
+  { title: 'TOTAL DISPATCH', data: 'TOTAL' },
+  ...Array.from(storeNames.value).map(storeName => ({ 
+    title: storeName, 
+    data: storeName,
+    render: (data, type, row) => {
+      if (type === 'display') {
+        return `<input type="number" value="${data}" onchange="window.updateCounted('${row.ITEMID}', '${storeName}', this.value)" />`;
+      }
+      return data;
+    }
+  }))
+]); */
+
+const columns = computed(() => [
+  { 
+    title: 'ITEMID', 
+    data: 'ITEMID',
+    render: (data, type, row) => {
+      if (type === 'display') {
+        return `<span>${data}</span>`;
+      }
+      return data;
+    }
+  },
+  { 
+    title: 'ITEMS', 
+    data: 'ITEMNAME',
+    render: (data, type, row) => {
+      if (type === 'display') {
+        return `<span>${data}</span>`;
+      }
+      return data;
+    }
+  },
+  { 
+    title: 'CATEGORY', 
+    data: 'CATEGORY',
+    render: (data, type, row) => {
+      if (type === 'display') {
+        return `<span>${data}</span>`;
+      }
+      return data;
+    }
+  },
+  /* { 
+    title: 'ACTUAL INV COUNT', 
+    data: 'MGCount',
+    render: (data, type, row) => {
+      if (type === 'display') {
+        return `<span>${data}</span>`;
+      }
+      return data;
+    }
+  }, */
+  { 
+    title: 'ACTUAL INV COUNT', 
+    data: 'MGCount',
+    render: (data, type, row) => {
+      if (type === 'display') {
+        return `<input type="number" value="${data}" onchange="window.updateMGCount('${row.ITEMID}', this.value)" />`;
+      }
+      return data;
+    }
+  },
+  { 
+    title: 'REMAINING STOCKS', 
     data: 'BalanceCount',
     render: (data, type, row) => {
       if (type === 'display') {
@@ -149,8 +212,8 @@ const columns = computed(() => [
       return data;
     }
   },
-  {
-    title: 'TOTAL ALLOCATION',
+  { 
+    title: 'TOTAL ALLOCATION', 
     data: 'TOTAL',
     render: (data, type, row) => {
       if (type === 'display') {
@@ -159,8 +222,8 @@ const columns = computed(() => [
       return data;
     }
   },
-  ...Array.from(storeNames.value).map(storeName => ({
-    title: storeName,
+  ...Array.from(storeNames.value).map(storeName => ({ 
+    title: storeName, 
     data: storeName,
     render: (data, type, row) => {
       if (type === 'display') {
@@ -171,11 +234,109 @@ const columns = computed(() => [
   }))
 ]);
 
+/* const saveAllData = () => {
+  const dataToSave = flattenedOrders.value.map(order => {
+    const counted = {};
+    Array.from(storeNames.value).forEach(storeName => {
+      counted[storeName] = order[storeName] || 0;
+    });
+
+    return {
+      itemId: order.ITEMID,
+      storeName: order.STORENAME,
+      mgCount: order.MGCount,
+      balanceCount: order.BalanceCount,
+      counted: counted
+    };
+  });
+
+  console.log('Data to save:', dataToSave); 
+
+  axios.post(route('save.all.data'), { data: dataToSave })
+    .then(response => {
+      console.log('All data saved successfully');
+    })
+    .catch(error => {
+      console.error('Error saving data:', error);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+      }
+    });
+}; */
+
+/* const saveAllData = () => {
+  const dataToSave = flattenedOrders.value.map(order => {
+    const counted = {};
+    Array.from(storeNames.value).forEach(storeName => {
+      counted[storeName] = order[storeName] || 0;
+    });
+
+    return {
+      itemId: order.ITEMID,
+      mgCount: order.MGCount,
+      balanceCount: order.BalanceCount,
+      counted: counted
+    };
+  });
+
+  console.log('Data to save:', JSON.stringify(dataToSave, null, 2));
+
+  axios.post(route('save.all.data'), { data: dataToSave })
+    .then(response => {
+      console.log('All data saved successfully:', response.data);
+    })
+    .catch(error => {
+      console.error('Error saving data:', error);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+      }
+    });
+}; */
+
 const showMessage = ref(false);
 const messageText = ref('');
 
+/* const saveAllData = () => {
+  const dataToSave = flattenedOrders.value.map(order => {
+    const counted = {};
+    Array.from(storeNames.value).forEach(storeName => {
+      counted[storeName] = order[storeName] || 0;
+    });
+
+    return {
+      itemId: order.ITEMID,
+      mgCount: order.MGCount,
+      balanceCount: order.BalanceCount,
+      counted: counted
+    };
+  });
+
+  console.log('Data to save:', JSON.stringify(dataToSave, null, 2));
+
+  axios.post(route('save.all.data'), { data: dataToSave })
+    .then(response => {
+      console.log('All data saved successfully:', response.data);
+      messageText.value = 'Data saved successfully!';
+      showMessage.value = true;
+      setTimeout(() => {
+        showMessage.value = false;
+      }, 3000); // Hide message after 3 seconds
+    })
+    .catch(error => {
+      console.error('Error saving data:', error);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+      }
+      messageText.value = 'Error saving data. Please try again.';
+      showMessage.value = true;
+      setTimeout(() => {
+        showMessage.value = false;
+      }, 3000); // Hide message after 3 seconds
+    });
+}; */
+
 const saveAllData = () => {
-  isLoading.value = true;
+  isLoading.value = true; // Set loading to true when starting
 
   const dataToSave = flattenedOrders.value.map(order => {
     const counted = {};
@@ -191,9 +352,11 @@ const saveAllData = () => {
     };
   });
 
+  console.log('Data to save:', JSON.stringify(dataToSave, null, 2));
+
   axios.post(route('save.all.data'), { data: dataToSave })
     .then(response => {
-
+      console.log('All data saved successfully:', response.data);
       messageText.value = 'Data saved successfully!';
       showMessage.value = true;
       setTimeout(() => {
@@ -201,9 +364,9 @@ const saveAllData = () => {
       }, 3000);
     })
     .catch(error => {
-
+      console.error('Error saving data:', error);
       if (error.response) {
-
+        console.error('Error response:', error.response.data);
       }
       messageText.value = 'Error saving data. Please try again.';
       showMessage.value = true;
@@ -212,25 +375,73 @@ const saveAllData = () => {
       }, 3000);
     })
     .finally(() => {
-      isLoading.value = false;
+      isLoading.value = false; // Set loading to false when finished
     });
 };
+
+/* const saveAllData = () => {
+  const dataToSave = flattenedOrders.value.map(order => {
+    const counted = {};
+    Array.from(storeNames.value).forEach(storeName => {
+      counted[storeName] = order[storeName] || 0;
+    });
+
+    return {
+      itemId: order.ITEMID,
+      mgCount: order.MGCount,
+      balanceCount: order.BalanceCount,
+      counted: counted
+    };
+  });
+
+  console.log('Data to save:', JSON.stringify(dataToSave, null, 2));
+
+  axios.post(route('save.all.data'), { data: dataToSave })
+    .then(response => {
+      console.log('All data saved successfully:', response.data);
+    })
+    .catch(error => {
+      console.error('Error saving data:', error);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+      }
+    });
+}; */
+
+/* window.updateMGCount = function(itemId, value) {
+  const item = groupedOrders[itemId];
+  if (item) {
+    item.MGCount = parseInt(value, 10) || 0;
+    item.BalanceCount =  item.MGCount - item.TOTAL;
+    
+    axios.post('/api/update-mgcount', {
+      itemId: itemId,
+      mgCount: item.MGCount
+    })
+    .then(response => {
+      console.log('MGCount updated successfully');
+    })
+    .catch(error => {
+      console.error('Error updating MGCount:', error);
+    });
+  }
+} */
 
 window.updateMGCount = function(itemId, value) {
   const item = groupedOrders[itemId];
   if (item) {
     item.MGCount = parseInt(value, 10) || 0;
     item.BalanceCount = item.MGCount - item.TOTAL;
-
+    
     axios.post('/api/update-mgcount', {
       itemId: itemId,
       mgCount: item.MGCount
     })
     .then(response => {
-
+      console.log('MGCount updated successfully');
     })
     .catch(error => {
-
+      console.error('Error updating MGCount:', error);
     });
   }
 }
@@ -239,11 +450,13 @@ window.updateCounted = function(itemId, storeName, value) {
   const item = groupedOrders[itemId];
   if (item) {
     item[storeName] = parseInt(value, 10) || 0;
-
+    
+    // Recalculate TOTAL based on all store counts
     item.TOTAL = Array.from(storeNames.value).reduce((sum, store) => {
       return sum + (item[store] || 0);
     }, 0);
-
+    
+    // Recalculate BalanceCount
     item.BalanceCount = item.TOTAL - item.MGCount;
 
     axios.post('/api/update-counted', {
@@ -254,10 +467,10 @@ window.updateCounted = function(itemId, storeName, value) {
       balanceCount: item.BalanceCount
     })
     .then(response => {
-
+      console.log('Counted updated successfully');
     })
     .catch(error => {
-
+      console.error('Error updating Counted:', error);
     });
   }
 }
@@ -339,16 +552,19 @@ async function exportToExcel() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Flattened Orders');
 
+    // Define columns
     worksheet.columns = columns.value.map(column => ({
       header: column.title,
       key: column.data,
       width: 15
     }));
 
+    // Add rows
     processedOrders.value.forEach(order => {
       worksheet.addRow(order);
     });
 
+    // Generate Excel file
     const today = new Date();
     const filename = `FlattenedOrders_${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}.xlsx`;
     const buffer = await workbook.xlsx.writeBuffer();
@@ -358,7 +574,7 @@ async function exportToExcel() {
     link.download = filename;
     link.click();
   } catch (error) {
-
+    console.error('Error exporting to Excel:', error);
   }
 }
 
@@ -386,7 +602,7 @@ const cakes = () => {
               <div date-rangepicker class="flex items-center">
                 <div class="relative ml-5 ">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                   </div>
                   <input
                     id="StartDate"
@@ -402,7 +618,7 @@ const cakes = () => {
                 <span class="mx-4 text-gray-500">to</span>
                 <div class="relative">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                   </div>
                   <input
                     id="EndDate"
@@ -484,11 +700,11 @@ const cakes = () => {
             </PrimaryButton>
           </div>
         </div>
-
-        <DataTable
-          :data="processedOrders"
-          :columns="columns"
-          class="w-full relative display custom-datatable"
+        
+        <DataTable 
+          :data="processedOrders" 
+          :columns="columns" 
+          class="w-full relative display custom-datatable" 
           :options="options"
         >
           <template #action="data">
@@ -505,7 +721,7 @@ const cakes = () => {
 <style>
 .custom-datatable table.dataTable {
   font-size: 0.85rem;
-  table-layout: fixed;
+  table-layout: fixed; /* This ensures that the percentage widths are respected */
   width: 100%;
 }
 
@@ -516,11 +732,12 @@ const cakes = () => {
   z-index: 1;
 }
 
+/* Set width for frozen columns */
 .custom-datatable .dataTables_scrollHead th:nth-child(-n+6),
 .custom-datatable .dataTables_scrollBody td:nth-child(-n+6) {
-  width: max(5%, 10px);
+  width: max(5%, 10px); /* Use whichever is larger: 5% of table width or 10px */
   min-width: 10px;
-  max-width: 100px;
+  max-width: 100px; /* Prevent columns from becoming too wide on large screens */
   font-size: 0.75rem;
   white-space: nowrap;
   overflow: hidden;
@@ -555,11 +772,13 @@ const cakes = () => {
 .custom-datatable .dataTables_scrollHead th:nth-child(6),
 .custom-datatable .dataTables_scrollBody td:nth-child(6) { left: 500px; }
 
+/* Additional styles for better visibility of frozen columns */
 .custom-datatable .dataTables_scrollHead th:nth-child(-n+6),
 .custom-datatable .dataTables_scrollBody td:nth-child(-n+6) {
   box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
 
+/* Ensure input fields in table cells don't overflow */
 .custom-datatable input[type="number"] {
   width: 100%;
   box-sizing: border-box;
@@ -567,29 +786,34 @@ const cakes = () => {
   font-size: 0.75rem;
 }
 
+/* Improve readability of table headers */
 .custom-datatable thead th {
   font-weight: bold;
   background-color: #f8f9fa;
 }
 
+/* Add some padding to table cells for better spacing */
 .custom-datatable td,
 .custom-datatable th {
   padding: 6px;
 }
 
+/* Style for alternating row colors */
 .custom-datatable tbody tr:nth-of-type(even) {
   background-color: #f3f4f6;
 }
 
+/* Hover effect for rows */
 .custom-datatable tbody tr:hover {
   background-color: #e5e7eb;
 }
 
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .custom-datatable table.dataTable {
     font-size: 0.7rem;
   }
-
+  
   .custom-datatable .dataTables_scrollHead th:nth-child(-n+6),
   .custom-datatable .dataTables_scrollBody td:nth-child(-n+6) {
     font-size: 0.65rem;

@@ -33,7 +33,7 @@ const submit = () => {
     <AuthenticationCard>
         <template #logo>
             <AuthenticationCardLogo />
-            <!-- <img id="background" class="absolute -left-20 top-0 max-w-[877px]" src="https:
+            <!-- <img id="background" class="absolute -left-20 top-0 max-w-[877px]" src="https://laravel.com/assets/img/welcome/background.svg" /> -->
         </template>
 
         <form @submit.prevent="submit">
@@ -182,5 +182,5 @@ const submit = () => {
         </form>
     </AuthenticationCard>
     </div>
-
+    
 </template>

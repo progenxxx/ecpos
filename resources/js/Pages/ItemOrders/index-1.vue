@@ -61,6 +61,7 @@ const options = {
     scrollCollapse: true,
 };
 
+
 const toggleUpdateModal = (newJOURNALID, newLINENUM, newCOUNTED) => {
     JOURNALID.value = newJOURNALID;
     LINENUM.value = newLINENUM;
@@ -80,7 +81,7 @@ const toggleCreateModal = (journalid, newLINENUM,) => {
     LINENUM.value = newLINENUM;
 
     showCreateModal.value = true;
-
+    console.log(JOURNALID.value); 
 };
 const togglePostModal = (newJOURNALID,) => {
     JOURNALID.value = newJOURNALID;
@@ -88,7 +89,7 @@ const togglePostModal = (newJOURNALID,) => {
 };
 
 const handleSelectedItem = (item) => {
-
+  console.log('Selected Item:', item);
 };
 
 const updateModalHandler = () => {
@@ -111,16 +112,17 @@ const reload = (journalid) => {
   window.location.href = `/ItemOrders/${journalid}`;
 };
 
+
 </script>
 
 <template>
-
+    
     <Main active-tab="ORDER">
         <template v-slot:modals>
             <Create
                 :show-modal="showCreateModal"
                 :JOURNALID="JOURNALID"
-                :items="props.items"
+                :items="props.items" 
                 @toggle-active="createModalHandler"
                 @select-item="handleSelectedItem"
             />

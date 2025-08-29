@@ -4,7 +4,7 @@ import Update from "@/Components/Orders/Update.vue";
 import Post from "@/Components/ItemOrders/Post.vue";
 import SendModal from "@/Components/Orders/Send.vue";
 import SuccessButton from "@/Components/Buttons/SuccessButton.vue";
-import Main from "@/Layouts/Main.vue";
+import Main from "@/Layouts/Main.vue";  
 import TableContainer from "@/Components/Tables/TableContainer.vue";
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import DataTable from 'datatables.net-vue3';
@@ -27,14 +27,15 @@ const props = defineProps({
     },
 });
 
+
 const columns = [
     { data: 'receiptid', title: 'RECEIPT' },
-    {
-        data: 'createddate',
-        title: 'CREATED DATE',
+    { 
+        data: 'createddate', 
+        title: 'CREATED DATE', 
         render: function(data, type, row) {
             const date = new Date(data);
-            return date.toLocaleDateString();
+            return date.toLocaleDateString();  
         }
     },
     { data: 'charge', title: 'CHARGE' },
@@ -46,6 +47,7 @@ const columns = [
     { data: 'grabfood', title: 'GRABFOOD' },
     { data: 'representation', title: 'REPRESENTATION' }
 ];
+
 
 const options = {
     paging: false,
@@ -76,4 +78,7 @@ const options = {
     </Main>
 
 </template>
+
+
+
 

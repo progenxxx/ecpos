@@ -48,6 +48,7 @@ const options = {
     scrollCollapse: true,
 };
 
+
 const toggleUpdateModal = (newID, newDESCRIPTION, newSTARTINGDATE, newENDINGDATE) => {
     ID.value = newID;
     DESCRIPTION.value = newDESCRIPTION;
@@ -63,6 +64,7 @@ const toggleDeleteModal = (newID) => {
 const toggleCreateModal = () => {
     showCreateModal.value = true;
 };
+
 
 const updateModalHandler = () => {
     showModalUpdate.value = false;

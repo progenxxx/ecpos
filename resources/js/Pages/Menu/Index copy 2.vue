@@ -15,8 +15,8 @@ import { ref, computed } from 'vue';
 const showThis = ref('Purchase');
 const selectedCategory = ref('');
 const searchQuery = ref('');
-const selectedAR = ref('CASH');
-const selectedCustomer = ref('000000');
+const selectedAR = ref('CASH'); 
+const selectedCustomer = ref('000000'); 
 const cartMessage = ref('');
 
 const props = defineProps({
@@ -48,19 +48,19 @@ const props = defineProps({
 
 const filteredItems = computed(() => {
     let filtered = props.items;
-
+    
     if (selectedCategory.value) {
         filtered = filtered.filter(item => item.itemgroup === selectedCategory.value);
     }
-
+    
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
-        filtered = filtered.filter(item =>
-            item.itemname.toLowerCase().includes(query) ||
+        filtered = filtered.filter(item => 
+            item.itemname.toLowerCase().includes(query) || 
             item.barcode.toLowerCase().includes(query)
         );
     }
-
+    
     return filtered.map(item => ({
         ...item,
         category: item.itemgroup || selectedCategory.value || ''
@@ -78,11 +78,14 @@ const addToCart = async (itemId) => {
             cartMessage.value = response.data.message;
         }
     } catch (error) {
-
+        console.error('Error adding item to cart:', error);
         cartMessage.value = 'Failed to add item to cart. Please try again.';
     }
 };
 
+/* const getItemLink = computed(() => {
+    return (itemId) => `addtocart/${itemId}/${props.windowId}/${selectedAR.value || ''}/${selectedCustomer.value || ''}`;
+}); */
 </script>
 
 <template>
@@ -93,7 +96,7 @@ const addToCart = async (itemId) => {
                     <div class="flex justify-between items-center gap-2">
                         <div class="flex items-center">
                             <Title class="text-sm font-bold lg:text-md">{{ windowDesc }}</Title>
-                            <span class="mx-2">|</span>
+                            <span class="mx-2">|</span> 
                             <div class="w-full lg:w-48 xl:w-64 mb-2 lg:mb-0">
                                 <select v-model="selectedAR" id="payment-options" class="block w-full p-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500">
                                     <option value="" disabled>Payment Method</option>
@@ -113,7 +116,7 @@ const addToCart = async (itemId) => {
 
                         <label class="input input-bordered flex items-center gap-2 w-3/5 lg:w-2/5">
                             <input v-model="searchQuery" type="text" class="grow text-sm" placeholder="Barcode / Item" />
-                            <svg xmlns="http:
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 opacity-70"><path fill-rule="evenodd" d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" clip-rule="evenodd" /></svg>
                         </label>
                     </div>
 
@@ -122,7 +125,7 @@ const addToCart = async (itemId) => {
                             <div class="flex flex-nowrap ml-10 text-xs w-[80%] lg:text-sm">
                                 <div v-for="cat in category" :key="cat.name">
                                     <div class="flex-none p-2 w-48">
-                                        <div
+                                        <div 
                                             @click="selectCategory(cat.name)"
                                             :class="{'bg-blue-500 text-white': selectedCategory === cat.name, 'bg-gray-200': selectedCategory !== cat.name}"
                                             class="flex items-center justify-center rounded-lg p-2 font-bold italic cursor-pointer transition-colors duration-300 h-full"

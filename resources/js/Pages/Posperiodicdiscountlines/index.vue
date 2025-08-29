@@ -25,6 +25,8 @@ const dealpriceordiscpct = ref('');
 const linegroup = ref('');
 const disctype = ref('');
 
+/* const ITEMS = ref([]);   */
+
 const showModalUpdate = ref(false);
 const showCreateModal = ref(false);
 const showDeleteModal = ref(false);
@@ -53,11 +55,11 @@ const formatPrice = (value) => {
 
 const columns = [
     { data: 'offerid', title: 'OFFERID' },
-
+    /* { data: 'lineid', title: 'LINEID' }, */
     { data: 'linegroup', title: 'LINEGROUP' },
     { data: 'itemid', title: 'ITEMID' },
-    {
-        data: 'dealpriceordiscpct',
+    { 
+        data: 'dealpriceordiscpct', 
         title: 'DISCOUNTPERITEM',
         render: function(data, type) {
             if (type === 'display') {
@@ -66,7 +68,7 @@ const columns = [
             return data;
         }
     },
-
+    /* { data: 'disctype', title: 'DISCTYPE' }, */
     {
         data: null,
         render: '#action',
@@ -103,6 +105,8 @@ const toggleCreateModal = (newOfferid, newDiscountType, newItems) => {
     showCreateModal.value = true;
 };
 
+
+
 const updateModalHandler = () => {
     showModalUpdate.value = false;
 };
@@ -117,15 +121,28 @@ const navigateToPosDiscount = () => {
   window.location.href = '/posperiodicdiscounts';
 };
 
-const navigateToposmmlinegroups = (offerid) => {
+/* const navigateToposmmlinegroups = () => {
+  window.location.href = '/posmmlinegroups';
+}; */
 
+const navigateToposmmlinegroups = (offerid) => {
+  console.log('Redirecting to Line Group Entries:', offerid);
   window.location.href = `/POSMMMLINEGROUPS/${offerid}`;
 };
 
 const reload = (offerid) => {
-
+  /* console.log('Redirecting to Line Group Entries:', offerid); */
   window.location.href = `/MNM/${offerid}`;
 };
+
+
+/* const selectedPrice = ref('');
+
+const uniquePrices = computed(() => {
+  const prices = new Set();
+  props.items.forEach(item => prices.add(item.price));
+  return Array.from(prices);
+}); */
 
 const selectedItemId = ref('');
 
@@ -133,12 +150,14 @@ const selectedItem = computed(() => {
   return props.items.find(item => item.itemid === selectedItemId.value);
 });
 
+console.log(props.items);
+
 </script>
 
 <template>
     <Main active-tab="RETAILITEMS">
         <template v-slot:modals>
-            <Create
+            <Create 
                 :show-modal="showCreateModal"
                 :offerid="props.offerid"
                 :discounttype="props.discounttype"
@@ -154,6 +173,7 @@ const selectedItem = computed(() => {
                 <div class="absolute adjust">
                     <div class="flex justify-start items-center">
 
+
                         <!-- <div>
                             <label for="item-select">Select an item:</label>
                             <select id="item-select" v-model="selectedItemId">
@@ -164,6 +184,7 @@ const selectedItem = computed(() => {
                             </select>
                             <p v-if="selectedItem" class="hidden">Selected Item: {{ selectedItem.itemname }} (ID: {{ selectedItemId }})</p>
                         </div> -->
+
 
                         <PrimaryButton
                             type="button"
@@ -198,6 +219,7 @@ const selectedItem = computed(() => {
                         </DangerButton>
 
                         <!-- <h3 class="text-blue-900 ml-6">Need to execute reload trigger to get offerid</h3> -->
+                        
 
                     </div>
                 </div>

@@ -47,9 +47,47 @@ const toggleActive = () => {
 };
 
 const layoutComponent = computed(() => {
-
+    console.log('userRole value:', props.userRole);
+    console.log('Is Store?:', (props.userRole?.toUpperCase() || '').toUpperCase() === 'STORE');
     return (props.userRole?.toUpperCase() || '') === 'STORE' ? StorePanel : Main;
 });
+
+/* const options = {
+  paging: false,
+  scrollX: true,
+  scrollY: "60vh",
+  scrollCollapse: true,
+  error: function (xhr, error, thrown) {
+    console.error("DataTables error:", error);
+  }
+}; */
+
+/* const groupedOrders = computed(() => {
+  return props.orders.reduce((acc, order) => {
+    const { STORENAME, ITEMID, ITEMNAME, CATEGORY, COUNTED, STOREID, stocks, movementstocks } = order;
+    const counted = parseInt((COUNTED ?? '').trim(), 10) || 0;
+
+    if (!acc[ITEMID]) {
+      acc[ITEMID] = {
+        ITEMID,
+        ITEMNAME,
+        CATEGORY,
+        stocks,
+        movementstocks,
+        TOTAL: 0,
+      };
+    }
+
+    if (!acc[ITEMID][STORENAME]) {
+      acc[ITEMID][STORENAME] = { count: 0, STOREID };
+    }
+
+    acc[ITEMID][STORENAME].count += counted;
+    acc[ITEMID].TOTAL += counted;
+
+    return acc;
+  }, {});
+}); */
 
 const groupedOrders = computed(() => {
   return props.orders.reduce((acc, order) => {
@@ -78,9 +116,14 @@ const groupedOrders = computed(() => {
   }, {});
 });
 
+
+
+
+
 const flattenedOrders = computed(() => {
   return Object.values(groupedOrders.value);
 });
+
 
 const storeNames = computed(() => {
   const names = new Set();
@@ -97,6 +140,13 @@ const storeNames = computed(() => {
     return aId.localeCompare(bId, undefined, { numeric: true, sensitivity: 'base' });
   });
 });
+
+
+
+
+
+
+
 
 const columnTotals = computed(() => {
   const totals = {
@@ -123,23 +173,23 @@ const columnTotals = computed(() => {
 
 const columns = computed(() => {
   const baseColumns = [
-    {
-      title: 'ITEMID',
+    { 
+      title: 'ITEMID', 
       data: 'ITEMID',
       className: 'frozen-column',
       footer: () => columnTotals.value.ITEMID,
       width: '120px'
     },
-    {
-      title: 'ITEMS',
+    { 
+      title: 'ITEMS', 
       data: 'ITEMNAME',
       className: 'frozen-column',
       footer: () => '',
       orderable: true,
       width: '200px'
     },
-    {
-      title: 'CATEGORY',
+    { 
+      title: 'CATEGORY', 
       data: 'CATEGORY',
       className: 'frozen-column',
       footer: () => '',
@@ -188,6 +238,7 @@ const columns = computed(() => {
   return [...baseColumns, ...storeColumns];
 });
 
+
 const options = {
   paging: false,
   scrollX: true,
@@ -197,7 +248,7 @@ const options = {
     start: 4,
   },
   error: function (xhr, error, thrown) {
-
+    console.error("DataTables error:", error);
   },
   footerCallback: function(tfoot, data, start, end, display) {
     const api = this.api();
@@ -209,6 +260,8 @@ const options = {
     });
   },
 };
+
+
 
 const StartDate = ref(null);
 const formattedDate1 = computed(() => {
@@ -281,13 +334,13 @@ downloadTextFile(filename, content);
       <div class="absolute adjust">
 
         <div class="flex justify-start items-center">
-
+         
           <form @submit.prevent="submitForm"   class="px-2 py-3 max-h-[50vh] lg:max-h-[70vh] overflow-y-auto">
               <input type="hidden" name="_token" :value="$page.props.csrf_token">
               <div date-rangepicker  class="flex items-center">
               <div class="relative ml-5 ">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                   </div>
 
               <input
@@ -306,7 +359,7 @@ downloadTextFile(filename, content);
 
               <div class="relative">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                   </div>
 
                   <input
@@ -342,7 +395,7 @@ downloadTextFile(filename, content);
               <li><a href="/lastweek">Last Week</a></li>
               <li><a href="/yesterday">Yesterday</a></li>
             </ul>
-          </details>
+          </details>               
 
          <SuccessButton
                 type="button"
@@ -354,10 +407,10 @@ downloadTextFile(filename, content);
           <!-- <h6 class="ml-2 font-bold">BW PRODUCTS | </h6> -->
 
           <!-- <p class="font-bold text:navy font-xs">{{ startDate }} | {{ endDate }}</p> -->
-
+          
         </div>
       </div>
-
+      
       <DataTable :data="flattenedOrders" :columns="columns" class="w-full relative display" :options="options">
         <template #action="data">
           <div class="flex justify-start">
@@ -368,6 +421,7 @@ downloadTextFile(filename, content);
   </template>
 </component>
 </template>
+
 
 <script>
 import ExcelJS from 'exceljs';
@@ -392,15 +446,18 @@ export default {
 
   methods: {
     calculateFlattenedOrders(orders) {
+      console.log('Calculating flattenedOrders');
+      console.log('Input orders:', orders);
 
       if (!orders || !Array.isArray(orders)) {
-
+        console.error('Invalid orders data');
         return [];
       }
 
+      // Improved sorting function
       function compareSTOREID(a, b) {
         if (!a.STOREID || !b.STOREID) {
-
+          console.warn('Missing STOREID:', a, b);
           return 0;
         }
 
@@ -414,11 +471,12 @@ export default {
         return aId.localeCompare(bId, undefined, {numeric: true, sensitivity: 'base'});
       }
 
+      // Sort orders by STOREID
       orders.sort(compareSTOREID);
 
       const groupedOrders = orders.reduce((acc, order) => {
         if (order && typeof order === 'object') {
-          const STORENAME = `${order.STOREID} - ${order.STORENAME}`;
+          const STORENAME = `${order.STOREID} - ${order.STORENAME}`; 
           const itemName = order.ITEMNAME || '';
           const ITEMID = order.ITEMID || '';
           const CATEGORY = order.CATEGORY || '';
@@ -460,14 +518,18 @@ export default {
         return { ...sortedItem, TOTAL: total };
       });
 
+      console.log('Calculated flattenedOrders:', result);
       return result;
     },
 
     async exportToExcel() {
+      console.log('Starting exportToExcel');
+      console.log('flattenedOrders:', this.flattenedOrders);
 
       try {
         if (!this.flattenedOrders || !Array.isArray(this.flattenedOrders) || this.flattenedOrders.length === 0) {
-
+          console.error('No data to export');
+          // You might want to show a message to the user here
           return;
         }
 
@@ -492,14 +554,15 @@ export default {
           }
         });
 
+        // Improved store names sorting
         const sortedStoreNames = Array.from(storeNames).sort((a, b) => {
           const aId = a.split(' - ')[0];
           const bId = b.split(' - ')[0];
-
+          
           if (!isNaN(aId) && !isNaN(bId)) {
             return parseInt(aId) - parseInt(bId);
           }
-
+          
           return aId.localeCompare(bId, undefined, {numeric: true, sensitivity: 'base'});
         });
 
@@ -529,7 +592,8 @@ export default {
         const buffer = await workbook.xlsx.writeBuffer();
         this.saveExcelFile(buffer, filename);
       } catch (error) {
-
+        console.error('Error exporting to Excel:', error);
+        // You might want to show an error message to the user here
       }
     },
 

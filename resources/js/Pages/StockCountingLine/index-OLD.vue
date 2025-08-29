@@ -6,9 +6,10 @@ import PrimaryButton from "@/Components/Buttons/PrimaryButton.vue";
 import DangerButton from "@/Components/Buttons/DangerButton.vue";
 import TableContainer from "@/Components/Tables/TableContainer.vue";
 
-import Add from "@/Components/Svgs/Add.vue";
+import Add from "@/Components/Svgs/Add.vue";    
 import editblue from "@/Components/Svgs/editblue.vue";
 import moreblue from "@/Components/Svgs/moreblue.vue";
+
 
 import Main from "@/Layouts/RetailPanel.vue";
 import { ref } from "vue";
@@ -46,6 +47,7 @@ const options = {
     scrollY: "70vh",
     scrollCollapse: true,
 };
+
 
 const toggleUpdateModal = (newEntryno, newPostingdate, newCustomer, newType, newDocumentno, newDescription, newReasoncode, newCurrency, newCurrencyamount, newAmount, newRemainingamount, newUserid) => {
     entryno.value = newEntryno;

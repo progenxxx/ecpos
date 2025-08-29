@@ -102,7 +102,7 @@ const submitForm = () => {
     preserveState: true,
     preserveScroll: true,
     onSuccess: () => {
-
+      // Force a re-render of the tab content
       nextTick(() => {
         const tabContent = document.querySelector('[role="tabpanel"]');
         if (tabContent) {
@@ -114,7 +114,7 @@ const submitForm = () => {
       });
     },
   });
-
+  /* location.reload(); */
 };
 
 const formattedDate1 = computed(() => {
@@ -132,6 +132,7 @@ const formattedDate1 = computed(() => {
 const totalCost = computed(() => {
   return Object.values(groupedPicklist.value).flat().reduce((sum, item) => sum + (Number(item.COST || 0) * Number(item.CHECKINGCOUNT || 0)), 0);
 });
+
 
 const specialOrder = computed(() => {
   return Object.values(groupedPicklist.value).flat().find(item => Number(item.SPECIALORDER || 0) > 0) || {};
@@ -152,12 +153,12 @@ const updateActual = async (storeName, itemName, itemId, value) => {
     const item = store.find(i => i.ITEMID === itemId);
 
     if (!item) {
-
+      console.error('Item not found');
       return;
     }
 
     if (!item.JOURNALID) {
-
+      console.error('JOURNALID is missing for this item');
       return;
     }
 
@@ -172,15 +173,15 @@ const updateActual = async (storeName, itemName, itemId, value) => {
     if (response.data.success) {
       item.ACTUAL = value;
     } else {
-
+      console.error('Failed to update ACTUAL value', response.data);
     }
   } catch (error) {
-
+    console.error('Error updating ACTUAL value:', error.message);
   }
 };
 
 const printDeliveryReceipt = () => {
-
+  // Implement your print functionality here
 };
 
 const BackPre = () => {
@@ -209,12 +210,12 @@ const updateCratesCounts = async (storeName, journalId) => {
     });
 
     if (response.data.success) {
-
+      console.log('Crates counts updated successfully');
     } else {
-
+      console.error('Failed to update crates counts', response.data);
     }
   } catch (error) {
-
+    console.error('Error updating crates counts:', error.message);
   }
 };
 
@@ -222,9 +223,11 @@ const reload = () => {
  location.reload();
 };
 
+
+
 const printPackingList = () => {
   const windowPrint = window.open('', '', 'left=0,top=0,width=800,height=600,toolbar=0,scrollbars=0,status=0');
-
+  
   const stores = Object.entries(groupedPicklist.value);
   let content = '';
 
@@ -261,7 +264,7 @@ const printPackingList = () => {
             <td class="border p-1 text-center">${spItem.ITEMNAME}</td>
             <td class="border p-1 text-center">${spItem.COUNTED}</td>
             <td class="border p-1 text-center">0</td>
-            <td class="border p-1 text-center">0</td>
+            <td class="border p-1 text-center">0</td> 
             <td class="border p-1 text-right">${formatCurrency(spItem.COST)}</td>
             <td class="border p-1 text-right">${formatCurrency(spItem.COST * spItem.COUNTED)}</td>
           </tr>
@@ -341,8 +344,8 @@ const printPackingList = () => {
             size: legal portrait;
             margin: 0;
           }
-          body {
-            font-family: Arial, sans-serif;
+          body { 
+            font-family: Arial, sans-serif; 
             font-size: 12px;
             margin: 0;
             padding: 0;
@@ -354,18 +357,18 @@ const printPackingList = () => {
             padding: 10mm;
             box-sizing: border-box;
           }
-          .store-section {
-            width: 100%;
+          .store-section { 
+            width: 100%; 
           }
-          table {
-            width: 100%;
-            border-collapse: collapse;
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
             margin-bottom: 5mm;
           }
-          th, td {
-            border: 1px solid black;
-            padding: 2px;
-            font-size: 12px;
+          th, td { 
+            border: 1px solid black; 
+            padding: 2px; 
+            font-size: 12px; 
           }
           .text-center { text-align: center; }
           .text-right { text-align: right; }
@@ -389,11 +392,11 @@ const printPackingList = () => {
   <Main active-tab="FINALDR">
     <template v-slot:modals>
       <Create v-if="showCreateModal" @toggle-active="createModalHandler" />
-      <Update
-        v-if="showModalUpdate"
-        :ID="id"
-        :SUBJECT="subject"
-        :DESCRIPTION="description"
+      <Update 
+        v-if="showModalUpdate"  
+        :ID="id" 
+        :SUBJECT="subject"  
+        :DESCRIPTION="description" 
         @toggle-active="updateModalHandler"
       />
     </template>
@@ -420,12 +423,12 @@ const printPackingList = () => {
 
             <form @submit.prevent="submitForm" class="flex items-center mt-4">
               <input type="hidden" name="_token" :value="$page.props.csrf_token">
-
+              
               <div class="ml-2">
                 <InputLabel for="STORE" value="STORE" class="sr-only" />
                 <select
                   id="STORE"
-                  v-model="form.STORE"
+                  v-model="form.STORE" 
                   class="input input-bordered w-64 !bg-gray-100"
                 >
                   <option disabled value="">Select Store</option>
@@ -437,7 +440,7 @@ const printPackingList = () => {
 
               <div class="relative ml-2">
                     <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                     </div>
 
                     <input
@@ -472,7 +475,7 @@ const printPackingList = () => {
               </details>
 
               <h6 class="ml-2 mt-6 font-bold">{{ routes }}</h6> -->
-
+              
         </div>
 
       <div role="tablist" class="tabs tabs-lifted mt-4 p-5">
@@ -483,7 +486,7 @@ const printPackingList = () => {
               <p class="text-gray-600 text-lg">Loading...</p>
             </div>
           </template>
-
+          
           <template v-else-if="!groupedPicklist || Object.keys(groupedPicklist).length === 0">
             <div class="col-span-full text-center mt-8">
               <div class="bg-white rounded-lg shadow-md p-4 sm:p-8 max-w-sm mx-auto">
@@ -491,7 +494,7 @@ const printPackingList = () => {
               </div>
             </div>
           </template>
-
+          
           <template v-else>
             <div v-for="storeName in storeNames" :key="storeName" class="mb-8">
               <h2 class="text-xl font-bold mb-4">{{ storeName }}</h2>
@@ -526,17 +529,17 @@ const printPackingList = () => {
                     <td class="border border-gray-400 p-1">{{ item.ITEMNAME }}</td>
                     <td class="border border-gray-400 p-1 text-center">{{ item.CHECKINGCOUNT }}</td>
                     <!-- <td class="border border-gray-400 p-1 text-center">
-                      <input
-                        type="number"
-                        v-model="item.actual"
+                      <input 
+                        type="number" 
+                        v-model="item.actual" 
                         @change="updateActual(storeName, item.ITEMNAME, item.ITEMID, item.actual)"
                         class="w-full text-center"
                       >
                     </td> -->
                     <!-- <td class="border border-gray-400 p-1 text-center">
-                      <input
-                        type="number"
-                        :value="0"
+                      <input 
+                        type="number" 
+                        :value="0" 
                         @change="updateActual(storeName, item.ITEMNAME, item.ITEMID, item.actual)"
                         class="w-full text-center"
                       >
@@ -568,7 +571,7 @@ const printPackingList = () => {
                       <td class="border border-gray-400 p-1 text-center">{{ spItem.ITEMNAME }}</td>
                       <td class="border border-gray-400 p-1 text-center">{{ spItem.COUNTED }}</td>
                       <td class="border border-gray-400 p-1 text-center">0</td>
-                      <td class="border border-gray-400 p-1 text-center">0</td>
+                      <td class="border border-gray-400 p-1 text-center">0</td> 
                       <td class="border border-gray-400 p-1 text-right">{{ formatCurrency(spItem.COST) }}</td>
                       <td class="border border-gray-400 p-1 text-right">{{ formatCurrency(spItem.COST * spItem.COUNTED) }}</td>
                     </tr>
@@ -577,6 +580,7 @@ const printPackingList = () => {
                       <td class="border border-gray-400 p-1 text-right font-bold">{{ formatCurrency(calculateSpecialOrder(props.sptrans)) }}</td>
                     </tr>
                   </template>
+
 
                   <!-- PARTY CAKES ONLY -->
                   <!-- <template v-if="storeName === getstore && props.partycakes && props.partycakes.length > 0"> -->
@@ -599,6 +603,8 @@ const printPackingList = () => {
                       <td class="border border-gray-400 p-1 text-right font-bold">{{ formatCurrency(calculatePartyCakes(props.partycakes)) }}</td>
                     </tr>
                   </template>
+
+
 
                   <tr>
                     <td colspan="3" class="border border-gray-400 p-1">
@@ -627,8 +633,8 @@ const printPackingList = () => {
                     <div class="flex justify-between items-center">
                       <span>ORANGE CRATES</span>
                       <span class="mr-2">{{ groupedPicklist[storeName][0].orangeCrates }}</span>
-                      <input
-                        type="number"
+                      <input 
+                        type="number" 
                         v-model="cratesCounts.orangeCrates"
                         @change="updateCratesCounts(storeName, groupedPicklist[storeName][0].JOURNALID)"
                         class="w-16 px-2 py-1 text-right border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -639,8 +645,8 @@ const printPackingList = () => {
                     <div class="flex justify-between items-center">
                       <span>BLUE CRATES</span>
                       <span class="mr-2">{{ groupedPicklist[storeName][0].blueCrates }}</span>
-                      <input
-                        type="number"
+                      <input 
+                        type="number" 
                         v-model="cratesCounts.blueCrates"
                         @change="updateCratesCounts(storeName, groupedPicklist[storeName][0].JOURNALID)"
                         class="w-16 px-2 py-1 text-right border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -651,8 +657,8 @@ const printPackingList = () => {
                     <div class="flex justify-between items-center">
                       <span>EMPANADA CRATES</span>
                       <span class="mr-2">{{ groupedPicklist[storeName][0].empanadaCrates }}</span>
-                      <input
-                        type="number"
+                      <input 
+                        type="number" 
                         v-model="cratesCounts.empanadaCrates"
                         @change="updateCratesCounts(storeName, groupedPicklist[storeName][0].JOURNALID)"
                         class="w-16 px-2 py-1 text-right border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -663,8 +669,8 @@ const printPackingList = () => {
                     <div class="flex justify-between items-center">
                       <span>BOX</span>
                       <span class="mr-2">{{ groupedPicklist[storeName][0].box }}</span>
-                      <input
-                        type="number"
+                      <input 
+                        type="number" 
                         v-model="cratesCounts.box"
                         @change="updateCratesCounts(storeName, groupedPicklist[storeName][0].JOURNALID)"
                         class="w-16 px-2 py-1 text-right border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -683,7 +689,7 @@ const printPackingList = () => {
 </template>
 
 <style scoped>
-
+/* Add any component-specific styles here */
 .adjust {
   top: 80px;
   left: 255px;

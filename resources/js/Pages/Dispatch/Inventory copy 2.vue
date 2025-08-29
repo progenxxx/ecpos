@@ -41,7 +41,7 @@ const options = {
   scrollY: "60vh",
   scrollCollapse: true,
   error: function (xhr, error, thrown) {
-
+    console.error("DataTables error:", error);
   }
 };
 
@@ -70,7 +70,8 @@ const groupedOrders = computed(() => {
 
 const flattenedOrders = computed(() => {
   const orders = Object.values(groupedOrders.value);
-
+  
+  // Add total row
   const totalRow = {
     ITEMID: 'TOTAL',
     ITEMNAME: '',
@@ -81,11 +82,12 @@ const flattenedOrders = computed(() => {
       orders.reduce((sum, order) => sum + (order.dates[date] || 0), 0)
     ])),
   };
-
+  
   orders.push(totalRow);
-
+  
   return orders;
 });
+
 
 const uniqueDates = computed(() => {
   const today = new Date();
@@ -93,12 +95,12 @@ const uniqueDates = computed(() => {
   const month = today.getMonth();
   const lastDay = new Date(year, month + 1, 0).getDate();
   const dates = [];
-
+  
   for (let i = 1; i <= lastDay; i++) {
     const date = new Date(year, month, i);
     dates.push(date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }));
   }
-
+  
   return dates;
 });
 
@@ -113,6 +115,8 @@ const columns = computed(() => [
     render: (data, type, row) => row.dates[date] || 0
   }))
 ]);
+
+
 
 const StartDate = ref(null);
 const formattedDate1 = computed(() => {
@@ -174,10 +178,11 @@ const content = generateTextFileContent(flattenedOrders, columns);
 downloadTextFile(filename, content);
 }
 
+
 const generateReceiptContent = () => {
   const date = new Date().toLocaleDateString();
   const time = new Date().toLocaleTimeString();
-
+  
   let content = `
     <html>
       <head>
@@ -200,6 +205,7 @@ const generateReceiptContent = () => {
         <div class="center" style="width: 200px">${date} ${time}</div>
   `;
 
+  // Group orders by store
   const ordersByStore = flattenedOrders.value.reduce((acc, order) => {
     Object.entries(order).forEach(([key, value]) => {
       if (typeof value === 'object' && value !== null && 'count' in value && 'STOREID' in value) {
@@ -218,6 +224,7 @@ const generateReceiptContent = () => {
     return acc;
   }, {});
 
+  // Generate receipt content for each store
   Object.entries(ordersByStore).forEach(([storeName, items]) => {
     content += `
       <div class="bold" style="width:200px; ">${storeName} Branch:</div>
@@ -279,13 +286,13 @@ const printReceipt = () => {
       <div class="absolute adjust">
 
         <div class="flex justify-start items-center">
-
+         
           <form @submit.prevent="submitForm"   class="px-2 py-3 max-h-[50vh] lg:max-h-[70vh] overflow-y-auto">
               <input type="hidden" name="_token" :value="$page.props.csrf_token">
               <div date-rangepicker  class="flex items-center">
               <div class="relative ml-5 ">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                   </div>
 
               <input
@@ -304,7 +311,7 @@ const printReceipt = () => {
 
               <div class="relative">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                   </div>
 
                   <input
@@ -326,7 +333,7 @@ const printReceipt = () => {
           </TransparentButton>
 
           <!-- &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<button @click="generateAndDownloadTextFile">Generate and Download Text File</button> -->
-
+              
           <details className="dropdown">
             <summary className="btn m-1">RECENT</summary>
             <ul className="menu dropdown-content bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
@@ -352,9 +359,10 @@ const printReceipt = () => {
             <Print class="h-5"></Print>
           </PrimaryButton>
 
+          
         </div>
       </div>
-
+      
       <DataTable :data="flattenedOrders" :columns="columns" :options="options" class="display">
         <thead>
           <tr>
@@ -366,16 +374,17 @@ const printReceipt = () => {
           </tr>
         </thead>
       </DataTable>
-
+        
         <!-- <div class="mt-4">
           <strong>Date Legend:</strong>
           {{ uniqueDates.join(' / ') }}
         </div> -->
-
+      
     </TableContainer>
   </template>
 </Main>
 </template>
+
 
 <script>
 import ExcelJS from 'exceljs';
@@ -416,27 +425,28 @@ export default {
       }));
     },
     async exportToExcel() {
-
+      console.log('Starting exportToExcel');
+      console.log('flattenedOrders:', this.flattenedOrders);
       try {
         if (!this.flattenedOrders || !Array.isArray(this.flattenedOrders) || this.flattenedOrders.length === 0) {
-
+          console.error('No data to export');
           return;
         }
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Orders');
-
+        // Define columns based on your DataTable structure
         const columns = [
           { header: 'ITEMID', key: 'ITEMID', width: 15 },
           { header: 'ITEMNAME', key: 'ITEMNAME', width: 30 },
           { header: 'CATEGORY', key: 'CATEGORY', width: 20 },
           { header: 'TOTAL', key: 'TOTAL', width: 15 },
         ];
-
+        // Add date columns
         this.uniqueDates.forEach(date => {
           columns.push({ header: date, key: date, width: 15 });
         });
         worksheet.columns = columns;
-
+        // Add data rows
         this.flattenedOrders.forEach(order => {
           const row = {
             ITEMID: order.ITEMID,
@@ -444,13 +454,13 @@ export default {
             CATEGORY: order.CATEGORY,
             TOTAL: order.TOTAL,
           };
-
+          // Add data for each date
           this.uniqueDates.forEach(date => {
             row[date] = order.dates[date] || 0;
           });
           worksheet.addRow(row);
         });
-
+        // Style the header row
         worksheet.getRow(1).font = { bold: true };
         worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
         const today = new Date();
@@ -458,7 +468,7 @@ export default {
         const buffer = await workbook.xlsx.writeBuffer();
         this.saveExcelFile(buffer, filename);
       } catch (error) {
-
+        console.error('Error exporting to Excel:', error);
       }
     },
     saveExcelFile(buffer, filename) {

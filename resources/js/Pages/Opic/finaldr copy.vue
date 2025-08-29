@@ -110,12 +110,12 @@ const updateActual = async (storeName, itemName, itemId, value) => {
     const item = store.find(i => i.ITEMID === itemId);
 
     if (!item) {
-
+      console.error('Item not found');
       return;
     }
 
     if (!item.JOURNALID) {
-
+      console.error('JOURNALID is missing for this item');
       return;
     }
 
@@ -130,15 +130,15 @@ const updateActual = async (storeName, itemName, itemId, value) => {
     if (response.data.success) {
       item.ACTUAL = value;
     } else {
-
+      console.error('Failed to update ACTUAL value', response.data);
     }
   } catch (error) {
-
+    console.error('Error updating ACTUAL value:', error.message);
   }
 };
 
 const printDeliveryReceipt = () => {
-
+  // ... (keep your existing printDeliveryReceipt function)
 };
 
 const BackPre = () => {
@@ -150,15 +150,16 @@ const picklistreload = () => {
 };
 </script>
 
+
 <template>
   <Main active-tab="FINALDR">
     <template v-slot:modals>
       <Create v-if="showCreateModal" @toggle-active="createModalHandler" />
-      <Update
-        v-if="showModalUpdate"
-        :ID="id"
-        :SUBJECT="subject"
-        :DESCRIPTION="description"
+      <Update 
+        v-if="showModalUpdate"  
+        :ID="id" 
+        :SUBJECT="subject"  
+        :DESCRIPTION="description" 
         @toggle-active="updateModalHandler"
       />
     </template>
@@ -217,7 +218,7 @@ const picklistreload = () => {
                 <div date-rangepicker  class="flex items-center">
                 <div class="relative ml-5 ">
                     <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                     </div>
 
                     <input
@@ -232,9 +233,9 @@ const picklistreload = () => {
                     <InputError :message="form.errors.StartDate" class="mt-2" />
 
                     <!-- <InputLabel for="RETAILGROUP" value="RETAILGROUP" />
-                      <SelectOption
+                      <SelectOption 
                           id="itemdepartment"
-                          v-model="form.itemdepartment"
+                          v-model="form.itemdepartment" 
                           :is-error="form.errors.itemdepartment ? true : false"
                           class="mt-1 block w-full"
                           >
@@ -249,7 +250,7 @@ const picklistreload = () => {
 
                 <div class="relative">
                     <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                     </div>
 
                     <input
@@ -270,6 +271,7 @@ const picklistreload = () => {
             <Search class="h-8" />
             </TransparentButton>
 
+          
         </div>
       </div>
 
@@ -281,8 +283,8 @@ const picklistreload = () => {
                   <p class="text-gray-600 text-lg">Loading...</p>
                 </div>
               </template>
-
-              <template v-else-if="error">
+              
+              <template v-else-if="error">  
                 <div class="col-span-full text-center mt-8">
                   <p class="text-red-600 text-lg">{{ error }}</p>
                 </div>
@@ -295,7 +297,7 @@ const picklistreload = () => {
                   </div>
                 </div>
               </template>
-
+              
             <template v-else>
                 <div class="max-w-4xl mx-auto p-4 bg-white shadow-lg text-xs">
                 <table class="w-full border-collapse border border-gray-400">
@@ -386,12 +388,14 @@ const picklistreload = () => {
                   </tr>
                 </table>
               </div>
-
+              
           </template>
 
         </div>
       </div>
 
+
+      
     </template>
   </Main>
 </template>

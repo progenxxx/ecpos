@@ -21,6 +21,7 @@ const linegroup = ref('');
 const noofitemsneeded = ref('');
 const description = ref('');
 
+
 const showModalUpdate = ref(false);
 const showCreateModal = ref(false);
 const showDeleteModal = ref(false);
@@ -55,6 +56,7 @@ const options = {
     scrollCollapse: true,
 };
 
+
 const toggleUpdateModal = (newOFFERID, newLINEGROUP, newNOOFITEMSNEEDED, newDESCRIPTION) => {
     offerid.value = newOFFERID;
     linegroup.value = newLINEGROUP;
@@ -77,8 +79,9 @@ const toggleCreateModal = (offerid) => {
     }
 
     showCreateModal.value = true;
-
+    console.log(offerid.value); 
 };
+
 
 const updateModalHandler = () => {
     showModalUpdate.value = false;
@@ -94,8 +97,13 @@ const posposmmlinegroups = () => {
   window.location.href = '/posperiodicdiscounts';
 };
 
-const reload = (offerid) => {
+/* const navigateToposmmlinegroups = (offerid) => {
+  console.log('Redirecting to Line Group Entries:', offerid);
+  window.location.href = `/POSMMMLINEGROUPS/${offerid}`;
+}; */
 
+const reload = (offerid) => {
+  /* console.log('Redirecting to Line Group Entries:', offerid); */
   window.location.href = `/POSMMMLINEGROUPS/${offerid}`;
 };
 

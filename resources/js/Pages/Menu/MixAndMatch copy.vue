@@ -18,7 +18,7 @@ const selectDiscount = (discount) => {
 
 const groupedItems = computed(() => {
   if (!selectedDiscount.value) return [];
-
+  
   return selectedDiscount.value.line_groups.map(group => ({
     ...group,
     items: group.discount_lines || [],
@@ -43,16 +43,16 @@ const selectItem = (item, group) => {
   if (!selectedItemsByGroup.value[group.linegroup]) {
     selectedItemsByGroup.value[group.linegroup] = [];
   }
-
+  
   const groupItems = selectedItemsByGroup.value[group.linegroup];
   const itemIndex = groupItems.findIndex(i => i.id === item.id);
-
+  
   if (itemIndex > -1) {
     groupItems.splice(itemIndex, 1);
   } else if (groupItems.length < group.noofitemsneeded) {
     groupItems.push(item);
   }
-
+  
   if (isSelectionComplete.value) {
     step.value = 3;
   }
@@ -103,7 +103,7 @@ const submitOrder = async () => {
         }))
       }))
     };
-
+    
     await axios.post('/api/mix-match/submit-order', orderData);
     isOpen.value = false;
     resetSelection();
@@ -112,12 +112,13 @@ const submitOrder = async () => {
   }
 };
 
+
 onMounted(fetchDiscounts);
 </script>
 
 <template>
   <div class="p-4">
-    <button
+    <button 
       @click="isOpen = true"
       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
     >
@@ -220,13 +221,13 @@ onMounted(fetchDiscounts);
 
         <!-- Footer -->
         <div class="border-t p-4 flex justify-between items-center">
-          <button
+          <button 
             @click="step > 1 ? step-- : resetSelection()"
             class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md"
           >
             {{ step > 1 ? 'Back' : 'Cancel' }}
           </button>
-
+          
           <div class="flex space-x-4">
             <button
               v-if="step < 3"

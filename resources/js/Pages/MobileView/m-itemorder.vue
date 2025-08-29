@@ -15,6 +15,7 @@ import Receipt from "@/Components/Svgs/Picklist.vue";
 import List from "@/Components/Nav/List.vue";
 import Cart from "@/Components/Svgs/Cart.vue";
 
+
 import Create from "@/Components/ItemOrders/Create.vue";
 import GetBWP from "@/Components/ItemOrders/GetBWP.vue";
 import CopyFrom from "@/Components/ItemOrders/CopyFrom.vue";
@@ -57,14 +58,14 @@ const props = defineProps({
     },
     items: {
         type: Array,
-        required: true,
+        required: true, 
     },
 });
 
 const columns = [
     { data: 'itemname', title: 'ITEMNAME' },
-    {
-        data: 'COUNTED',
+    { 
+        data: 'COUNTED', 
         title: 'COUNTED',
         render: function(data, type, row) {
             if (type === 'display') {
@@ -97,19 +98,19 @@ const toggleCreateModal = (journalid, newLINENUM) => {
     JOURNALID.value = journalid;
     LINENUM.value = newLINENUM;
     showCreateModal.value = true;
-
+    console.log(JOURNALID.value);
 };
 
 const toggleGetBWModal = (journalid) => {
     JOURNALID.value = journalid;
     showGetBWModal.value = true;
-
+    console.log(JOURNALID.value);
 };
 
 const toggleGetCFModal = (journalid) => {
     JOURNALID.value = journalid;
     showGetCFModal.value = true;
-
+    console.log(JOURNALID.value);
 };
 
 const createModalHandler = () => {
@@ -142,16 +143,18 @@ const ViewOrders = (journalid) => {
 };
 
 const handleSelectedItem = (item) => {
-
+    console.log('Selected Item:', item);
 };
 
+// Reactive state
 const tableData = ref([]);
 const updatedValues = reactive({});
 const message = reactive({
     text: '',
-    type: ''
+    type: '' // 'success', 'error', or 'info'
 });
 
+// Methods
 const handleCountedChange = (event, item) => {
     const newValue = event.target.value;
     updatedValues[item.ITEMID] = newValue;
@@ -161,14 +164,14 @@ const updateAllCountedValues = async () => {
     try {
         message.text = 'Updating counted values...';
         message.type = 'info';
-
+        
         const response = await axios.post('/api/update-all-counted-values', {
             journalId: props.journalid,
             updatedValues: updatedValues,
         });
-
+        
         if (response.data.success) {
-
+            console.log('All values updated successfully');
             for (const [itemId, newValue] of Object.entries(updatedValues)) {
                 const item = tableData.value.find(row => row.ITEMID === itemId);
                 if (item) {
@@ -176,7 +179,7 @@ const updateAllCountedValues = async () => {
                 }
             }
             Object.keys(updatedValues).forEach(key => delete updatedValues[key]);
-
+            
             message.text = 'All counted values updated successfully';
             message.type = 'success';
 
@@ -185,7 +188,7 @@ const updateAllCountedValues = async () => {
             throw new Error('Update failed');
         }
     } catch (error) {
-
+        console.error(`You don't have any changes!`, error);
         message.text = `You don't have any changes!`;
         message.type = 'error';
     }
@@ -196,7 +199,7 @@ const clearMessage = () => {
     setTimeout(() => {
         message.text = '';
         message.type = '';
-    }, 5000);
+    }, 5000); // Clear after 5 seconds
 };
 </script>
 
@@ -212,12 +215,13 @@ const clearMessage = () => {
   <!-- Main content area -->
   <main class="flex-grow px-4 pb-20">
 
+    
     <TableContainer>
         <!-- Message display area -->
-        <div v-if="message.text"
-             :class="['p-4 mb-4 rounded-md',
-                      message.type === 'success' ? 'bg-green-100 text-green-700' :
-                      message.type === 'error' ? 'bg-red-100 text-red-700' :
+        <div v-if="message.text" 
+             :class="['p-4 mb-4 rounded-md', 
+                      message.type === 'success' ? 'bg-green-100 text-green-700' : 
+                      message.type === 'error' ? 'bg-red-100 text-red-700' : 
                       'bg-blue-100 text-blue-700']">
             {{ message.text }}
         </div>
@@ -257,10 +261,10 @@ const clearMessage = () => {
             </div>
         </div>
 
-        <DataTable
-            :data="inventjournaltransrepos"
-            :columns="columns"
-            class="w-full relative display"
+        <DataTable 
+            :data="inventjournaltransrepos" 
+            :columns="columns" 
+            class="w-full relative display" 
             :options="options"
         >
             <template #action="data">
@@ -285,7 +289,7 @@ const clearMessage = () => {
           </SuccessButton>
         </div>
       </div>
-
+    
       <DataTable :data="orders" :columns="txtfilecolumns" class="w-full relative display" :options="options">
         <template #action="data">
           <div class="flex justify-start">
@@ -299,7 +303,7 @@ const clearMessage = () => {
   <nav class="fixed bottom-0 left-0 right-0 bg-navy shadow-lg">
     <div class="flex justify-around items-center h-16 relative">
       <a href="/dashboard" class="flex flex-col items-center text-blue-400">
-        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
           <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
         </svg>
         <span class="text-xs mt-1">Home</span>
@@ -309,7 +313,7 @@ const clearMessage = () => {
         <span class="text-xs mt-1">Retail</span>
       </a>
       <button onclick="window.location.href='/m-order'"  class="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-blue-700 rounded-full shadow-lg flex items-center justify-center border-2 border-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-        <!-- <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http:
+        <!-- <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
         </svg> --><span class="text-xs mt-1 font-bold text-white">EC</span>
       </button>

@@ -35,6 +35,7 @@ const props = defineProps({
     </div>
 </header>
 
+
   <!-- Main content area -->
   <main class="flex-grow">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
@@ -69,7 +70,7 @@ const props = defineProps({
   <nav class="fixed bottom-0 left-0 right-0 bg-navy shadow-lg">
     <div class="flex justify-around items-center h-16 relative">
       <a href="/dashboard" class="flex flex-col items-center text-blue-400">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
           <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
         </svg>
         <span class="text-xs mt-1">Home</span>
@@ -79,7 +80,7 @@ const props = defineProps({
         <span class="text-xs mt-1">Retail</span>
       </a>
       <button onclick="window.location.href='/m-order'"  class="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-blue-700 rounded-full shadow-lg flex items-center justify-center border-2 border-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-        <!-- <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http:
+        <!-- <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
         </svg> --><span class="text-xs mt-1 font-bold text-white">EC</span>
       </button>

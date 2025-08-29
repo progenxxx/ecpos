@@ -43,7 +43,7 @@
     scrollY: "60vh",
     scrollCollapse: true,
     error: function (xhr, error, thrown) {
-
+      console.error("DataTables error:", error);
     }
   };
 
@@ -95,10 +95,12 @@ storeNames.forEach(storeName => {
 flattenedOrders.forEach(order => {
   columns.forEach(column => {
     if (!order.hasOwnProperty(column.data)) {
-      order[column.data] = '0';
+      order[column.data] = '0'; 
     }
   });
 });
+
+
 
 const StartDate = ref(null);
 const formattedDate1 = computed(() => {
@@ -169,13 +171,13 @@ function generateAndDownloadTextFile() {
         <div class="absolute adjust">
 
           <div class="flex justify-start items-center">
-
+           
             <form @submit.prevent="submitForm"   class="px-2 py-3 max-h-[50vh] lg:max-h-[70vh] overflow-y-auto">
                 <input type="hidden" name="_token" :value="$page.props.csrf_token">
                 <div date-rangepicker  class="flex items-center">
                 <div class="relative ml-5 ">
                     <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                     </div>
 
                 <input
@@ -194,7 +196,7 @@ function generateAndDownloadTextFile() {
 
                 <div class="relative">
                     <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                     </div>
 
                     <input
@@ -216,7 +218,7 @@ function generateAndDownloadTextFile() {
             </TransparentButton>
 
             <!-- &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<button @click="generateAndDownloadTextFile">Generate and Download Text File</button> -->
-
+                
             <details className="dropdown">
               <summary className="btn m-1">RECENT</summary>
               <ul className="menu dropdown-content bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
@@ -234,9 +236,10 @@ function generateAndDownloadTextFile() {
                   <ExcelIcon class="h-4" />
             </SuccessButton>
 
+            
           </div>
         </div>
-
+        
         <DataTable :data="flattenedOrders" :columns="columns" class="w-full relative display" :options="options">
           <template #action="data">
             <div class="flex justify-start">
@@ -247,6 +250,9 @@ function generateAndDownloadTextFile() {
     </template>
   </Main>
 </template>
+
+
+
 
 <script>
 import ExcelJS from 'exceljs';
@@ -269,6 +275,7 @@ export default {
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Flattened Orders');
 
+        // Define columns
         const columns = [
           { header: 'ITEMID', key: 'ITEMID', width: 20 },
           { header: 'ITEMNAME', key: 'ITEMNAME', width: 25 },
@@ -276,6 +283,7 @@ export default {
           { header: 'TOTAL', key: 'TOTAL', width: 15 },
         ];
 
+        // Extract unique STORENAMEs
         const storeNames = new Set();
         this.flattenedOrders.forEach(order => {
           Object.keys(order).forEach(key => {
@@ -285,12 +293,15 @@ export default {
           });
         });
 
+        // Add STORENAME columns
         storeNames.forEach(storeName => {
           columns.push({ header: storeName, key: storeName, width: 15 });
         });
 
+        // Set columns in the worksheet
         worksheet.columns = columns;
 
+        // Add rows
         this.flattenedOrders.forEach(order => {
           const row = {
             ITEMID: order.ITEMID,
@@ -304,16 +315,17 @@ export default {
           worksheet.addRow(row);
         });
 
+        // Generate Excel file
         const today = new Date();
         const filename = `FlattenedOrders_${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}.xlsx`;
         const buffer = await workbook.xlsx.writeBuffer();
         this.saveExcelFile(buffer, filename);
       } catch (error) {
-
+        console.error('Error exporting to Excel:', error);
       }
     },
     saveExcelFile(buffer, filename) {
-
+      // Convert workbook buffer to Blob and create download link
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -321,7 +333,7 @@ export default {
       link.click();
     },
     calculateFlattenedOrders(orders) {
-
+      // Calculate grouped orders and transform into flattenedOrders format
       const groupedOrders = orders.reduce((acc, order) => {
         const STORENAME = order.STORENAME;
         const itemName = order.ITEMNAME;

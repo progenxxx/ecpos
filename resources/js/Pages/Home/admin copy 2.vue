@@ -1,5 +1,6 @@
 <script setup>
 
+/* ICON */
 import Store from "@/Components/Svgs/Store.vue";
 import Peso from "@/Components/Svgs/Peso.vue";
 import Receipt from "@/Components/Svgs/Receipt.vue";
@@ -30,6 +31,12 @@ const props = defineProps({
 const getFileUrl = (filePath) => {
     return `/storage/${filePath}`;
 };
+
+/* const getFileUrl = (filePath) => {
+    return `/storage/app/public/announcements/${encodeURIComponent(filePath)}`;
+}; */
+
+
 
 const breakpoints = ref({
     300: {
@@ -73,12 +80,14 @@ const showTab = (showThisParam, titleParam) => {
             <div class="flex gap-3 flex-column justify-center">
                 <!-- <div v-for="items in 5" class="h-[180px] w-[300px] bg-white shadow-sm shadow-gray-500 rounded-md p-3"> -->
 
+
                 <!-- <div class="h-[130px] w-[300px] bg-white shadow-sm shadow-gray-100 rounded-md p-3">
                     <div class="flex items-center justify-center w-10 h-10 bg-gray-200 rounded-full">
-                        <Peso />
+                        <Peso /> 
                     </div>
                     <h3 class="sm:text-xs lg:text-lg text-black my-5 font-bold">NET SALES</h3>
                 </div>
+
 
                 <div class="h-[130px] w-[300px] bg-white shadow-sm shadow-gray-100 rounded-md p-3">
                     <div class="flex items-center justify-center w-10 h-10 bg-gray-200 rounded-full">
@@ -108,9 +117,10 @@ const showTab = (showThisParam, titleParam) => {
                     <h3 class="sm:text-xs lg:text-lg text-black my-5 font-bold">TOTAL TRANSACTIONS</h3>
                 </div> -->
 
+                
             </div>
 
-            <!-- <div class="hero h-5/6 w-full mt-16" style="background-image: url(https:
+            <!-- <div class="hero h-5/6 w-full mt-16" style="background-image: url(https://bwsuperbakeshop.ph/images/slider/slider-2-1920x870.webp?v=18);"> -->
                     <!-- <div class="hero-overlay bg-opacity-60"></div>
                         <div class="hero-content text-center text-neutral-content">
                             <div class="max-w-md">
@@ -121,12 +131,13 @@ const showTab = (showThisParam, titleParam) => {
                         </div> -->
                     <!-- </div> -->
 
-                    <!-- <iframe src="https:
-                    <!-- <iframe src="https:
+                    <!-- <iframe src="https://lottie.host/embed/43c1b491-658d-43f3-8dd5-854446819251/2igOT6RrNk.json" class="w-full h-full"></iframe> -->
+                    <!-- <iframe src="https://lottie.host/embed/f69dee81-7a79-4de1-9199-0ed5f959549c/BiVHosiGkN.json" class="w-full h-full"></iframe> -->
 
                      <!-- <img src="../../../../public/images/bg.png" width='100%' height='150%' class="block md:hidden lg:hidden mt-10"></img>
-                    <iframe src='https:
+                    <iframe src='https://my.spline.design/3dtextbluecopy-963d6cfed5fa7561aad011be55639519/' frameborder='0' width='100%' height='100%' class="block sm:hidden md:block lg:block"></iframe> -->
 
+                    
                     <!-- <div className="mockup-window border-base-300 border bg-white">
                         <div className="flex w-full flex-col p-10">
                             <div v-for="announcement in announcements" :key="announcement.id">
@@ -175,6 +186,7 @@ const showTab = (showThisParam, titleParam) => {
                         </div>
                     </template>
                 </div> -->
+
 
                 <!-- <div class="grid grid-cols-3 gap-4">
                     <div v-for="announcement in announcements" :key="announcement.id">
@@ -247,6 +259,7 @@ const showTab = (showThisParam, titleParam) => {
                     </div>
                 </div>
 
+                    
         </template>
 
     </AdminPanel>
@@ -254,6 +267,6 @@ const showTab = (showThisParam, titleParam) => {
 
 <style >
 .vue-slide {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease; /* Adjust duration and easing as needed */
 }
 </style>

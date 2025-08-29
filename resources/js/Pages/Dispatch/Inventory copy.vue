@@ -33,7 +33,10 @@ const showGetBWModal = ref(false);
 const showGetCFModal = ref(false);
 
 onMounted(() => {
+  console.log('Initial items:', props.initialItems);
+  console.log('Processed items:', items.value);
 
+  // Set up days in month
   if (props.currentMonth) {
     const date = new Date(props.currentMonth);
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -79,8 +82,8 @@ const columns = computed(() => [
       `;
     }
   })),
-  {
-    title: 'TOTAL',
+  { 
+    title: 'TOTAL', 
     data: null,
     render: (data, type, row) => itemTotal(row)
   }
@@ -98,7 +101,7 @@ const options = {
   info: true,
   ordering: false,
   fixedColumns: {
-    leftColumns: 2
+    leftColumns: 2  
   }
 };
 
@@ -110,11 +113,14 @@ window.setQuantity = (itemId, day, value) => {
 };
 
 const updateInventory = () => {
-
+  // Implementation for updating the inventory
+  console.log('Updating inventory...');
+  // You would typically make an API call here to update the backend
 };
 
 async function exportToExcel() {
-
+  console.log('Starting export to Excel');
+  
   if (!items.value.length || !daysInMonth.value.length) {
     alert('No data available to export.');
     return;
@@ -123,15 +129,18 @@ async function exportToExcel() {
   try {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Inventory');
-
+    
+    console.log('Defining columns');
     worksheet.columns = columns.value.map(column => ({
       header: column.title,
       key: column.title,
       width: 15
     }));
 
+    console.log('Adding header row');
     worksheet.addRow(columns.value.map(column => column.title));
 
+    console.log('Adding data rows');
     items.value.forEach(item => {
       const rowData = columns.value.map(column => {
         if (column.title === 'ITEMS') return item.name;
@@ -143,6 +152,7 @@ async function exportToExcel() {
       worksheet.addRow(rowData);
     });
 
+    console.log('Adding footer row');
     const footerRow = worksheet.addRow(columns.value.map(column => {
       if (column.title === 'TOTAL') return grandTotal();
       if (column.title !== 'ITEMS' && column.title !== 'CATEGORY') {
@@ -159,6 +169,7 @@ async function exportToExcel() {
     };
     footerRow.font = { color: { argb: 'FFDDDDDD' } };
 
+    console.log('Styling header row');
     worksheet.getRow(1).font = { bold: true };
     worksheet.getRow(1).fill = {
       type: 'pattern',
@@ -166,13 +177,15 @@ async function exportToExcel() {
       fgColor: { argb: 'FFF8F9FA' }
     };
 
+    console.log('Generating Excel file');
     const filename = `Inventory_${props.currentMonth.replace(' ', '_')}.xlsx`;
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     saveAs(blob, filename);
 
+    console.log('Excel export completed');
   } catch (error) {
-
+    console.error('Error exporting to Excel:', error);
     alert('An error occurred while exporting to Excel. Please try again.');
   }
 }
@@ -190,7 +203,8 @@ const GetCFModalHandler = () => {
 };
 
 const handleSelectedItem = (item) => {
-
+  // Handle the selected item
+  console.log('Selected item:', item);
 };
 
 </script>
@@ -220,7 +234,7 @@ const handleSelectedItem = (item) => {
             :columns="columns"
             :data="items"
             :options="options"
-            class="w-full relative display"
+            class="w-full relative display" 
           />
         </div>
 
@@ -233,10 +247,10 @@ const handleSelectedItem = (item) => {
 </template>
 
 <style scoped>
-
+/* Customize DataTable header styles */
 .dataTables_wrapper .dataTables_paginate .paginate_button {
-  background-color: #003366;
-  color: #ffffff;
+  background-color: #003366; /* Navy background color */
+  color: #ffffff; /* White text color */
 }
 
 .dataTables_wrapper .dataTables_scroll .dataTables_scrollHead .dataTables_scrollHeadInner .dataTables_scrollHead {
@@ -244,8 +258,8 @@ const handleSelectedItem = (item) => {
 }
 
 .dataTables_wrapper .dataTables_scroll .dataTables_scrollHead .dataTables_scrollHeadInner th {
-  background-color: #003366;
-  color: #ffffff;
+  background-color: #003366; /* Navy background color */
+  color: #ffffff; /* White text color */
   font-weight: bold;
 }
 </style>

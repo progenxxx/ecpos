@@ -110,6 +110,7 @@ const showTab = (showThisParam, titleParam) => {
                         Purchase Window 4
                     </window>
 
+
                     <window :show-this="showThis == 'party-cake'" url="/party_cake" >
                         Party Cake Window 1
                     </window>
@@ -117,12 +118,14 @@ const showTab = (showThisParam, titleParam) => {
                         Party Cake Window 2
                     </window>
 
+
                     <window :show-this="showThis == 'reseller'" url="/reseller" >
                         Reseller Window 1
                     </window>
                     <window :show-this="showThis == 'reseller'" url="/reseller">
                         Reseller Window 2
                     </window>
+
 
                     <window :show-this="showThis == 'tie-up'" url="/tie_up" >
                         Tie up Window 1
@@ -133,6 +136,7 @@ const showTab = (showThisParam, titleParam) => {
                     <window :show-this="showThis == 'tie-up'" url="/tie_up">
                         Tie up Window 3
                     </window>
+
 
                     <window :show-this="showThis == 'advance-order'" url="/advance_order">
                         Advance Order Window 2
@@ -146,6 +150,6 @@ const showTab = (showThisParam, titleParam) => {
 
 <style >
 .vue-slide {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease; /* Adjust duration and easing as needed */
 }
 </style>

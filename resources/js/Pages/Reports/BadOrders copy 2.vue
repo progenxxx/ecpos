@@ -13,6 +13,7 @@ import ExcelJS from 'exceljs';
 import jQuery from 'jquery';
 import { router } from '@inertiajs/vue3';
 
+// Initialize DataTables with jQuery
 window.$ = window.jQuery = jQuery;
 DataTable.use(DataTablesCore);
 
@@ -56,13 +57,13 @@ onMounted(() => {
 
 const filteredData = computed(() => {
     let filtered = [...props.bo];
-
+    
     if (selectedStores.value.length > 0) {
-        filtered = filtered.filter(item =>
+        filtered = filtered.filter(item => 
             selectedStores.value.includes(item.storename)
         );
     }
-
+    
     return filtered;
 });
 
@@ -85,7 +86,7 @@ const footerTotals = computed(() => {
 });
 
 const columns = [
-    {
+    { 
         data: 'itemid',
         title: 'Item ID',
         footer: 'Grand Total'
@@ -183,9 +184,10 @@ const columns = [
     }
 ];
 
+// DataTable options
 const options = {
     responsive: true,
-    order: [[3, 'asc']],
+    order: [[3, 'asc']], // Sort by store name by default
     pageLength: 25,
     dom: 'Bfrtip',
     scrollX: true,
@@ -215,10 +217,12 @@ const options = {
     }
 };
 
+// Export function to Excel
 const exportToExcel = () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('BO Data');
 
+    // Define columns in Excel sheet
     worksheet.columns = [
         { header: 'Item ID', key: 'itemid' },
         { header: 'Item Name', key: 'itemname' },
@@ -233,6 +237,7 @@ const exportToExcel = () => {
         { header: 'Ant Bites', key: 'ant_bites' }
     ];
 
+    // Add filtered data to the worksheet
     filteredData.value.forEach(row => {
         worksheet.addRow({
             itemid: row.itemid,
@@ -249,6 +254,7 @@ const exportToExcel = () => {
         });
     });
 
+    // Add a row for totals
     worksheet.addRow({
         itemid: 'Total',
         itemname: '',
@@ -263,6 +269,7 @@ const exportToExcel = () => {
         ant_bites: footerTotals.value.ant_bites.toFixed(2)
     });
 
+    // Generate the Excel file and trigger the download
     workbook.xlsx.writeBuffer().then((buffer) => {
         const blob = new Blob([buffer], { type: 'application/octet-stream' });
         const link = document.createElement('a');
@@ -272,6 +279,7 @@ const exportToExcel = () => {
     });
 };
 
+// Handle filter changes and refresh data
 const handleFilterChange = () => {
     if (startDate.value && endDate.value && new Date(startDate.value) > new Date(endDate.value)) {
         alert('Start date cannot be later than end date');
@@ -279,7 +287,7 @@ const handleFilterChange = () => {
         endDate.value = '';
         return;
     }
-
+    
     router.get(
         route('reports.bo'),
         {
@@ -310,7 +318,7 @@ onUnmounted(() => {
         <template v-slot:main>
             <!-- Filters Section -->
             <div class="mb-4 flex flex-wrap gap-4 p-4 bg-white rounded-lg shadow z-[999]">
-                <div v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'"
+                <div v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'" 
                      class="flex-1 min-w-[200px]">
                     <MultiSelectDropdown
                         v-model="selectedStores"
@@ -327,7 +335,7 @@ onUnmounted(() => {
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
                 </div>
-
+                
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
                     <input
@@ -349,10 +357,10 @@ onUnmounted(() => {
 
             <!-- Table Section -->
             <TableContainer>
-                <DataTable
-                    :data="filteredData"
-                    :columns="columns"
-                    class="w-full relative display"
+                <DataTable 
+                    :data="filteredData" 
+                    :columns="columns" 
+                    class="w-full relative display" 
                     :options="options"
                 >
                 </DataTable>
@@ -362,7 +370,7 @@ onUnmounted(() => {
 </template>
 
 <style>
-
+/* General Styling for DataTable */
 table.dataTable {
     width: 100%;
     border-collapse: collapse;
@@ -404,6 +412,7 @@ table.dataTable td {
     font-size: 13px;
 }
 
+/* Styling for Footer */
 .dataTable tfoot {
     background-color: #007bff;
     color: white;
@@ -415,6 +424,7 @@ table.dataTable td {
     padding: 12px 15px;
 }
 
+/* Styling for DataTable Buttons */
 .dt-buttons {
     display: flex;
     justify-content: flex-start;
@@ -443,6 +453,7 @@ table.dataTable td {
     background-color: darkblue;
 }
 
+/* Search Box Styling */
 .dataTables_filter {
     float: right;
     padding-bottom: 20px;
@@ -458,6 +469,7 @@ table.dataTable td {
     margin-left: 8px;
 }
 
+/* Pagination Styling */
 .dataTables_paginate {
     margin-top: 15px;
     text-align: right;
@@ -482,6 +494,7 @@ table.dataTable td {
     background-color: #e9ecef;
 }
 
+/* Length Menu Styling */
 .dataTables_length {
     margin-bottom: 15px;
 }
@@ -493,11 +506,13 @@ table.dataTable td {
     margin: 0 5px;
 }
 
+/* Info Styling */
 .dataTables_info {
     margin-top: 15px;
     color: #666;
 }
 
+/* Responsive Design */
 @media (max-width: 768px) {
     .dt-buttons {
         position: static;
@@ -519,7 +534,7 @@ table.dataTable td {
         text-align: center;
     }
 
-    table.dataTable th,
+    table.dataTable th, 
     table.dataTable td {
         padding: 8px;
         font-size: 12px;
@@ -534,6 +549,7 @@ table.dataTable td {
     }
 }
 
+/* Print Styling */
 @media print {
     .dt-buttons,
     .dataTables_filter,
@@ -553,6 +569,7 @@ table.dataTable td {
     }
 }
 
+/* Loading State */
 .dataTables_processing {
     position: absolute;
     top: 50%;
@@ -565,6 +582,7 @@ table.dataTable td {
     z-index: 1000;
 }
 
+/* Scrollbar Styling */
 .dataTables_scrollBody::-webkit-scrollbar {
     width: 8px;
     height: 8px;

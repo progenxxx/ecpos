@@ -52,6 +52,7 @@ const options = {
     scrollCollapse: true,
 };
 
+
 const toggleUpdateModal = (newNUMBERSEQUENCE, newTXT, newLOWEST, newHIGHEST, newBLOCKED, newSTOREID, newCANBEDELETED) => {
     NUMBERSEQUENCE.value = newNUMBERSEQUENCE;
     TXT.value = newTXT;
@@ -70,6 +71,7 @@ const toggleDeleteModal = (newNUMBERSEQUENCE) => {
 const toggleCreateModal = () => {
     showCreateModal.value = true;
 };
+
 
 const updateModalHandler = () => {
     showModalUpdate.value = false;

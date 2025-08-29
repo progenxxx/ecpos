@@ -3,12 +3,14 @@ import { useRouter } from 'vue-router'
 import Create from "@/Components/Orders/Create.vue";
 import Update from "@/Components/Orders/Update.vue";
 import Post from "@/Components/ItemOrders/Post.vue";
+/* import Delete from "@/Components/Orders/Delete.vue";
+import More from "@/Components/Orders/More.vue"; */
 
 import PrimaryButton from "@/Components/Buttons/PrimaryButton.vue";
 import Main from "@/Layouts/AdminPanel.vue";
 import Excel from "@/Components/Exports/Excel.vue";
 
-import Add from "@/Components/Svgs/Add.vue";
+import Add from "@/Components/Svgs/Add.vue";    
 import editblue from "@/Components/Svgs/editblue.vue";
 import moreblue from "@/Components/Svgs/moreblue.vue";
 import PostIcon from "@/Components/Svgs/Post.vue";
@@ -18,14 +20,21 @@ import { ref, computed } from "vue";
 
 import txtfile from "@/Pages/Reports/TxtFile.vue";
 
+
 import DataTable from 'datatables.net-vue3';
 import DataTablesCore from 'datatables.net';
 DataTable.use(DataTablesCore);
+
+/* const JOURNALID = ref('');
+const DESCRIPTION = ref('');
+const CREATEDDATETIME = ref('');
+const STOREID = ref(''); */
 
 const journalid = ref('');
 const description = ref('');
 const createddatetime = ref('');
 const storeid = ref('');
+
 
 const showModalUpdate = ref(false);
 const showCreateModal = ref(false);
@@ -68,8 +77,9 @@ const togglePostModal = (newJOURNALID,) => {
     showPostModal.value = true;
 };
 
-const toggleUpdateModal = (newJOURNALID, newDESCRIPTION) => {
 
+const toggleUpdateModal = (newJOURNALID, newDESCRIPTION) => {
+    
     journalid.value = newJOURNALID;
     description.value = newDESCRIPTION;
     showModalUpdate.value = true;
@@ -88,6 +98,7 @@ const toggleMoreModal = (newJOURNALID) => {
     showModalMore.value = true;
 };
 
+
 const updateModalHandler = () => {
     showModalUpdate.value = false;
 };
@@ -95,7 +106,7 @@ const createModalHandler = () => {
     showCreateModal.value = false;
 };
 const deleteModalHandler = () => {
-    showDeleteModal.value = false;
+    showDeleteModal.value = false;  
 };
 const MoreModalHandler = () => {
     showModalMore.value = false;
@@ -107,9 +118,16 @@ const postModalHandler = () => {
 const router = useRouter()
 
 const navigateToOrder = (journalid) => {
-
+  console.log('Redirecting to Item Order Entries for account:', journalid);
   window.location.href = `/ItemOrders/${journalid}`;
 };
+
+
+
+
+
+
+
 
 const currentDate = computed(() => {
     const now = new Date();
@@ -121,12 +139,12 @@ const currentDate = computed(() => {
 
 const txtfilecolumns = [
     { data: 'STOREID', title: 'STOREID' },
-    {
-        data: 'POSTEDDATETIME',
+    { 
+        data: 'POSTEDDATETIME', 
         title: 'POSTEDDATETIME',
         render: function(data, type, row) {
             const date = new Date(data);
-            return date.toLocaleDateString();
+            return date.toLocaleDateString(); 
         }
     },
     { data: 'ITEMID', title: 'ITEMID' },
@@ -140,8 +158,8 @@ function generateTextFileContent(orders, columns) {
                 const date = new Date(order[column.data]);
                 return date.toLocaleDateString();
             } else if (column.data === 'COUNTED') {
-
-                return Math.floor(order[column.data]) || '';
+                // Ensure COUNTED is formatted as an integer
+                return Math.floor(order[column.data]) || ''; // Use Math.floor to remove decimals
             } else {
                 return order[column.data] || '';
             }
@@ -166,7 +184,7 @@ function downloadTextFile(filename, content) {
 
 function generateAndDownloadTextFile() {
     const storeID = props.orders[0].STOREID;
-    const postedDate = new Date(props.orders[0].POSTEDDATETIME);
+    const postedDate = new Date(props.orders[0].POSTEDDATETIME); // Assuming all orders have the same POSTEDDATETIME
     const formattedDate = `${postedDate.getFullYear()}${(postedDate.getMonth() + 1).toString().padStart(2, '0')}${postedDate.getDate().toString().padStart(2, '0')}`;
     const filename = `${storeID}${formattedDate}.txt`;
     const header = `${storeID}|${postedDate.toLocaleDateString()}`;
@@ -185,6 +203,7 @@ function generateAndDownloadTextFile() {
             <Delete :show-modal="showDeleteModal" item-name="inventjournaltables" :journalid="journalid" @toggle-active="deleteModalHandler"  />
             <Post :show-modal="showPostModal" item-name="inventjournaltrans" :journalid="journalid" @toggle-active="postModalHandler"  />
 
+
             <More
             :show-modal="showModalMore"
             :accountnum="accountnum"
@@ -195,7 +214,7 @@ function generateAndDownloadTextFile() {
         <template v-slot:main>
 
             <TableContainer>
-
+                
                 <div class="absolute adjust">
                     <div class="flex justify-start items-center">
 
@@ -259,6 +278,7 @@ function generateAndDownloadTextFile() {
                                 </TransparentButton>
                             </div>
 
+
                         <!-- <DangerButton type="button" @click="toggleDeleteModal(data.cellData.accountnum)">
                             Delete
                         </DangerButton> -->
@@ -270,12 +290,16 @@ function generateAndDownloadTextFile() {
 
             </TableContainer>
 
+
+
             <TableContainer>
         <div class="absolute adjust">
 
           <div class="flex justify-start items-center">
+           
 
             &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<button @click="generateAndDownloadTextFile">Generate and Download Text File</button>
+                
 
            <SuccessButton
                   type="button"
@@ -285,9 +309,10 @@ function generateAndDownloadTextFile() {
                   <ExcelIcon class="h-4" />
             </SuccessButton>
 
+            
           </div>
         </div>
-
+        
         <DataTable :data="orders" :columns="txtfilecolumns" class="w-full relative display" :options="options">
           <template #action="data">
             <div class="flex justify-start">
@@ -300,4 +325,7 @@ function generateAndDownloadTextFile() {
 
     <!-- <txtfile class=""></txtfile> -->
 </template>
+
+
+
 

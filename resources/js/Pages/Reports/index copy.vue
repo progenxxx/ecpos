@@ -14,12 +14,15 @@ import Search from "@/Components/Svgs/SearchColored.vue";
 import Refresh from "@/Components/Svgs/Refresh.vue";
 import Warning from "@/Components/Svgs/Warning.vue";
 
+// Initialize DataTable
 DataTable.use(DataTablesCore);
 
 const emit = defineEmits();
 
+// Add missing showResetModal ref
 const showResetModal = ref(false);
 
+// Reset modal handler function
 const ResetModalHandler = () => {
   showResetModal.value = !showResetModal.value;
 };
@@ -49,7 +52,8 @@ const cards = ref([
 ]);
 
 const handleAction = (id) => {
-
+  console.log(`Action triggered for card ${id}`);
+  // Add your action handling logic here
 };
 </script>
 
@@ -64,7 +68,7 @@ const handleAction = (id) => {
 
     <template v-slot:main>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
-        <div v-for="card in cards" :key="card.id"
+        <div v-for="card in cards" :key="card.id" 
              class="bg-white rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:scale-105">
           <div class="relative h-48 overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-br from-blue-100 to-purple-100">
@@ -76,21 +80,21 @@ const handleAction = (id) => {
                   <div class="absolute w-4 h-4 bg-white rounded-full" style="right: 20%; top: 30%">
                     <div class="w-2 h-2 bg-black rounded-full absolute right-0"></div>
                   </div>
-                  <div class="absolute w-12 h-6 border-b-4 border-white rounded-full"
+                  <div class="absolute w-12 h-6 border-b-4 border-white rounded-full" 
                        style="left: 20%; top: 60%"></div>
                 </div>
               </div>
             </div>
           </div>
-
+          
           <div class="p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-2">{{ card.title }}</h3>
             <p class="text-gray-600">{{ card.description }}</p>
-
+            
             <div class="mt-4 flex justify-between items-center">
               <span class="text-sm font-semibold text-purple-600">{{ card.category }}</span>
-              <button @click="handleAction(card.id)"
-                      class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600
+              <button @click="handleAction(card.id)" 
+                      class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 
                              transition-colors duration-200">
                 Learn More
               </button>
@@ -111,6 +115,7 @@ const handleAction = (id) => {
   align-items: center;
 }
 
+/* Animation classes */
 .bounce {
   animation: bounce 2s infinite;
 }

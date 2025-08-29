@@ -16,6 +16,7 @@ const NUMBERSEQUENCE = ref('');
 const NEXTREC = ref('');
 const STOREID = ref('');
 
+
 const showModalUpdate = ref(false);
 const showCreateModal = ref(false);
 const showDeleteModal = ref(false);
@@ -31,7 +32,7 @@ const columns = [
     { data: 'NUMBERSEQUENCE', title: 'NUMBERSEQUENCE' },
     { data: 'NEXTREC', title: 'NEXTREC' },
     { data: 'STOREID', title: 'STOREID' },
-
+   
     {
         data: null,
         render: '#action',
@@ -46,11 +47,12 @@ const options = {
     scrollCollapse: true,
 };
 
+
 const toggleUpdateModal = (newNUMBERSEQUENCE, newNEXTREC, newSTOREID) => {
     NUMBERSEQUENCE.value = newNUMBERSEQUENCE;
     NEXTREC.value = newNEXTREC;
     STOREID.value = newSTOREID;
-
+  
     showModalUpdate.value = true;
 };
 const toggleDeleteModal = (newNUMBERSEQUENCE) => {
@@ -58,9 +60,11 @@ const toggleDeleteModal = (newNUMBERSEQUENCE) => {
     showDeleteModal.value = true;
 };
 
+
 const toggleCreateModal = () => {
     showCreateModal.value = true;
 };
+
 
 const updateModalHandler = () => {
     showModalUpdate.value = false;

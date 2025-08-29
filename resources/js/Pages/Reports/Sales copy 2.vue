@@ -15,10 +15,12 @@ import ExcelJS from 'exceljs';
 
 DataTable.use(DataTablesCore);
 
+// State management
 const selectedStores = ref([]);
 const startDate = ref('');
 const endDate = ref('');
 
+// Props definition with proper validation
 const props = defineProps({
     ar: {
         type: Array,
@@ -58,6 +60,7 @@ const formatCurrency = (value) => {
     }).format(value);
 };
 
+// Computed properties
 const layoutComponent = computed(() => {
     return props.userRole.toUpperCase() === 'STORE' ? StorePanel : Main;
 });
@@ -70,13 +73,13 @@ onMounted(() => {
 
 const filteredData = computed(() => {
     let filtered = [...props.ar];
-
+    
     if (selectedStores.value.length > 0) {
-        filtered = filtered.filter(item =>
+        filtered = filtered.filter(item => 
             selectedStores.value.includes(item.storename)
         );
     }
-
+    
     if (startDate.value && endDate.value) {
         filtered = filtered.filter(item => {
             const itemDate = new Date(item.createddate);
@@ -85,7 +88,7 @@ const filteredData = computed(() => {
             return itemDate >= start && itemDate <= end;
         });
     }
-
+    
     return filtered;
 });
 
@@ -101,26 +104,27 @@ const footerTotals = computed(() => {
     });
 });
 
+// DataTable configuration
 const columns = [
-    {
-        data: 'store',
-        title: 'Store',
+    { 
+        data: 'store', 
+        title: 'Store', 
         footer: 'Grand Total'
     },
-    {
-        data: 'total_netamount',
+    { 
+        data: 'total_netamount', 
         title: 'Net Amount',
         render: (data) => formatCurrency(Number(data) || 0),
         footer: () => formatCurrency(footerTotals.value.total_netamount)
     },
-    {
-        data: 'total_discamount',
+    { 
+        data: 'total_discamount', 
         title: 'Discount Amount',
         render: (data) => formatCurrency(Number(data) || 0),
         footer: () => formatCurrency(footerTotals.value.total_discamount)
     },
-    {
-        data: 'total_grossamount',
+    { 
+        data: 'total_grossamount', 
         title: 'Gross Amount',
         render: (data) => formatCurrency(Number(data) || 0),
         footer: () => formatCurrency(footerTotals.value.total_grossamount)
@@ -149,10 +153,11 @@ const options = {
     }
 };
 
+// Helper function to update footer totals
 function updateFooterTotals(api) {
     const footerRow = api.table().footer().querySelectorAll('td, th');
     const columns = ['total_grossamount', 'total_discamount', 'total_netamount'];
-
+    
     columns.forEach((column, idx) => {
         const total = footerTotals.value[column];
         const footerCell = footerRow[idx + 1];
@@ -162,10 +167,12 @@ function updateFooterTotals(api) {
     });
 }
 
+// Excel export function
 async function exportToExcel() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Sales Report');
 
+    // Define columns with proper formatting
     worksheet.columns = [
         { header: 'Store', key: 'store', width: 20 },
         { header: 'Net Amount', key: 'netAmount', width: 20, style: { numFmt: '₱"#,##0.00' } },
@@ -173,6 +180,7 @@ async function exportToExcel() {
         { header: 'Gross Amount', key: 'grossAmount', width: 20, style: { numFmt: '"₱"#,##0.00' } }
     ];
 
+    // Add data rows
     filteredData.value.forEach(item => {
         worksheet.addRow({
             store: item.store,
@@ -182,6 +190,7 @@ async function exportToExcel() {
         });
     });
 
+    // Add totals row
     worksheet.addRow({
         store: 'Grand Total',
         netAmount: footerTotals.value.total_netamount,
@@ -189,12 +198,13 @@ async function exportToExcel() {
         grossAmount: footerTotals.value.total_grossamount
     });
 
+    // Style the header row
     worksheet.getRow(1).font = { bold: true };
 
     try {
         const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], {
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        const blob = new Blob([buffer], { 
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
         });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -203,11 +213,12 @@ async function exportToExcel() {
         link.click();
         window.URL.revokeObjectURL(url);
     } catch (error) {
-
+        console.error('Error exporting to Excel:', error);
         alert('Failed to export Excel file. Please try again.');
     }
 }
 
+// Filter handling
 const handleFilterChange = () => {
     if (startDate.value && endDate.value && new Date(startDate.value) > new Date(endDate.value)) {
         alert('Start date cannot be later than end date');
@@ -215,12 +226,13 @@ const handleFilterChange = () => {
         endDate.value = '';
         return;
     }
-
+    
+    // Map store names to store IDs for the backend
     const selectedStoreIds = selectedStores.value.map(storeName => {
         const store = props.stores.find(s => s.NAME === storeName);
         return store ? store.STOREID : storeName;
     });
-
+    
     router.get(
         route('reports.sales'),
         {
@@ -235,12 +247,14 @@ const handleFilterChange = () => {
     );
 };
 
+// Watch for filter changes with debounce
 let filterTimeout;
 watch([selectedStores, startDate, endDate], () => {
     clearTimeout(filterTimeout);
     filterTimeout = setTimeout(handleFilterChange, 500);
 }, { deep: true });
 
+// Cleanup on component unmount
 onUnmounted(() => {
     clearTimeout(filterTimeout);
 });
@@ -251,8 +265,8 @@ onUnmounted(() => {
         <template #main>
             <div class="mb-4 flex flex-wrap gap-4 p-4 bg-white rounded-lg shadow">
                 <!-- Store filter -->
-                <div
-                    v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'"
+                <div 
+                    v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'" 
                     class="flex-1 min-w-[200px]"
                 >
                     <MultiSelectDropdown
@@ -271,7 +285,7 @@ onUnmounted(() => {
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
                 </div>
-
+                
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
                     <input
@@ -294,10 +308,10 @@ onUnmounted(() => {
 
             <!-- Data table -->
             <TableContainer>
-                <DataTable
-                    :data="filteredData"
-                    :columns="columns"
-                    class="w-full relative display"
+                <DataTable 
+                    :data="filteredData" 
+                    :columns="columns" 
+                    class="w-full relative display" 
                     :options="options"
                 />
             </TableContainer>
@@ -314,9 +328,9 @@ onUnmounted(() => {
     color:aliceblue
 }
 .dt-buttons {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
+    display: flex;               
+    justify-content: flex-start; 
+    align-items: center;    
     position: absolute;
 }
 

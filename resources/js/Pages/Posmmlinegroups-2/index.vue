@@ -47,6 +47,7 @@ const options = {
     scrollCollapse: true,
 };
 
+
 const toggleUpdateModal = (newOFFERID, newLINEGROUP, newNOOFITEMSNEEDED, newDESCRIPTION) => {
     OFFERID.value = newOFFERID;
     LINEGROUP.value = newLINEGROUP;
@@ -54,6 +55,7 @@ const toggleUpdateModal = (newOFFERID, newLINEGROUP, newNOOFITEMSNEEDED, newDESC
     DESCRIPTION.value = newDESCRIPTION;
     showModalUpdate.value = true;
 };
+
 
 const toggleDeleteModal = (newOFFERID) => {
     OFFERID.value = newOFFERID;

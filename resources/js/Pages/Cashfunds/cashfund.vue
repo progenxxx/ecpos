@@ -25,9 +25,35 @@ const fetchCashFundsCount = async () => {
     const response = await axios.get('/api/cash-funds-count')
     totalCashFunds.value = response.data.total || 0
   } catch (error) {
+    console.error('Error fetching cash funds count:', error)
+    // Add user notification here
+  }
+}
 
+const submitCashFund = async () => {
+  if (!isValidAmount.value) return
+
+  try {
+    await axios.post('/api/submit-cash-fund', {
+      amount: parseFloat(amount.value)
+    })
+    amount.value = ''
+    await fetchCashFundsCount()
+    // Add success notification here
+
+    location.reload();
   } catch (error) {
-     background-size: cover;">
+    console.error('Error submitting cash fund:', error)
+    // Add error notification here
+  }
+}
+
+onMounted(fetchCashFundsCount)
+</script>
+
+
+<template>
+  <div class="flex flex-col items-center justify-center min-h-screen bg-cover bg-center backdrop-blur-md" style="background-image: url('/images/pos_wallpaper.png'); background-size: cover;">
     <div class="bg-white p-8 rounded-lg shadow-lg w-80">
       <h2 class="text-2xl font-bold mb-4 text-gray-800">Cash Input</h2>
       <div class="relative">
@@ -43,7 +69,7 @@ const fetchCashFundsCount = async () => {
           class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none transition-all duration-300"
           :class="{ 'text-sm -translate-y-8': focused || amount }"
         >
-
+          
         </div>
       </div>
       <div class="mt-4">

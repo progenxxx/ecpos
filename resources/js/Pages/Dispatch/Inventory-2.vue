@@ -14,12 +14,13 @@ const items = ref([]);
 const daysInMonth = ref([]);
 
 onMounted(() => {
-
+  // Initialize items
   items.value = (props.initialItems || []).map(item => ({
     ...item,
     quantities: item.quantities || {}
   }));
 
+  // Set up days in month
   if (props.currentMonth) {
     const date = new Date(props.currentMonth);
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();

@@ -18,7 +18,7 @@ const selectDiscount = (discount) => {
 
 const groupedItems = computed(() => {
   if (!selectedDiscount.value) return [];
-
+  
   return selectedDiscount.value.line_groups.map(group => ({
     ...group,
     items: group.discount_lines || [],
@@ -26,12 +26,26 @@ const groupedItems = computed(() => {
   }));
 });
 
+/* const fetchDiscounts = async () => {
+  loading.value = true;
+  error.value = null;
+  try {
+    const response = await axios.get('/mix-match/discounts');
+    console.log(response.data); // Log the response to check its structure
+    discounts.value = response.data;
+  } catch (err) {
+    error.value = 'Failed to load discounts. Please try again.';
+  } finally {
+    loading.value = false;
+  }
+}; */
+
 const fetchDiscounts = async () => {
   loading.value = true;
   error.value = null;
   try {
     const response = await axios.get('/mix-match/discounts');
-
+    console.log(response.data); // Check the structure of the response
     discounts.value = response.data.map(discount => ({
       ...discount,
       dealpricevalue: Number(discount.dealpricevalue),
@@ -45,20 +59,21 @@ const fetchDiscounts = async () => {
   }
 };
 
+
 const selectItem = (item, group) => {
   if (!selectedItemsByGroup.value[group.linegroup]) {
     selectedItemsByGroup.value[group.linegroup] = [];
   }
-
+  
   const groupItems = selectedItemsByGroup.value[group.linegroup];
   const itemIndex = groupItems.findIndex(i => i.id === item.id);
-
+  
   if (itemIndex > -1) {
     groupItems.splice(itemIndex, 1);
   } else if (groupItems.length < group.noofitemsneeded) {
     groupItems.push(item);
   }
-
+  
   if (isSelectionComplete.value) {
     step.value = 3;
   }
@@ -95,8 +110,70 @@ const resetSelection = () => {
   step.value = 1;
 };
 
-const showToast = (type, message) => {
+/* const submitOrder = async () => {
+  loading.value = true;
+  error.value = null;
+  
+  try {
+    const orderData = {
+      discountId: selectedDiscount.value.id,
+      items: Object.entries(selectedItemsByGroup.value).map(([groupId, items]) => ({
+        groupId,
+        items: items.map(item => ({
+          id: item.id,
+          itemid: item.itemid,
+          linegroup: item.linegroup,
+          qty: item.qty,
+          dealpriceordiscpct: item.dealpriceordiscpct.toString()
+        }))
+      }))
+    };
 
+    const response = await axios.post('/mix-match/submit-order', orderData);
+    
+    if (response.data.status === 'success') {
+      isOpen.value = false;
+      resetSelection();
+      
+      const toast = document.createElement('div');
+      toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+      toast.innerHTML = `
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>Order completed successfully!</span>
+      `;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    } else {
+      throw new Error(response.data.message || 'Failed to submit order');
+    }
+  } catch (err) {
+    error.value = err.response?.data?.message || 'Failed to submit order. Please try again.';
+    const errorMessage = document.createElement('div');
+    errorMessage.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+    errorMessage.innerHTML = `
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <span>${error.value}</span>
+    `;
+    document.body.appendChild(errorMessage);
+    
+    setTimeout(() => {
+      errorMessage.remove();
+    }, 3000);
+  } finally {
+    loading.value = false;
+  }
+}; */
+
+// Toast utility function
+const showToast = (type, message) => {
+    // Remove existing toasts
     const existingToasts = document.querySelectorAll('.toast-message');
     existingToasts.forEach(toast => toast.remove());
 
@@ -104,25 +181,26 @@ const showToast = (type, message) => {
     toast.className = `toast-message fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2 ${
         type === 'success' ? 'bg-green-500' : 'bg-red-500'
     } text-white`;
-
-    const icon = type === 'success'
-        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>'
+    
+    const icon = type === 'success' 
+        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>' 
         : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>';
-
+    
     toast.innerHTML = `
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             ${icon}
         </svg>
         <span>${message}</span>
     `;
-
+    
     document.body.appendChild(toast);
-
+    
     setTimeout(() => {
         toast.remove();
     }, 3000);
 };
 
+// Main submitOrder function
 const submitOrder = async () => {
     loading.value = true;
     error.value = null;
@@ -156,10 +234,14 @@ const submitOrder = async () => {
                 return {
                     itemid: item.itemid,
                     qty: item.qty,
-                    price: price || 0
+                    price: price || 0 // Default to 0 if price is NaN
                 };
             });
         });
+
+
+
+        console.log('Constructed cartItems:', cartItems);
 
         if (cartItems.length === 0) {
             throw new Error('Cart cannot be empty');
@@ -188,7 +270,7 @@ const submitOrder = async () => {
         };
 
         const response = await axios.post('/mix-match/submit-order', orderData);
-
+        
         if (response.data.status === 'success') {
             isOpen.value = false;
             resetSelection();
@@ -205,18 +287,20 @@ const submitOrder = async () => {
     }
 };
 
+
 const totalAmount = computed(() => {
   if (!selectedDiscount.value) return 0;
 
   return Object.entries(selectedItemsByGroup.value).reduce((total, [groupId, items]) => {
     return total + items.reduce((groupTotal, item) => {
-
+      console.log(`Item ID: ${item.id}, Price: ${item.dealpriceordiscpct}, Quantity: ${item.qty}`);
       const price = parseFloat(item.dealpriceordiscpct) || 0;
       const quantity = parseInt(item.qty) || 0;
       return groupTotal + (price * quantity);
     }, 0);
   }, 0);
 });
+
 
 const calculateSavings = computed(() => {
   try {
@@ -232,15 +316,18 @@ const calculateSavings = computed(() => {
       case 1:
         return (totalAmount.value * ((discountpctvalue || 0) / 100)).toFixed(2);
       case 2:
-        return amountValue.toFixed(2);
+        return amountValue.toFixed(2); 
       default:
         return 0;
     }
   } catch (error) {
-
+    console.error('Error calculating savings:', error);
     return 0;
   }
 });
+
+
+
 
 onMounted(fetchDiscounts);
 </script>
@@ -248,7 +335,7 @@ onMounted(fetchDiscounts);
 <template>
   <div class="p-4">
     <!-- Trigger Button -->
-    <button
+    <button 
       @click="isOpen = true"
       class="group relative inline-flex items-center justify-center px-6 py-3 overflow-hidden font-bold text-white rounded-lg shadow-2xl bg-gradient-to-br from-purple-600 to-blue-500 hover:from-purple-500 hover:to-blue-400 transition-all duration-300 ease-out hover:scale-105"
     >
@@ -268,7 +355,7 @@ onMounted(fetchDiscounts);
           <div class="bg-gradient-to-r from-purple-600 to-blue-500 p-6">
             <div class="flex justify-between items-center">
               <h2 class="text-2xl font-bold text-white">Mix & Match Menu</h2>
-              <button
+              <button 
                 @click="isOpen = false; resetSelection();"
                 class="text-white hover:text-gray-200 transition-colors"
               >
@@ -279,24 +366,24 @@ onMounted(fetchDiscounts);
             </div>
             <!-- Progress Steps -->
             <div class="flex items-center justify-center space-x-4 mt-6">
-              <div
-                v-for="i in 3"
+              <div 
+                v-for="i in 3" 
                 :key="i"
                 class="flex items-center"
               >
-                <div
-                  :class="[
+                <div 
+                  :class="[ 
                     'w-8 h-8 rounded-full flex items-center justify-center border-2 font-bold',
-                    step >= i
-                      ? 'bg-white text-purple-600 border-white'
+                    step >= i 
+                      ? 'bg-white text-purple-600 border-white' 
                       : 'border-white/50 text-white/50'
                   ]"
                 >
                   {{ i }}
                 </div>
-                <div
+                <div 
                   v-if="i < 3"
-                  :class="[
+                  :class="[ 
                     'w-16 h-0.5 mx-2',
                     step > i ? 'bg-white' : 'bg-white/30'
                   ]"
@@ -366,7 +453,7 @@ onMounted(fetchDiscounts);
                     v-for="item in group.items"
                     :key="item.id"
                     @click="selectItem(item, group)"
-                    :class="[
+                    :class="[ 
                       'relative p-4 rounded-xl transition-all duration-300',
                       isItemSelected(item, group.linegroup)
                         ? 'bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-2 border-purple-500'
@@ -395,8 +482,8 @@ onMounted(fetchDiscounts);
             <div v-if="step === 3" class="space-y-6 max-h-[60vh] overflow-y-auto">
               <h3 class="text-xl font-bold text-gray-800">Review Your Selection</h3>
               <div class="space-y-6">
-                <div
-                  v-for="group in groupedItems"
+                <div 
+                  v-for="group in groupedItems" 
                   :key="group.linegroup"
                   class="p-6 rounded-xl bg-gray-50 space-y-4"
                 >
@@ -433,29 +520,29 @@ onMounted(fetchDiscounts);
                         <a class="text-red-900">{{selectedDiscount.description}}</a>
                         Original Total: {{ totalAmount.toFixed(2) }} PESOS
                     </div>
-
+                    
                     <div class="text-2xl font-bold text-purple-600">
                         <template v-if="selectedDiscount.discounttype === 0">
-                            Discounttype: (Deal Price):
+                            Discounttype: (Deal Price): 
                             <br>FINAL TOTAL: {{ selectedDiscount.dealpricevalue.toFixed(2) }} PESOS
                         </template>
-
+                        
                         <template v-else-if="selectedDiscount.discounttype === 1">
-                        Final Price (Perc. Discount) ({{ selectedDiscount.discountpctvalue.toFixed(2) }}% OFF):
+                        Final Price (Perc. Discount) ({{ selectedDiscount.discountpctvalue.toFixed(2) }}% OFF): 
                         <br>FINAL TOTAL: {{ (totalAmount * (1 - selectedDiscount.discountpctvalue / 100)).toFixed(2) }} PESOS
                         </template>
-
+                        
                         <template v-else-if="selectedDiscount.discounttype === 2">
-                        Discounttype: Amount Discount ({{ selectedDiscount.discountamountvalue.toFixed(2) }} PESOS OFF):
+                        Discounttype: Amount Discount ({{ selectedDiscount.discountamountvalue.toFixed(2) }} PESOS OFF): 
                         <br>FINAL TOTAL: {{ (totalAmount - selectedDiscount.discountamountvalue).toFixed(2) }} PESOS
                         </template>
-
+                        
                         <template v-else>
                         <!-- Final Price: {{ totalAmount.toFixed(2) }} PESOS -->
                         {{selectedDiscount.discounttype.toFixed(2)}}
                         </template>
                     </div>
-
+                    
                     <!-- Show savings -->
                     <div class="text-green-600 font-medium" v-if="selectedDiscount.discounttype !== 3">
                         You Save: {{ calculateSavings }} PESOS
@@ -469,23 +556,23 @@ onMounted(fetchDiscounts);
           <!-- Footer -->
           <div class="border-t bg-gray-50 p-6">
             <div class="flex justify-between items-center">
-              <button
+              <button 
                 @click="step > 1 ? step-- : resetSelection()"
                 class="px-6 py-2 border-2 border-gray-300 rounded-lg font-medium text-gray-600 hover:bg-gray-100 transition-colors"
               >
                 {{ step > 1 ? 'Back' : 'Cancel' }}
               </button>
-
+              
               <div class="flex space-x-4">
                 <button
                   v-if="step < 3"
                   @click="step++"
                   :disabled="!selectedDiscount || (step === 2 && !isSelectionComplete)"
-                  :class="[
-                    'px-6 py-2 rounded-lg font-medium transition-all duration-300',
-                    (!selectedDiscount || (step === 2 && !isSelectionComplete))
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-purple-600 to-blue-500 text-white hover:from-purple-500 hover:to-blue-400'
+                  :class="[ 
+                    'px-6 py-2 rounded-lg font-medium transition-all duration-300', 
+                    (!selectedDiscount || (step === 2 && !isSelectionComplete)) 
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                      : 'bg-gradient-to-r from-purple-600 to-blue-500 text-white hover:from-purple-500 hover:to-blue-400' 
                   ]"
                 >
                   Continue
@@ -496,16 +583,16 @@ onMounted(fetchDiscounts);
                   class="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-medium hover:from-green-400 hover:to-emerald-500 transition-all duration-300">
                   <span class="relative inline-flex items-center">
                     <span>Complete Order</span>
-                    <svg
-                      class="w-5 h-5 ml-2"
-                      fill="none"
-                      stroke="currentColor"
+                    <svg 
+                      class="w-5 h-5 ml-2" 
+                      fill="none" 
+                      stroke="currentColor" 
                       viewBox="0 0 24 24"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
+                      <path 
+                        stroke-linecap="round" 
+                        stroke-linejoin="round" 
+                        stroke-width="2" 
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
@@ -525,16 +612,16 @@ onMounted(fetchDiscounts);
       :class="isOpen ? 'translate-y-20 opacity-0' : 'translate-y-0 opacity-100'"
     >
       <div class="flex items-center space-x-2">
-        <svg
-          class="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
+        <svg 
+          class="w-6 h-6" 
+          fill="none" 
+          stroke="currentColor" 
           viewBox="0 0 24 24"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
+          <path 
+            stroke-linecap="round" 
+            stroke-linejoin="round" 
+            stroke-width="2" 
             d="M5 13l4 4L19 7"
           />
         </svg>
@@ -543,6 +630,7 @@ onMounted(fetchDiscounts);
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .backdrop-blur-sm {
@@ -559,6 +647,7 @@ onMounted(fetchDiscounts);
   animation: spin 1s linear infinite;
 }
 
+/* Custom transitions */
 .modal-enter-active,
 .modal-leave-active {
   transition: all 0.3s ease-out;

@@ -38,8 +38,8 @@ const note = ref('');
 
 const cashAmount = ref('');
 const isLoading = ref(false);
-const storeId = ref('');
-const staffId = ref('');
+const storeId = ref(''); 
+const staffId = ref(''); 
 
 const modalRef = ref(null);
 
@@ -72,19 +72,19 @@ const props = defineProps({
 
 const filteredItems = computed(() => {
     let filtered = props.items;
-
+    
     if (selectedCategory.value) {
         filtered = filtered.filter(item => item.itemgroup === selectedCategory.value);
     }
-
+    
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
-        filtered = filtered.filter(item =>
-            item.itemname.toLowerCase().includes(query) ||
+        filtered = filtered.filter(item => 
+            item.itemname.toLowerCase().includes(query) || 
             item.barcode.toLowerCase().includes(query)
         );
     }
-
+    
     return filtered.map(item => ({
         ...item,
         category: item.itemgroup || selectedCategory.value || ''
@@ -97,9 +97,9 @@ const selectCategory = (name) => {
 
 const addToCart = async (itemId) => {
     try {
-
+        // Ensure windowId is properly passed and converted to a number if needed
         const windowId = Number(props.windowId);
-
+        
         if (!windowId) {
             cartMessage.value = 'Invalid window ID';
             return false;
@@ -118,7 +118,7 @@ const addToCart = async (itemId) => {
         }
 
         const data = await response.json();
-
+        
         if (data.success) {
             cartMessage.value = data.message;
             await fetchCartData();
@@ -128,7 +128,7 @@ const addToCart = async (itemId) => {
             return false;
         }
     } catch (error) {
-
+        console.error('Error adding item to cart:', error);
         cartMessage.value = 'Failed to add item to cart. Please try again.';
         return false;
     }
@@ -164,7 +164,7 @@ const fetchCartData = async () => {
     }));
     calculateTotal();
   } catch (error) {
-
+    console.error('Error fetching cart data:', error);
     cartMessage.value = error.message;
   }
 };
@@ -181,7 +181,7 @@ const clearCart = async () => {
     selectAll.value = false;
     calculateTotal();
   } catch (error) {
-
+    console.error('Error clearing cart:', error);
   }
 };
 
@@ -203,7 +203,7 @@ const updateQuantity = async (itemName, newQuantity) => {
       calculateTotal();
     }
   } catch (error) {
-
+    console.error('Error updating quantity:', error);
   }
 };
 
@@ -216,7 +216,7 @@ const deleteSelectedItems = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items: selectedItems.value })
     });
-
+    
     if (response.ok) {
       cartItems.value = cartItems.value.filter(item => !selectedItems.value.includes(item.itemname));
       selectedItems.value = [];
@@ -225,10 +225,10 @@ const deleteSelectedItems = async () => {
 
       location.reload();
     } else {
-
+      console.error('Failed to delete items');
     }
   } catch (error) {
-
+    console.error('Error deleting selected items:', error);
   }
 };
 
@@ -248,7 +248,7 @@ const formattedTotal = computed(() => formattedPrice(total.value));
 
 const openModal = () => {
   if (modalRef.value) {
-    const selectedItemsData = cartItems.value.filter(item =>
+    const selectedItemsData = cartItems.value.filter(item => 
       selectedItems.value.includes(item.itemname)
     );
 
@@ -258,12 +258,12 @@ const openModal = () => {
         ...item,
         itemid: item.itemid || item.itemId || 'No ID'
       }));
-
+      console.log('Items being sent to modal:', selectedItemsForModal.value);
       modalRef.value.showModal(selectedItemsForModal.value);
   }
 };
 
-const VAT_RATE = 0.12;
+const VAT_RATE = 0.12; 
 
 const computeVAT = computed(() => {
   const netTotal = calculateNetsTotal();
@@ -295,6 +295,7 @@ const calculateTotalPartial = () => {
   return cartItems.value.reduce((sum, item) => sum + item.partial_payment, 0);
 };
 
+
 const calculateNetTotal = () => {
   return calculateGrossTotal() - calculateTotalDiscount();
 };
@@ -309,9 +310,10 @@ const handleBarcodeInput = (event) => {
     clearTimeout(searchTimeout);
   }
 
+  // Set a new timeout
   searchTimeout = setTimeout(() => {
     processBarcode(barcode);
-  }, 300);
+  }, 300); 
 };
 
 const processBarcode = async (barcode) => {
@@ -320,13 +322,13 @@ const processBarcode = async (barcode) => {
   if (item) {
     const success = await addToCart(item.itemid);
     if (success) {
-
-      searchQuery.value = '';
+      console.log('Item added to cart:', item.itemname);
+      searchQuery.value = ''; 
     } else {
-
+      console.log('Failed to add item to cart');
     }
   } else {
-
+    console.log('Item not found for barcode:', barcode);
   }
 };
 
@@ -341,9 +343,10 @@ const handleEnter = () => {
 };
 
 const handleCashSubmit = async (cashAmount) => {
+  console.log('Cash Amount Input:', cashAmount);
 
   const cashAmountParsed = parseFloat(cashAmount);
-
+  
   if (isNaN(cashAmountParsed) || cashAmountParsed < 0) {
     await Swal.fire({
       icon: 'error',
@@ -358,8 +361,9 @@ const handleCashSubmit = async (cashAmount) => {
   const netTotal = calculateNetTotal();
   const totalAmount = netTotal - calculateTotalPartial();
 
+  // Check if customer is not WALK-IN
   if (selectedCustomer.value !== 'WALK-IN') {
-
+    // For non-WALK-IN customers, validate if it's an exact amount payment
     if (cashAmountParsed !== totalAmount) {
       await Swal.fire({
         icon: 'error',
@@ -371,7 +375,7 @@ const handleCashSubmit = async (cashAmount) => {
       return;
     }
   } else {
-
+    // For WALK-IN customers, check if the amount is sufficient
     if (cashAmountParsed < totalAmount) {
       await Swal.fire({
         icon: 'warning',
@@ -384,6 +388,7 @@ const handleCashSubmit = async (cashAmount) => {
     }
   }
 
+  
   if (cashAmountParsed < totalAmount) {
     await Swal.fire({
       icon: 'warning',
@@ -416,23 +421,26 @@ const handleCashSubmit = async (cashAmount) => {
         wintransid: item.wintransid || 'PCS',
         taxinclinprice: parseFloat(item.taxinclinprice) || 0,
         netamountnotincltax: parseFloat(item.netamountnotincltax) || 0,
-        partialpayment: parseFloat(item.partialpayment) || 0
+        partialpayment: parseFloat(item.partialpayment) || 0 
       })),
       totalAmount: totalAmount,
-      selectedAR: selectedAR.value,
+      selectedAR: selectedAR.value, 
       selectedCustomer: selectedCustomer.value,
       store: 'ANCHETA',
       staff: 'ANCHETA',
-      partialpayment: calculatePartialPayment(),
+      partialpayment: calculatePartialPayment(), 
       note: note.value,
     };
+
+    console.log('Order Data:', orderData);
 
     const response = await axios.post('/submit-order', orderData);
 
     if (response.data.success) {
       showCashModal.value = false;
       note.value = '';
-
+      
+      // Calculate cash change
       const cashChange = cashAmountParsed - totalAmount;
       await Swal.fire({
         icon: 'success',
@@ -440,12 +448,12 @@ const handleCashSubmit = async (cashAmount) => {
         confirmButtonText: 'OK',
         position: 'center'
       });
-
+      
     } else {
       throw new Error(response.data.message || 'Failed to submit order');
     }
   } catch (error) {
-
+    console.error('Error submitting order:', error);
     if (error.response && error.response.data && error.response.data.errors) {
       const errorMessages = Object.values(error.response.data.errors).flat().join('\n');
       await Swal.fire({
@@ -469,12 +477,14 @@ const handleCashSubmit = async (cashAmount) => {
   }
 };
 
+
+
 const calculatePartialPayment = () => {
   return cartItems.value.reduce((total, item) => total + (parseFloat(item.partial_payment) || 0), 0);
 };
 
 watch(selectedAR, (newValue) => {
-
+  console.log('Selected payment method changed:', newValue);
 });
 
 onUnmounted(() => {
@@ -520,14 +530,14 @@ onUnmounted(() => {
                         </div>
 
                         <label class="input input-bordered flex items-center gap-2 w-3/5 lg:w-3/5">
-                            <input
+                            <input 
                             v-model="searchQuery"
                             @input="handleBarcodeInput"
-                            type="text"
-                            class="grow text-sm"
-                            placeholder="Barcode / Item"
+                            type="text" 
+                            class="grow text-sm" 
+                            placeholder="Barcode / Item" 
                             />
-                            <svg xmlns="http:
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 opacity-70">
                             <path fill-rule="evenodd" d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" clip-rule="evenodd" />
                             </svg>
                         </label>
@@ -539,7 +549,7 @@ onUnmounted(() => {
 
                                 <div class="flex items-center justify-center rounded-lg p-2 font-bold italic cursor-pointer transition-colors duration-300 h-10 mt-2">
                                     <MixAndMatchModal />
-                                </div>
+                                </div> 
 
                                 <div class="flex items-center bg-red-900 justify-center text-white rounded-lg p-5 font-bold italic cursor-pointer transition-colors duration-300 h-10 mt-2">
                                     <a href="/partycakes">DETAILS</a>
@@ -547,7 +557,7 @@ onUnmounted(() => {
 
                                 <div v-for="cat in category" :key="cat.name">
                                     <div class="flex-none p-2 w-48">
-                                        <div
+                                        <div 
                                             @click="selectCategory(cat.name)"
                                             :class="{'bg-blue-500 text-white': selectedCategory === cat.name, 'bg-gray-200': selectedCategory !== cat.name}"
                                             class="flex items-center justify-center rounded-lg p-2 font-bold italic cursor-pointer transition-colors duration-300 h-full "
@@ -568,9 +578,9 @@ onUnmounted(() => {
 
                       <div class="left-0 top-5 overflow-y-auto h-[70vh] w-full ml-10 justify-center gap-x-5 gap-y-4 p-2 lg:gap-x-20 lg:ml-20">
                           <div class="flex flex-wrap">
-                              <div
-                                  v-for="item in filteredItems"
-                                  :key="item.itemid"
+                              <div 
+                                  v-for="item in filteredItems" 
+                                  :key="item.itemid" 
                                   class="relative flex flex-col justify-center w-full sm:w-1/4 lg:w-1/6 min-h-20 bg-white shadow-md shadow-gray-200 py-4 px-2 rounded-lg cursor-pointer m-2 hover:shadow-lg transition-shadow duration-300"
                               >
                                   <span class="font-bold text-base text-nowrap overflow-hidden">
@@ -589,11 +599,12 @@ onUnmounted(() => {
                   </div>
               </div>
 
+
                 <div class="absolute top-0 bottom-0 right-0 w-[42%] lg:w-2/6">
 
                     <!-- Cart Content -->
                     <div class="relative bg-white border-s border-gray-400 shadow-md shadow-gray-600 w-full h-full lg:w-full lg:h-full max-w-sm lg:max-w-full">
-
+                        
                         <div class="absolute left-0 right-0 top-0 h-10 bg-white text-black flex justify-center items-center text-xl font-bold p-3">
                             <p class="tracking-widest">ORDER | CART</p>
                             <div class="ml-auto flex items-center">
@@ -604,7 +615,7 @@ onUnmounted(() => {
                         </div>
 
                         <div class="absolute top-7 bottom-12 left-0 right-0 my-2 px-2 overflow-y-auto">
-                            <div
+                            <div 
                                 class="absolute inset-4 bg-cover bg-center bg-no-repeat duration-300"
                                 style="background-image: url('/images/ec2.webp'); z-index: 0;"
                             >
@@ -616,8 +627,8 @@ onUnmounted(() => {
                                   <ul class="grid grid-cols-4 text-md font-bold lg:grid-cols-4 bg-violet-900 text-white rounded sticky top-0 z-20">
                                       <li class="p-2 flex justify-center">
                                           <label class="inline-flex items-center">
-                                              <input type="checkbox"
-                                                  v-model="selectAll"
+                                              <input type="checkbox" 
+                                                  v-model="selectAll" 
                                                   @change="toggleSelectAll"
                                                   class="form-checkbox h-4 w-4 text-blue-600 rounded-full"
                                               />
@@ -631,9 +642,9 @@ onUnmounted(() => {
                                   <ul v-for="item in cartItems" :key="item.itemid" class="grid grid-cols-4 text-sm lg:grid-cols-4 items-center mb-4 border-b pb-2 bg-white-200">
                                       <li class="p-2 flex justify-center">
                                           <label class="inline-flex items-center">
-                                              <input type="checkbox"
-                                                  :value="item.itemname"
-                                                  v-model="selectedItems"
+                                              <input type="checkbox" 
+                                                  :value="item.itemname" 
+                                                  v-model="selectedItems" 
                                                   class="form-checkbox h-4 w-4 text-blue-600 rounded-full"
                                               />
                                           </label>
@@ -676,10 +687,10 @@ onUnmounted(() => {
                               </div>
                               <div class="flex text-sm font-bold justify-between items-center px-1">
                                   <p class="pr-5">NOTE: </p>
-                                  <input
+                                  <input 
                                       v-model="note"
-                                      id="note"
-                                      name="note"
+                                      id="note" 
+                                      name="note" 
                                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                                   >
                               </div>
@@ -687,7 +698,7 @@ onUnmounted(() => {
                           </section>
 
                         </div>
-
+        
                         <div class="absolute left-0 right-0 bottom-0 h-14 text-white bg-navy flex justify-between items-center border-t border-gray-900 shadow-sm shadow-gray-900">
                             <div class="flex flex-col justify-start ps-1 tracking-wider w-[100%]">
                               <!-- <p class="font-thin text-xs text-white ml-2">NET TOTAL</p> -->
@@ -703,8 +714,8 @@ onUnmounted(() => {
                                 <Cart class="w-10 p-2 lg:p-1"></Cart>
                             </div>
 
-                            <!-- <CashInputModal
-                            :is-open="showCashModal"
+                            <!-- <CashInputModal 
+                            :is-open="showCashModal" 
                             :total-amount="calculateNetTotal()"
                             :total-gross="calculateGrossTotal()"
                             :total-discount="calculateTotalDiscount()"
@@ -714,11 +725,11 @@ onUnmounted(() => {
                             :selected-customer="selectedCustomer"
                             @close="showCashModal = false"
                             @submit="handleCashSubmit"
-                            @keyup.enter="handleEnter"
+                            @keyup.enter="handleEnter" 
                             /> -->
 
-                            <CashInputModal
-                              :is-open="showCashModal"
+                            <CashInputModal 
+                              :is-open="showCashModal" 
                               :total-amount="calculateNetTotal()"
                               :total-partial="calculateTotalPartial()"
                               :selected-ar="selectedAR"

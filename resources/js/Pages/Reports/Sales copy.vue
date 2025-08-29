@@ -52,6 +52,7 @@ const layoutComponent = computed(() => {
     return props.userRole.toUpperCase() === 'STORE' ? StorePanel : Main;
 });
 
+// Filter change handler
 const handleFilterChange = () => {
     if (startDate.value && endDate.value && new Date(startDate.value) > new Date(endDate.value)) {
         alert('Start date cannot be later than end date');
@@ -60,6 +61,7 @@ const handleFilterChange = () => {
         return;
     }
 
+    // Reload the data from the server with the selected filters
     router.get(
         route('reports.sales'),
         {
@@ -74,6 +76,7 @@ const handleFilterChange = () => {
     );
 };
 
+// Currency formatter
 const formatCurrency = (value) => {
     return `₱${parseFloat(value).toLocaleString(undefined, {
         minimumFractionDigits: 2,
@@ -83,13 +86,13 @@ const formatCurrency = (value) => {
 
 const filteredData = computed(() => {
     let filtered = [...props.ar];
-
+    
     if (selectedStores.value.length > 0) {
-        filtered = filtered.filter(item =>
+        filtered = filtered.filter(item => 
             selectedStores.value.includes(item.storename)
         );
     }
-
+    
     if (startDate.value && endDate.value) {
         filtered = filtered.filter(item => {
             const itemDate = new Date(item.createddate);
@@ -98,7 +101,7 @@ const filteredData = computed(() => {
             return itemDate >= start && itemDate <= end;
         });
     }
-
+    
     return filtered;
 });
 
@@ -117,13 +120,13 @@ const footerTotals = computed(() => {
 });
 
 const columns = [
-    {
-        data: 'store',
-        title: 'Store',
+    { 
+        data: 'store', 
+        title: 'Store', 
         footer: 'Grand Total'
     },
-    {
-        data: 'total_netamount',
+    { 
+        data: 'total_netamount', 
         title: 'Net Amount',
         render: function(data) {
             return formatCurrency(parseFloat(data) || 0);
@@ -132,8 +135,8 @@ const columns = [
             return footerTotals.value.total_netamount.toFixed(2);
         }
     },
-    {
-        data: 'total_discamount',
+    { 
+        data: 'total_discamount', 
         title: 'Discount Amount',
         render: function(data) {
             return formatCurrency(parseFloat(data) || 0);
@@ -142,8 +145,8 @@ const columns = [
             return footerTotals.value.total_discamount.toFixed(2);
         }
     },
-    {
-        data: 'total_grossamount',
+    { 
+        data: 'total_grossamount', 
         title: 'Gross Amount',
         render: function(data) {
             return formatCurrency(parseFloat(data) || 0);
@@ -172,6 +175,8 @@ const options = {
     order: [[0, 'asc']]
 };
 
+
+// Export to Excel function
 const exportToExcel = () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Sales Report');
@@ -213,6 +218,7 @@ const exportToExcel = () => {
 };
 </script>
 
+
 <template>
     <component :is="layoutComponent" active-tab="REPORTS">
         <template v-slot:main>
@@ -225,7 +231,7 @@ const exportToExcel = () => {
                     label="Stores"
                   />
                 </div>
-
+                
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">Start Date</label>
                     <input
@@ -234,7 +240,7 @@ const exportToExcel = () => {
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
                 </div>
-
+                
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
                     <input
@@ -255,16 +261,17 @@ const exportToExcel = () => {
             </div>
 
             <TableContainer>
-                <DataTable
-                    :data="props.ar"
-                    :columns="columns"
-                    class="w-full relative display"
+                <DataTable 
+                    :data="props.ar" 
+                    :columns="columns" 
+                    class="w-full relative display" 
                     :options="options"
                 />
             </TableContainer>
         </template>
     </component>
 </template>
+
 
 <style>
 tfoot {
@@ -277,9 +284,9 @@ tfoot td {
     color: aliceblue !important;
 }
 .dt-buttons {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
+    display: flex;               
+    justify-content: flex-start; 
+    align-items: center;    
     position: absolute;
 }
 

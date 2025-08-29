@@ -25,7 +25,7 @@ onMounted(() => {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
     </Head>
-
+    
     <div class="min-h-screen bg-gray-50">
         <!-- Header -->
         <header class="fixed w-full bg-white shadow-md z-50">
@@ -48,7 +48,7 @@ onMounted(() => {
                             Sign In
                         </Link>
                         <Link :href="route('register')" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
-                            License
+                            Licence
                         </Link>
                     </template>
                 </div>

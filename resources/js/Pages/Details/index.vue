@@ -53,7 +53,7 @@ const props = defineProps({
 });
 
 const handleSelectedStore = (rbostoretables) => {
-
+  console.log('Selected rbostoretables:', rbostoretables);
 };
 
 const columns = [
@@ -69,7 +69,7 @@ const columns = [
         render: '#action',
         title: 'ACTIONS'
     },
-
+    
 ];
 
 const options = {
@@ -124,19 +124,19 @@ const toggleCreateModal = (journalid, newLINENUM) => {
     JOURNALID.value = journalid;
     LINENUM.value = newLINENUM;
     showCreateModal.value = true;
-
+    console.log(JOURNALID.value);
 };
 
 const toggleGetBWModal = (journalid) => {
     JOURNALID.value = "CREATE DETAILS";
     showGetBWModal.value = true;
-
+    console.log(JOURNALID.value);
 };
 
 const toggleGetCFModal = (journalid) => {
     JOURNALID.value = journalid;
     showGetCFModal.value = true;
-
+    console.log(JOURNALID.value);
 };
 
 const createModalHandler = () => {
@@ -160,31 +160,35 @@ const ItemOrders = () => {
     window.location.href = '/mgcount';
 };
 
+
 const SYNCDR = () => {
     const userConfirmed = window.confirm('Are you sure you want to sync the details on the delivery receipt?');
 
     if (userConfirmed) {
         window.location.href = '/details/sync';
     } else {
-
+        console.log('User cancelled the post operation.');
     }
 };
+
 
 const ViewOrders = () => {
     window.location.href = `/specialorders/vieworders`;
 };
 
 const handleSelectedItem = (item) => {
-
+    console.log('Selected Item:', item);
 };
 
+// Reactive state
 const tableData = ref([]);
 const updatedValues = reactive({});
 const message = reactive({
     text: '',
-    type: ''
+    type: '' // 'success', 'error', or 'info'
 });
 
+// Methods
 const handleCountedChange = (event, item) => {
     const newValue = event.target.value;
     updatedValues[item.ITEMID] = newValue;
@@ -194,14 +198,14 @@ const updateAllCountedValues = async () => {
     try {
         message.text = 'Updating counted values...';
         message.type = 'info';
-
+        
         const response = await axios.post('/api/sp-update-all-counted-values', {
             journalId: props.journalid,
             updatedValues: updatedValues,
         });
-
+        
         if (response.data.success) {
-
+            console.log('All values updated successfully');
             for (const [itemId, newValue] of Object.entries(updatedValues)) {
                 const item = tableData.value.find(row => row.ITEMID === itemId);
                 if (item) {
@@ -209,7 +213,7 @@ const updateAllCountedValues = async () => {
                 }
             }
             Object.keys(updatedValues).forEach(key => delete updatedValues[key]);
-
+            
             message.text = 'All counted values updated successfully';
             message.type = 'success';
 
@@ -218,7 +222,7 @@ const updateAllCountedValues = async () => {
             throw new Error('Update failed');
         }
     } catch (error) {
-
+        console.error(`You don't have any changes!`, error);
         message.text = `You don't have any changes!`;
         message.type = 'error';
     }
@@ -229,7 +233,7 @@ const clearMessage = () => {
     setTimeout(() => {
         message.text = '';
         message.type = '';
-    }, 5000);
+    }, 5000); // Clear after 5 seconds
 };
 
 </script>
@@ -240,43 +244,43 @@ const clearMessage = () => {
             <Create
                 :show-modal="showCreateModal"
                 :JOURNALID="JOURNALID"
-                :items="props.items"
+                :items="props.items" 
                 @toggle-active="createModalHandler"
             />
             <GetBWP
                 :show-modal="showGetBWModal"
                 :JOURNALID="JOURNALID"
-                :rbostoretables="props.rbostoretables"
+                :rbostoretables="props.rbostoretables" 
                 @toggle-active="GetBWModalHandler"
-                @select-item="handleSelectedStore"
+                @select-item="handleSelectedStore"  
             />
             <CopyFrom
                 :show-modal="showGetCFModal"
                 :JOURNALID="JOURNALID"
-                :rbostoretables="props.rbostoretables"
+                :rbostoretables="props.rbostoretables"  
                 @select-item="handleSelectedStore"
                 @toggle-active="GetCFModalHandler"
             />
-            <Update
-                :show-modal="showModalUpdate"
-                :FGENCODER="FGENCODER"
-                :PLENCODER="PLENCODER"
-                :DISPATCHER="DISPATCHER"
-                :LOGISTICS="LOGISTICS"
-                :ROUTES="ROUTES"
-                :CREATEDDATE="CREATEDDATE"
-                :DELIVERYDATE="DELIVERYDATE"
+            <Update 
+                :show-modal="showModalUpdate" 
+                :FGENCODER="FGENCODER" 
+                :PLENCODER="PLENCODER" 
+                :DISPATCHER="DISPATCHER" 
+                :LOGISTICS="LOGISTICS" 
+                :ROUTES="ROUTES" 
+                :CREATEDDATE="CREATEDDATE" 
+                :DELIVERYDATE="DELIVERYDATE" 
                 @toggle-active="updateModalHandler"
             />
-            <SYNC
-                :show-modal="showSYNCModal"
-                :FGENCODER="FGENCODER"
-                :PLENCODER="PLENCODER"
-                :DISPATCHER="DISPATCHER"
-                :LOGISTICS="LOGISTICS"
-                :ROUTES="ROUTES"
-                :CREATEDDATE="CREATEDDATE"
-                :DELIVERYDATE="DELIVERYDATE"
+            <SYNC 
+                :show-modal="showSYNCModal" 
+                :FGENCODER="FGENCODER" 
+                :PLENCODER="PLENCODER" 
+                :DISPATCHER="DISPATCHER" 
+                :LOGISTICS="LOGISTICS" 
+                :ROUTES="ROUTES" 
+                :CREATEDDATE="CREATEDDATE" 
+                :DELIVERYDATE="DELIVERYDATE" 
                 @toggle-active="syncModalHandler"
             />
         </template>
@@ -284,10 +288,10 @@ const clearMessage = () => {
         <template v-slot:main>
     <TableContainer>
         <!-- Message display area -->
-        <div v-if="message.text"
-             :class="['p-4 mb-4 rounded-md',
-                      message.type === 'success' ? 'bg-green-100 text-green-700' :
-                      message.type === 'error' ? 'bg-red-100 text-red-700' :
+        <div v-if="message.text" 
+             :class="['p-4 mb-4 rounded-md', 
+                      message.type === 'success' ? 'bg-green-100 text-green-700' : 
+                      message.type === 'error' ? 'bg-red-100 text-red-700' : 
                       'bg-blue-100 text-blue-700']">
             {{ message.text }}
         </div>
@@ -309,14 +313,14 @@ const clearMessage = () => {
                 >
                     ADD DETAILS
                 </PrimaryButton>
-
+            
             </div>
         </div>
 
-        <DataTable
-            :data="details"
-            :columns="columns"
-            class="w-full relative display"
+        <DataTable 
+            :data="details" 
+            :columns="columns" 
+            class="w-full relative display" 
             :options="options"
         >
             <template #action="data">

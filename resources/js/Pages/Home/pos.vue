@@ -73,11 +73,11 @@ const carouselSettings = ref({
                 <div class="flex justify-center">
                     <Carousel v-bind="carouselSettings" :breakpoints="breakpoints">
                         <Slide v-for="tab in windowtables" :key="tab.id">
-                            <button
+                            <button 
                                 @click="setActiveTab(tab.id)"
-                                :class="[
+                                :class="[ 
                                     'px-10 py-2 rounded-md w-full ',
-                                    tab.id === activeTab ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'
+                                    tab.id === activeTab ? 'bg-blue-600 text-white' : 'bg-white text-gray-700' 
                                 ]"
                             >
                                 {{ tab.DESCRIPTION }}
@@ -89,22 +89,22 @@ const carouselSettings = ref({
                         </template>
                     </Carousel>
                 </div>
-
+                
                 <h2 class="text-lg font-semibold my-4">{{ activeTabName }}</h2>
-
+                
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
-                    <div
-                        v-for="window in activeWindowData"
+                    <div 
+                        v-for="window in activeWindowData" 
                         :key="window.id"
-                        class="bg-blue-600 text-white p-6 rounded-lg flex flex-col items-center justify-center
+                        class="bg-blue-600 text-white p-6 rounded-lg flex flex-col items-center justify-center 
                             sm:h-[15vh] md:h-[32vh] lg:h-[40vh]"
                     >
                         <a :href="`/windows/menu/${window.id}`">
                             <p class="text-xl font-bold mb-2">{{ window.DESCRIPTION }}</p>
-                        </a>
+                        </a>   
                     </div>
                 </div>
-
+                
             </div>
         </template>
     </Main>

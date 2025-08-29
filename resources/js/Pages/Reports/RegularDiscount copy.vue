@@ -1,7 +1,7 @@
 <!-- Script setup section -->
 <script setup>
 import Main from "@/Layouts/AdminPanel.vue";
-import StorePanel from "@/Layouts/Main.vue";
+import StorePanel from "@/Layouts/Main.vue";  
 import MultiSelectDropdown from "@/Components/MultiSelect/MultiSelectDropdown.vue";
 import TableContainer from "@/Components/Tables/TableContainer.vue";
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
@@ -49,19 +49,20 @@ onMounted(() => {
 });
 
 const layoutComponent = computed(() => {
-
+    console.log('userRole value:', props.userRole);
+    console.log('Is Store?:', props.userRole.toUpperCase() === 'STORE');
     return props.userRole.toUpperCase() === 'STORE' ? StorePanel : Main;
 });
 
 const filteredData = computed(() => {
     let filtered = [...props.rd];
-
+    
     if (selectedStores.value.length > 0) {
-        filtered = filtered.filter(item =>
+        filtered = filtered.filter(item => 
             selectedStores.value.includes(item.storename)
         );
     }
-
+    
     if (startDate.value && endDate.value) {
         filtered = filtered.filter(item => {
             const itemDate = new Date(item.createddate);
@@ -70,9 +71,10 @@ const filteredData = computed(() => {
             return itemDate >= start && itemDate <= end;
         });
     }
-
+    
     return filtered;
 });
+
 
 const totals = computed(() => {
     return filteredData.value.reduce((acc, curr) => {
@@ -86,40 +88,40 @@ const totals = computed(() => {
 });
 
 const columns = [
-    {
-        data: 'storename',
-        title: 'STORE',
-        footer: 'GRAND TOTAL'
+    {   
+        data: 'storename', 
+        title: 'STORE', 
+        footer: 'GRAND TOTAL'  // Updated to be more visible
     },
-    {
-        data: 'receiptid',
-        title: 'RECEIPT',
-        footer: ''
+    { 
+        data: 'receiptid', 
+        title: 'RECEIPT', 
+        footer: '' 
     },
-    {
-        data: 'itemname',
-        title: 'ITEMNAME',
-        footer: ''
+    { 
+        data: 'itemname', 
+        title: 'ITEMNAME', 
+        footer: '' 
     },
-    {
-        data: 'createddate',
-        title: 'DATE',
+    { 
+        data: 'createddate', 
+        title: 'DATE', 
         footer: '',
         render: function(data, type, row) {
             const date = new Date(data);
             return date.toLocaleDateString();
         }
     },
-    {
-        data: 'senior_discount',
+    { 
+        data: 'senior_discount', 
         title: 'SENIOR DISCOUNT',
         render: (data) => (parseFloat(data || 0)).toFixed(2),
         footer: function() {
             return totals.value.senior_discount.toFixed(2);
         }
     },
-    {
-        data: 'pwd_discount',
+    { 
+        data: 'pwd_discount', 
         title: 'PWD DISCOUNT',
         render: (data) => (parseFloat(data || 0)).toFixed(2),
         footer: function() {
@@ -132,26 +134,27 @@ const options = {
     responsive: true,
     order: [[0, 'asc']],
     pageLength: 25,
-    dom: 'Bfrtip',
+    dom: 'Bfrtip', // Ensure buttons are configured with this
     scrollX: true,
     scrollY: "50vh",
     buttons: [
-        'copy',
+        'copy', // This should work
         {
             text: 'Export Excel',
             action: function(e, dt, node, config) {
                 exportToExcel();
             }
         },
-        'pdf',
-        'print'
+        'pdf', // This should work
+        'print' // This should work
     ],
     order: [[2, 'asc']],
     drawCallback: function(settings) {
-
+        // Update footer totals whenever the table is redrawn
         const api = new DataTablesCore.Api(settings);
         const footerRow = api.table().footer().querySelectorAll('td, th');
-
+        
+        // Update the totals in the footer
         if (footerRow[4]) {
             footerRow[4].textContent = totals.value.senior_discount.toFixed(2);
         }
@@ -168,7 +171,7 @@ const handleFilterChange = () => {
         endDate.value = '';
         return;
     }
-
+    
     router.get(
         route('reports.rd'),
         {
@@ -183,12 +186,14 @@ const handleFilterChange = () => {
     );
 };
 
+// Watch for filter changes with debounce
 let filterTimeout;
 watch([selectedStores, startDate, endDate], () => {
     clearTimeout(filterTimeout);
     filterTimeout = setTimeout(handleFilterChange, 500);
 }, { deep: true });
 
+// Cleanup on component unmount
 onUnmounted(() => {
     clearTimeout(filterTimeout);
 });
@@ -198,7 +203,7 @@ onUnmounted(() => {
     <component :is="layoutComponent" active-tab="REPORTS">
         <template v-slot:main>
             <div class="mb-4 flex flex-wrap gap-4 p-4 bg-white rounded-lg shadow z-[999]">
-
+                
                 <div v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'" class="flex-1 min-w-[200px]">
                   <MultiSelectDropdown
                     v-model="selectedStores"
@@ -216,7 +221,7 @@ onUnmounted(() => {
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
                 </div>
-
+                
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
                     <input
@@ -239,10 +244,10 @@ onUnmounted(() => {
 
             <!-- Data table -->
             <TableContainer>
-                <DataTable
-                    :data="filteredData"
-                    :columns="columns"
-                    class="w-full relative display"
+                <DataTable 
+                    :data="filteredData" 
+                    :columns="columns" 
+                    class="w-full relative display" 
                     :options="options"
                 >
                     <template #action="data">
@@ -254,7 +259,7 @@ onUnmounted(() => {
 </template>
 
 <style>
-
+/* General Styling for DataTable */
 table.dataTable {
     width: 100%;
     border-collapse: collapse;
@@ -296,6 +301,7 @@ table.dataTable td {
     font-size: 13px;
 }
 
+/* Styling for Footer */
 .dataTable tfoot {
     background-color: #007bff;
     color: white;
@@ -307,6 +313,7 @@ table.dataTable td {
     padding: 12px 15px;
 }
 
+/* Styling for DataTable Buttons */
 .dt-buttons {
     display: flex;
     justify-content: flex-start;
@@ -329,6 +336,7 @@ table.dataTable td {
     background-color: #218838;
 }
 
+/* Copy, Print, Export to Excel Button Styling */
 .dt-buttons .buttons-copy,
 .dt-buttons .buttons-print,
 .dt-buttons .buttons-excel {
@@ -345,6 +353,7 @@ table.dataTable td {
     background-color: #0056b3;
 }
 
+/* Search Box Styling */
 .dataTables_filter {
     float: right;
     margin-bottom: 20px;
@@ -357,6 +366,7 @@ table.dataTable td {
     font-size: 14px;
 }
 
+/* Clear Filters Button */
 button.clear-filters {
     padding: 10px 15px;
     background-color: #ffc107;
@@ -372,6 +382,7 @@ button.clear-filters:hover {
     background-color: #e0a800;
 }
 
+/* Responsive Design */
 @media (max-width: 768px) {
     table.dataTable th, table.dataTable td {
         padding: 8px 10px;
@@ -387,10 +398,11 @@ button.clear-filters:hover {
     }
 }
 
+/* Styling for DataTable Buttons */
 .dt-buttons {
-    display: flex;
-    justify-content: flex-start;
-    gap: 10px;
+    display: flex;                 /* Align buttons horizontally */
+    justify-content: flex-start;   /* Align buttons to the left */
+    gap: 10px;                     /* Add space between buttons */
     margin: 10px 0;
 }
 
@@ -409,11 +421,12 @@ button.clear-filters:hover {
     background-color: #218838;
 }
 
+/* Search Box Styling */
 .dataTables_filter {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-left: auto;
+    display: flex;                 /* Display search box inline with buttons */
+    align-items: center;           /* Align vertically */
+    gap: 10px;                     /* Add space between search input and buttons */
+    margin-left: auto;             /* Align search box to the right */
 }
 
 .dataTables_filter input {
@@ -423,23 +436,24 @@ button.clear-filters:hover {
     font-size: 14px;
 }
 
+/* Responsive Design */
 @media (max-width: 768px) {
     .dt-buttons {
-        flex-wrap: wrap;
-        justify-content: center;
+        flex-wrap: wrap;            /* Allow buttons to wrap on smaller screens */
+        justify-content: center;    /* Center the buttons */
     }
 
     .dataTables_filter {
-        margin: 0;
+        margin: 0;                  /* Remove margin when wrapping */
     }
 }
 
 .dt-buttons {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
+    display: flex;               
+    justify-content: flex-start; 
+    align-items: center;    
     position: absolute;
-    z-index: 1;
+    z-index: 1;  
 }
 
 .dt-buttons .buttons-copy{
@@ -467,7 +481,7 @@ button.clear-filters:hover {
     float: right;
     padding-bottom: 20px;
     position: relative;
-    z-index: 999;
+    z-index: 999;  
 }
 
 </style>

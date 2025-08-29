@@ -1,5 +1,7 @@
 <script setup>
-
+/* import Create from "@/Components/Journaltrans/Create.vue";
+import Update from "@/Components/Journaltrans/Update.vue";
+import Delete from "@/Components/Journaltrans/Delete.vue"; */
 import PrimaryButton from "@/Components/Buttons/PrimaryButton.vue";
 import DangerButton from "@/Components/Buttons/DangerButton.vue";
 import TableContainer from "@/Components/Tables/TableContainer.vue";
@@ -66,6 +68,7 @@ const options = {
     scrollCollapse: true,
 };
 
+
 const toggleUpdateModal = (newJOURNALID, newLINENUM, newTRANSDATE, newITEMID, newADJUSTMENT, newCOSTPRICE, newPRICEUNIT, newSALESAMOUNT, newINVENTONHAND, newCOUNTED, newREASONREFRECID, newVARIANTID, newPOSTED, newPOSTEDDATETIME,newUNITID) => {
     JOURNALID.value = newJOURNALID;
     LINENUM.value = newLINENUM;
@@ -93,6 +96,7 @@ const toggleDeleteModal = (newJOURNALID) => {
 const toggleCreateModal = () => {
     showCreateModal.value = true;
 };
+
 
 const updateModalHandler = () => {
     showModalUpdate.value = false;

@@ -5,7 +5,7 @@ import Update from "@/Components/Storetable/Update.vue";
 import PrimaryButton from "@/Components/Buttons/PrimaryButton.vue";
 import Main from "@/Layouts/AdminPanel.vue";
 import Excel from "@/Components/Exports/Excel.vue";
-import Add from "@/Components/Svgs/Add.vue";
+import Add from "@/Components/Svgs/Add.vue";    
 import editblue from "@/Components/Svgs/editblue.vue";
 import moreblue from "@/Components/Svgs/moreblue.vue";
 import TableContainer from "@/Components/Tables/TableContainer.vue";
@@ -68,10 +68,10 @@ const router = useRouter();
     <Main active-tab="STORE">
         <template v-slot:modals>
             <Create :show-modal="showCreateModal" @toggle-active="createModalHandler"  />
-            <Update
-                :show-modal="showModalUpdate"
-                :STOREID="storeid"
-                :NAME="name"
+            <Update 
+                :show-modal="showModalUpdate"  
+                :STOREID="storeid" 
+                :NAME="name"  
                 @toggle-active="updateModalHandler"
             />
         </template>
@@ -93,9 +93,9 @@ const router = useRouter();
                 <DataTable :data="rbostoretables" :columns="columns" class="w-full relative display" :options="options">
                     <template #action="data">
                         <div class="flex justify-start">
-                            <TransparentButton
-                                type="button"
-                                @click="toggleUpdateModal(data.cellData.STOREID, data.cellData.NAME)"
+                            <TransparentButton 
+                                type="button" 
+                                @click="toggleUpdateModal(data.cellData.STOREID, data.cellData.NAME)" 
                                 class="me-1"
                             >
                                 <editblue class="h-6 cursor-pointer"></editblue>

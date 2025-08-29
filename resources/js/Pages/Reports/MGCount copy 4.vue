@@ -20,6 +20,7 @@ import { ref, computed, isRef, unref, reactive, onMounted } from 'vue';
 import ExcelJS from 'exceljs';
 import axios from 'axios';
 
+
 DataTable.use(DataTablesCore);
 
 const emit = defineEmits();
@@ -52,14 +53,30 @@ const toggleActive = () => {
   emit('toggleActive');
 };
 
+/* const options = {
+  paging: false,
+  scrollX: true,
+  scrollY: "60vh",
+  scrollCollapse: true,
+  fixedColumns: {
+    left: 6
+  },
+  error: function (xhr, error, thrown) {
+    console.error("DataTables error:", error);
+  }
+}; */
+
 const options = {
   paging: false,
   scrollX: true,
   scrollY: "60vh",
   scrollCollapse: true,
-
+  /* fixedColumns: {
+    left: 6
+  }, */
+  
   error: function (xhr, error, thrown) {
-
+    console.error("DataTables error:", error);
   },
   footerCallback: function(tfoot, data, start, end, display) {
     const api = this.api();
@@ -70,8 +87,34 @@ const options = {
       }
     });
   },
-
+  
 };
+
+/* const groupedOrders = reactive(props.orders.reduce((acc, order) => {
+  const { STORENAME, ITEMID, ITEMNAME, CATEGORY, COUNTED } = order;
+  const counted = parseInt(COUNTED) || 0;
+
+  if (!acc[ITEMID]) {
+    acc[ITEMID] = {
+      ITEMID,
+      ITEMNAME,
+      CATEGORY,
+      TOTAL: 0,
+      MGCount: 0,
+      BalanceCount: 0,
+    };
+  }
+
+  if (!acc[ITEMID][STORENAME]) {
+    acc[ITEMID][STORENAME] = 0;
+  }
+
+  acc[ITEMID][STORENAME] += counted;
+  acc[ITEMID].TOTAL += counted;
+  acc[ITEMID].BalanceCount = acc[ITEMID].TOTAL - acc[ITEMID].MGCount;
+
+  return acc;
+}, {})); */
 
 const groupedOrders = reactive(props.orders.reduce((acc, order) => {
   const { STORENAME, ITEMID, ITEMNAME, CATEGORY, COUNTED, MGCOUNT } = order;
@@ -114,6 +157,34 @@ const storeNames = computed(() => {
   return names;
 });
 
+/* const columns = computed(() => [
+  { title: 'ITEMID', data: 'ITEMID' },
+  { title: 'ITEMS', data: 'ITEMNAME' },
+  { title: 'CATEGORY', data: 'CATEGORY' },
+  { 
+    title: 'ACTUAL INV COUNT', 
+    data: 'MGCount',
+    render: (data, type, row) => {
+      if (type === 'display') {
+        return `<input type="number" value="${data}" onchange="window.updateMGCount('${row.ITEMID}', this.value)" />`;
+      }
+      return data;
+    }
+  },
+  { title: 'REMAINING STOCKS', data: 'BalanceCount' },
+  { title: 'TOTAL DISPATCH', data: 'TOTAL' },
+  ...Array.from(storeNames.value).map(storeName => ({ 
+    title: storeName, 
+    data: storeName,
+    render: (data, type, row) => {
+      if (type === 'display') {
+        return `<input type="number" value="${data}" onchange="window.updateCounted('${row.ITEMID}', '${storeName}', this.value)" />`;
+      }
+      return data;
+    }
+  }))
+]); */
+
 const footerTotals = computed(() => {
   const totals = {
     ITEMID: 'Grand Total',
@@ -142,45 +213,56 @@ const footerTotals = computed(() => {
 });
 
 const columns = computed(() => [
-  {
-    title: 'ITEMID',
+  { 
+    title: 'ITEMID', 
     data: 'ITEMID',
     className: 'frozen-column',
     footer: () => footerTotals.value.ITEMID
   },
-  {
-    title: 'ITEMS',
+  { 
+    title: 'ITEMS', 
     data: 'ITEMNAME',
     className: 'frozen-column',
     footer: () => ''
   },
-  {
-    title: 'CATEGORY',
+  { 
+    title: 'CATEGORY', 
     data: 'CATEGORY',
     className: 'frozen-column',
     footer: () => ''
   },
-
-  {
-    title: 'ACTUAL INV COUNT',
+  /* { 
+    title: 'ACTUAL INV COUNT', 
+    data: 'MGCount',
+    className: 'frozen-column',
+    render: (data, type, row) => {
+      if (type === 'display') {
+        return `<input type="number" value="${data}" onchange="window.updateMGCount('${row.ITEMID}', this.value)" />`;
+      }
+      return data;
+    },
+    footer: () => footerTotals.value.MGCount
+  }, */
+  { 
+    title: 'ACTUAL INV COUNT', 
     data: 'MGCount',
     className: 'frozen-column',
     footer: () => ''
   },
-  {
-    title: 'REMAINING STOCKS',
+  { 
+    title: 'REMAINING STOCKS', 
     data: 'BalanceCount',
     className: 'frozen-column',
     footer: () => footerTotals.value.BalanceCount
   },
-  {
-    title: 'TOTAL ALLOCATION',
+  { 
+    title: 'TOTAL ALLOCATION', 
     data: 'TOTAL',
     className: 'frozen-column',
     footer: () => footerTotals.value.TOTAL
   },
-  ...Array.from(storeNames.value).map(storeName => ({
-    title: storeName,
+  ...Array.from(storeNames.value).map(storeName => ({ 
+    title: storeName, 
     data: storeName,
     render: (data, type, row) => {
       if (type === 'display') {
@@ -192,8 +274,106 @@ const columns = computed(() => [
   })),
 ]);
 
+/* const saveAllData = () => {
+  const dataToSave = flattenedOrders.value.map(order => {
+    const counted = {};
+    Array.from(storeNames.value).forEach(storeName => {
+      counted[storeName] = order[storeName] || 0;
+    });
+
+    return {
+      itemId: order.ITEMID,
+      storeName: order.STORENAME,
+      mgCount: order.MGCount,
+      balanceCount: order.BalanceCount,
+      counted: counted
+    };
+  });
+
+  console.log('Data to save:', dataToSave); 
+
+  axios.post(route('save.all.data'), { data: dataToSave })
+    .then(response => {
+      console.log('All data saved successfully');
+    })
+    .catch(error => {
+      console.error('Error saving data:', error);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+      }
+    });
+}; */
+
+/* const saveAllData = () => {
+  const dataToSave = flattenedOrders.value.map(order => {
+    const counted = {};
+    Array.from(storeNames.value).forEach(storeName => {
+      counted[storeName] = order[storeName] || 0;
+    });
+
+    return {
+      itemId: order.ITEMID,
+      mgCount: order.MGCount,
+      balanceCount: order.BalanceCount,
+      counted: counted
+    };
+  });
+
+  console.log('Data to save:', JSON.stringify(dataToSave, null, 2));
+
+  axios.post(route('save.all.data'), { data: dataToSave })
+    .then(response => {
+      console.log('All data saved successfully:', response.data);
+    })
+    .catch(error => {
+      console.error('Error saving data:', error);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+      }
+    });
+}; */
+
 const showMessage = ref(false);
 const messageText = ref('');
+
+/* const saveAllData = () => {
+  const dataToSave = flattenedOrders.value.map(order => {
+    const counted = {};
+    Array.from(storeNames.value).forEach(storeName => {
+      counted[storeName] = order[storeName] || 0;
+    });
+
+    return {
+      itemId: order.ITEMID,
+      mgCount: order.MGCount,
+      balanceCount: order.BalanceCount,
+      counted: counted
+    };
+  });
+
+  console.log('Data to save:', JSON.stringify(dataToSave, null, 2));
+
+  axios.post(route('save.all.data'), { data: dataToSave })
+    .then(response => {
+      console.log('All data saved successfully:', response.data);
+      messageText.value = 'Data saved successfully!';
+      showMessage.value = true;
+      setTimeout(() => {
+        showMessage.value = false;
+      }, 3000); // Hide message after 3 seconds
+    })
+    .catch(error => {
+      console.error('Error saving data:', error);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+      }
+      messageText.value = 'Error saving data. Please try again.';
+      showMessage.value = true;
+      setTimeout(() => {
+        showMessage.value = false;
+      }, 3000); // Hide message after 3 seconds
+    });
+}; */
 
 const saveAllData = () => {
   isLoading.value = true;
@@ -213,9 +393,11 @@ const saveAllData = () => {
     };
   });
 
+  console.log('Data to save:', JSON.stringify(dataToSave, null, 2));
+
   axios.post(route('save.all.data'), { data: dataToSave })
     .then(response => {
-
+      console.log('All data saved successfully:', response.data);
       messageText.value = 'Data saved successfully!';
       showMessage.value = true;
       setTimeout(() => {
@@ -223,9 +405,9 @@ const saveAllData = () => {
       }, 3000);
     })
     .catch(error => {
-
+      console.error('Error saving data:', error);
       if (error.response) {
-
+        console.error('Error response:', error.response.data);
       }
       messageText.value = 'Error saving data. Please try again.';
       showMessage.value = true;
@@ -246,39 +428,151 @@ const disableAllInputs = (disabled) => {
   });
 };
 
+/* const saveAllData = () => {
+  const dataToSave = flattenedOrders.value.map(order => {
+    const counted = {};
+    Array.from(storeNames.value).forEach(storeName => {
+      counted[storeName] = order[storeName] || 0;
+    });
+
+    return {
+      itemId: order.ITEMID,
+      mgCount: order.MGCount,
+      balanceCount: order.BalanceCount,
+      counted: counted
+    };
+  });
+
+  console.log('Data to save:', JSON.stringify(dataToSave, null, 2));
+
+  axios.post(route('save.all.data'), { data: dataToSave })
+    .then(response => {
+      console.log('All data saved successfully:', response.data);
+    })
+    .catch(error => {
+      console.error('Error saving data:', error);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+      }
+    });
+}; */
+
+/* window.updateMGCount = function(itemId, value) {
+  const item = groupedOrders[itemId];
+  if (item) {
+    item.MGCount = parseInt(value, 10) || 0;
+    item.BalanceCount =  item.MGCount - item.TOTAL;
+    
+    axios.post('/api/update-mgcount', {
+      itemId: itemId,
+      mgCount: item.MGCount
+    })
+    .then(response => {
+      console.log('MGCount updated successfully');
+    })
+    .catch(error => {
+      console.error('Error updating MGCount:', error);
+    });
+  }
+} */
+
+/* window.updateMGCount = function(itemId, value) {
+  const item = groupedOrders[itemId];
+  if (item) {
+    item.MGCount = parseInt(value, 10) || 0;
+    item.BalanceCount = item.MGCount - item.TOTAL;
+    
+    axios.post('/api/update-mgcount', {
+      itemId: itemId,
+      mgCount: item.MGCount
+    })
+    .then(response => {
+      console.log('MGCount updated successfully');
+    })
+    .catch(error => {
+      console.error('Error updating MGCount:', error);
+    });
+  }
+} */
+
 window.updateMGCount = function(itemId, value) {
   const item = groupedOrders[itemId];
   if (item) {
     item.MGCount = parseInt(value, 10) || 0;
     item.BalanceCount = item.MGCount - item.TOTAL;
+    
+    /* axios.post('/api/update-mgcount', {
+      itemId: itemId,
+      mgCount: item.MGCount
+    })
+    .then(response => {
+      console.log('MGCount updated successfully');
+    })
+    .catch(error => {
+      console.error('Error updating MGCount:', error);
+    }); */
 
     axios.post('/api/update-mgcount', {
       itemId: itemId,
       mgCount: item.MGCount
     })
     .then(response => {
-
+      console.log('MGCount update response:', response.data);
       if (response.data.success) {
-
+        console.log('MGCount updated successfully');
       } else {
-
+        console.error('Failed to update MGCount:', response.data.message);
       }
     })
     .catch(error => {
-
+      console.error('Error updating MGCount:', error.response ? error.response.data : error);
     });
   }
 }
+
+/* window.updateCounted = function(itemId, storeName, value) {
+  const item = groupedOrders[itemId];
+  if (item) {
+    const countedValue = parseInt(value, 10) || 0;
+    item[storeName] = countedValue;
+    
+    item.TOTAL = Array.from(storeNames.value).reduce((sum, store) => {
+      return sum + (item[store] || 0);
+    }, 0);
+    
+    item.BalanceCount = item.MGCount - item.TOTAL;
+
+    axios.post('/api/update-counted', {
+      itemId: itemId,
+      storeName: storeName,
+      counted: countedValue,
+      total: item.TOTAL,
+      balanceCount: item.BalanceCount
+    })
+    .then(response => {
+      if (response.data.success) {
+        console.log('Counted value updated successfully');
+      } else {
+        console.error('Failed to update counted value:', response.data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error updating counted value:', error.response ? error.response.data : error);
+    });
+  }
+} */
 
 window.updateCounted = function(itemId, storeName, value) {
   const item = groupedOrders[itemId];
   if (item) {
     item[storeName] = parseInt(value, 10) || 0;
-
+    
+    // Recalculate TOTAL based on all store counts
     item.TOTAL = Array.from(storeNames.value).reduce((sum, store) => {
       return sum + (item[store] || 0);
     }, 0);
-
+    
+    // Recalculate BalanceCount
     item.BalanceCount = item.TOTAL - item.MGCount;
 
     axios.post('/api/update-counted', {
@@ -289,10 +583,10 @@ window.updateCounted = function(itemId, storeName, value) {
       balanceCount: item.BalanceCount
     })
     .then(response => {
-
+      console.log('Counted updated successfully');
     })
     .catch(error => {
-
+      console.error('Error updating Counted:', error);
     });
   }
 }
@@ -369,7 +663,7 @@ function generateAndDownloadTextFile() {
   downloadTextFile(filename, content);
 }
 
-async function exportToExcel() {
+/* async function exportToExcel() {
   try {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Flattened Orders');
@@ -382,12 +676,7 @@ async function exportToExcel() {
 
     worksheet.addRow(columns.value.map(column => column.title));
 
-    const filteredOrders = processedOrders.value.filter(order => {
-      const storeCounts = Array.from(storeNames.value).map(store => order[store] || 0);
-      return storeCounts.some(count => count > 0);
-    });
-
-    filteredOrders.forEach(order => {
+    processedOrders.value.forEach(order => {
       const rowData = columns.value.map(column => {
         const value = order[column.data];
         return value !== null && value !== undefined ? value : 0;
@@ -395,20 +684,12 @@ async function exportToExcel() {
       worksheet.addRow(rowData);
     });
 
-    const filteredTotals = columns.value.reduce((acc, column) => {
-      if (column.footer) {
-        acc[column.data] = filteredOrders.reduce((sum, order) => {
-          return sum + (Number(order[column.data]) || 0);
-        }, 0);
-      }
-      return acc;
-    }, {});
-
     const footerRow = worksheet.addRow(columns.value.map(column => {
       if (column.footer) {
-        return filteredTotals[column.data] || 0;
+        const value = column.footer();
+        return value !== null && value !== undefined ? value : 0;
       }
-      return '';
+      return 0;
     }));
     footerRow.font = { bold: true };
     footerRow.fill = {
@@ -434,7 +715,83 @@ async function exportToExcel() {
     link.download = filename;
     link.click();
   } catch (error) {
+    console.error('Error exporting to Excel:', error);
+  }
+} */
 
+async function exportToExcel() {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Flattened Orders');
+
+    // Define columns
+    worksheet.columns = columns.value.map(column => ({
+      header: column.title,
+      key: column.data,
+      width: 15
+    }));
+
+    // Add header row
+    worksheet.addRow(columns.value.map(column => column.title));
+
+    // Filter out items with no count and add data rows
+    const filteredOrders = processedOrders.value.filter(order => {
+      const storeCounts = Array.from(storeNames.value).map(store => order[store] || 0);
+      return storeCounts.some(count => count > 0);
+    });
+
+    filteredOrders.forEach(order => {
+      const rowData = columns.value.map(column => {
+        const value = order[column.data];
+        return value !== null && value !== undefined ? value : 0;
+      });
+      worksheet.addRow(rowData);
+    });
+
+    // Recalculate totals for filtered orders
+    const filteredTotals = columns.value.reduce((acc, column) => {
+      if (column.footer) {
+        acc[column.data] = filteredOrders.reduce((sum, order) => {
+          return sum + (Number(order[column.data]) || 0);
+        }, 0);
+      }
+      return acc;
+    }, {});
+
+    // Add footer row with recalculated totals
+    const footerRow = worksheet.addRow(columns.value.map(column => {
+      if (column.footer) {
+        return filteredTotals[column.data] || 0;
+      }
+      return '';
+    }));
+    footerRow.font = { bold: true };
+    footerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF7C0000' }
+    };
+    footerRow.font = { color: { argb: 'FFDDDDDD' } };
+
+    // Style header row
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFF8F9FA' }
+    };
+
+    // Generate Excel file
+    const today = new Date();
+    const filename = `FlattenedOrders_${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}.xlsx`;
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
   }
 }
 
@@ -446,11 +803,11 @@ const cakes = () => {
   window.location.href = '/cakepicklist';
 };
 
-const specialorder = () => {
+const specialorder = () => { 
     window.location.href = '/special-orders';
 };
 
-const inputpartycakes = () => {
+const inputpartycakes = () => { 
     window.location.href = '/add-partycakes';
 };
 
@@ -460,7 +817,7 @@ const postorders = () => {
     if (userConfirmed) {
         window.location.href = '/opic/post';
     } else {
-
+        console.log('User cancelled the post operation.');
     }
 };
 
@@ -468,7 +825,7 @@ const showGetCFModal = ref(false);
 
 const toggleGetCFModal = () => {
     showGetCFModal.value = true;
-
+    console.log(JOURNALID.value);
 };
 
 const GetCFModalHandler = () => {
@@ -497,7 +854,7 @@ const GetCFModalHandler = () => {
               <div date-rangepicker class="flex items-center">
                 <div class="relative ml-5 ">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                   </div>
                   <input
                     id="StartDate"
@@ -513,7 +870,7 @@ const GetCFModalHandler = () => {
                 <span class="mx-4 text-gray-500">to</span>
                 <div class="relative">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                   </div>
                   <input
                     id="EndDate"
@@ -617,9 +974,9 @@ const GetCFModalHandler = () => {
 
             <!-- <div class="col-span-6 sm:col-span-4">
               <InputLabel for="ROUTES" value="ROUTES" />
-              <SelectOption
+              <SelectOption 
                   id="ROUTES"
-                  v-model="form.ROUTES"
+                  v-model="form.ROUTES" 
                   :is-error="form.errors.ROUTES ? true : false"
                   class="mt-1 block w-full"
                   >
@@ -652,16 +1009,16 @@ const GetCFModalHandler = () => {
               <h6 class="ml-2">{{ routes }}</h6>
           </div>
         </div>
-
+        
         <div class="custom-datatable">
-          <div :class="{ 'blur-overlay': isLoading }">
-              <DataTable
-              :data="processedOrders"
-              :columns="columns"
-              class="w-full relative display"
+          <div :class="{ 'blur-overlay': isLoading }">  
+              <DataTable 
+              :data="processedOrders" 
+              :columns="columns" 
+              class="w-full relative display" 
               :options="options"
               >
-
+              
               <template #action="data">
                 <div class="flex justify-start">
                 </div>
@@ -669,7 +1026,7 @@ const GetCFModalHandler = () => {
             </DataTable>
           </div>
         </div>
-
+        
       </TableContainer>
     </template>
   </Main>
@@ -689,7 +1046,7 @@ const GetCFModalHandler = () => {
   z-index: 1;
 }
 
-.custom-datatable ::v-deep th,
+.custom-datatable ::v-deep th, 
 .custom-datatable ::v-deep td {
   white-space: nowrap;
 }
@@ -737,11 +1094,13 @@ const GetCFModalHandler = () => {
 .custom-datatable ::v-deep .dataTables_scrollHead th:nth-child(6),
 .custom-datatable ::v-deep .dataTables_scrollBody td:nth-child(6) { left: 500px; background-color: white;}
 
+/* Additional styles for better visibility of frozen columns */
 .custom-datatable ::v-deep .dataTables_scrollHead th:nth-child(-n+6),
 .custom-datatable ::v-deep .dataTables_scrollBody td:nth-child(-n+6) {
   box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
 
+/* Ensure input fields in table cells don't overflow */
 .custom-datatable ::v-deep input[type="number"] {
   width: 100%;
   box-sizing: border-box;
@@ -749,23 +1108,42 @@ const GetCFModalHandler = () => {
   font-size: 0.75rem;
 }
 
+/* Improve readability of table headers */
 .custom-datatable ::v-deep thead th {
   font-weight: bold;
   background-color: #f8f9fa;
 }
 
+/* Add some padding to table cells for better spacing */
 .custom-datatable ::v-deep td,
 .custom-datatable ::v-deep th {
   padding: 6px;
 }
 
+/* Style for alternating row colors */
 .custom-datatable ::v-deep tbody tr:nth-of-type(even) {
   background-color: #f3f4f6;
 }
 
+/* Hover effect for rows */
 .custom-datatable ::v-deep tbody tr:hover {
   background-color: #e5e7eb;
 }
+
+
+
+/* Responsive adjustments */
+/* @media (max-width: 768px) {
+  .custom-datatable ::v-deep table.dataTable {
+    font-size: 0.7rem;
+  }
+  
+  .custom-datatable ::v-deep .dataTables_scrollHead th:nth-child(-n+6),
+  .custom-datatable ::v-deep .dataTables_scrollBody td:nth-child(-n+6) {
+    font-size: 0.65rem;
+    padding: 3px;
+  }
+} */
 
 .blur-overlay {
   filter: blur(5px);

@@ -20,6 +20,7 @@ const props = defineProps({
     }
 });
 
+// Computed properties
 const user = computed(() => props.auth?.user || {});
 const userRole = computed(() => user.value?.role || '');
 const layoutComponent = computed(() => {
@@ -28,6 +29,7 @@ const layoutComponent = computed(() => {
 
 const isAdmin = computed(() => ['SUPERADMIN', 'ADMIN', 'OPIC'].includes(userRole.value));
 
+// Form setup
 const form = useForm({
     DISCOFFERNAME: props.discount.DISCOFFERNAME || '',
     PARAMETER: props.discount.PARAMETER || '',
@@ -40,12 +42,14 @@ const discountTypes = [
     { value: 'PERCENTAGE', label: 'Percentage', description: 'Percentage off the total amount' }
 ];
 
+// Reactive state
 const previewAmount = ref(100);
 const showFloatingMenu = ref(false);
 const showPreviewPanel = ref(false);
 const showDeleteModal = ref(false);
 const showChangesPanel = ref(false);
 
+// Computed properties for form validation and preview
 const isPercentage = computed(() => form.DISCOUNTTYPE === 'PERCENTAGE');
 const parameterLabel = computed(() => {
     switch (form.DISCOUNTTYPE) {
@@ -104,32 +108,35 @@ const discountPreview = computed(() => {
     };
 });
 
+// Check if form has changes
 const formHasChanges = computed(() => {
     return form.DISCOFFERNAME !== props.discount.DISCOFFERNAME ||
            form.PARAMETER != props.discount.PARAMETER ||
            form.DISCOUNTTYPE !== props.discount.DISCOUNTTYPE;
 });
 
+// Validation rules
 const parameterError = computed(() => {
     if (!form.PARAMETER) return null;
-
+    
     const value = parseFloat(form.PARAMETER);
     if (isNaN(value) || value < 0) {
         return 'Value must be a positive number';
     }
-
+    
     if (form.DISCOUNTTYPE === 'PERCENTAGE' && value > 100) {
         return 'Percentage cannot exceed 100%';
     }
-
+    
     return null;
 });
 
+// Methods
 const submitForm = () => {
     form.put(route('discountsv2.update', props.discount.id), {
         preserveScroll: true,
         onSuccess: () => {
-
+            // Success handled by redirect
         }
     });
 };
@@ -151,7 +158,7 @@ const formatCurrency = (value) => {
 
 const formatDiscountValue = (discount) => {
     if (!discount) return '';
-
+    
     switch (discount.DISCOUNTTYPE) {
         case 'PERCENTAGE':
             return `${discount.PARAMETER}%`;
@@ -291,7 +298,7 @@ const deleteDiscount = () => {
                 </div>
 
                 <!-- Flash Messages -->
-                <div v-if="flash.message"
+                <div v-if="flash.message" 
                      :class="[
                          'mb-4 lg:mb-6 px-4 py-3 rounded-lg mx-4 lg:mx-0',
                          flash.isSuccess ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'
@@ -327,7 +334,7 @@ const deleteDiscount = () => {
                         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden lg:order-1">
                             <div class="p-4 lg:p-6">
                                 <h2 class="text-lg font-medium text-gray-900 mb-4 lg:mb-6">Discount Information</h2>
-
+                                
                                 <form @submit.prevent="submitForm" class="space-y-4 lg:space-y-6">
                                     <!-- Discount Name -->
                                     <div>
@@ -368,7 +375,7 @@ const deleteDiscount = () => {
                                         <p v-if="form.errors.DISCOUNTTYPE" class="mt-2 text-sm text-red-600">
                                             {{ form.errors.DISCOUNTTYPE }}
                                         </p>
-
+                                        
                                         <!-- Type Description -->
                                         <div v-if="form.DISCOUNTTYPE" class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                                             <p class="text-sm text-blue-800">
@@ -411,7 +418,7 @@ const deleteDiscount = () => {
                                     </div>
 
                                     <!-- Preview Summary (Mobile Inline) -->
-                                    <div v-if="form.DISCOUNTTYPE && form.PARAMETER && discountPreview"
+                                    <div v-if="form.DISCOUNTTYPE && form.PARAMETER && discountPreview" 
                                          class="lg:hidden p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
                                         <h3 class="text-sm font-medium text-gray-900 mb-3">Quick Preview</h3>
                                         <div class="space-y-2 text-sm">
@@ -454,7 +461,7 @@ const deleteDiscount = () => {
                                         :disabled="form.processing || parameterError || !form.DISCOFFERNAME || !form.DISCOUNTTYPE || !form.PARAMETER || !formHasChanges"
                                         class="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <svg v-if="form.processing" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http:
+                                        <svg v-if="form.processing" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
@@ -469,7 +476,7 @@ const deleteDiscount = () => {
                             <!-- Live Preview Panel -->
                             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                 <h2 class="text-lg font-medium text-gray-900 mb-4">Live Preview</h2>
-
+                                
                                 <div v-if="!form.DISCOUNTTYPE" class="text-center py-8 text-gray-500">
                                     <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
@@ -516,7 +523,7 @@ const deleteDiscount = () => {
                             <!-- Changes Comparison (Desktop Only) -->
                             <div v-if="formHasChanges" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                 <h2 class="text-lg font-medium text-gray-900 mb-4">Changes Summary</h2>
-
+                                
                                 <div class="space-y-4">
                                     <!-- Original Values -->
                                     <div class="p-4 bg-gray-50 rounded-lg border">
@@ -563,7 +570,7 @@ const deleteDiscount = () => {
                             <!-- Quick Actions (Desktop Only) -->
                             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                 <h2 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
-
+                                
                                 <div class="space-y-3">
                                     <Link
                                         :href="route('discountsv2.show', discount.id)"
@@ -575,7 +582,7 @@ const deleteDiscount = () => {
                                         </svg>
                                         View Discount Details
                                     </Link>
-
+                                    
                                     <button
                                         v-if="isAdmin"
                                         @click="confirmDelete"
@@ -677,7 +684,7 @@ const deleteDiscount = () => {
                     >
                         <!-- Changes indicator -->
                         <div v-if="formHasChanges && !showFloatingMenu" class="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full animate-pulse border-2 border-white"></div>
-
+                        
                         <svg v-if="!showFloatingMenu" class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                         </svg>
@@ -831,24 +838,24 @@ const deleteDiscount = () => {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L5.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
                                 </svg>
                             </div>
-
+                            
                             <h3 class="text-lg font-medium text-gray-900 mb-2">Delete Discount</h3>
-
+                            
                             <div class="mb-4">
                                 <p class="text-sm text-gray-500 mb-2">
                                     Are you sure you want to delete this discount?
                                 </p>
-
+                                
                                 <div class="p-3 bg-gray-50 rounded-lg border text-left">
                                     <p class="font-medium text-gray-900">{{ discount.DISCOFFERNAME }}</p>
                                     <p class="text-sm text-gray-600">{{ formatDiscountValue(discount) }}</p>
                                 </div>
-
+                                
                                 <p class="text-xs text-red-600 mt-3">
                                     <strong>Warning:</strong> This action cannot be undone.
                                 </p>
                             </div>
-
+                            
                             <div class="flex space-x-3">
                                 <button
                                     @click="showDeleteModal = false"

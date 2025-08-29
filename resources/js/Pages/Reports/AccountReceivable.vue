@@ -14,6 +14,7 @@ import ExcelJS from 'exceljs';
 import jQuery from 'jquery';
 import { router } from '@inertiajs/vue3';
 
+// Initialize DataTables with jQuery
 window.$ = window.jQuery = jQuery;
 DataTable.use(DataTablesCore);
 
@@ -47,6 +48,7 @@ const props = defineProps({
     }
 });
 
+// Helper function to format numbers consistently
 const formatNumber = (value) => {
     const num = parseFloat(value || 0);
     return isNaN(num) ? '0.00' : num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -64,16 +66,17 @@ onMounted(() => {
 
 const filteredData = computed(() => {
     let filtered = [...props.ar];
-
+    
     if (selectedStores.value.length > 0) {
-        filtered = filtered.filter(item =>
+        filtered = filtered.filter(item => 
             selectedStores.value.includes(item.storename)
         );
     }
-
+    
     return filtered;
 });
 
+// Check if we have data to display
 const hasData = computed(() => {
     return filteredData.value && filteredData.value.length > 0;
 });
@@ -103,7 +106,7 @@ const footerTotals = computed(() => {
 });
 
 const columns = [
-    {
+    { 
         data: 'receiptid',
         title: 'Receipt ID',
         footer: 'Grand Total'
@@ -125,7 +128,7 @@ const columns = [
         data: 'charge',
         title: 'Charge',
         render: (data) => {
-
+            // Format with thousands separator and 2 decimal places
             return formatNumber(data);
         },
         footer: function() {
@@ -212,12 +215,14 @@ const columns = [
     }
 ];
 
+// Function to export to Excel
 const exportToExcel = (dt) => {
     try {
         isLoading.value = true;
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Account Receivable Data');
 
+        // Define columns in Excel sheet
         worksheet.columns = [
             { header: 'Receipt ID', key: 'receiptid', width: 15 },
             { header: 'Store Name', key: 'storename', width: 20 },
@@ -232,6 +237,7 @@ const exportToExcel = (dt) => {
             { header: 'Representation', key: 'representation', width: 15 }
         ];
 
+        // Apply styling to header row
         worksheet.getRow(1).font = { bold: true };
         worksheet.getRow(1).fill = {
             type: 'pattern',
@@ -240,8 +246,10 @@ const exportToExcel = (dt) => {
         };
         worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' } };
 
+        // Get filtered data from DataTable
         const filteredRows = dt.rows({ search: 'applied' }).data().toArray();
-
+        
+        // Add filtered data to worksheet with proper formatting
         filteredRows.forEach(row => {
             const excelRow = worksheet.addRow({
                 receiptid: row.receiptid,
@@ -256,16 +264,19 @@ const exportToExcel = (dt) => {
                 grabfood: parseFloat(row.grabfood || 0),
                 representation: parseFloat(row.representation || 0)
             });
-
+            
+            // Format numeric cells with 2 decimal places
             for (let i = 4; i <= 11; i++) {
                 if (excelRow.getCell(i).value !== null) {
                     excelRow.getCell(i).numFmt = '#,##0.00';
                 }
             }
-
+            
+            // Format date cells
             if (excelRow.getCell(3).value) excelRow.getCell(3).numFmt = 'yyyy-mm-dd';
         });
 
+        // Calculate totals for filtered data
         const totalCharge = filteredRows.reduce((acc, row) => acc + parseFloat(row.charge || 0), 0);
         const totalGcash = filteredRows.reduce((acc, row) => acc + parseFloat(row.gcash || 0), 0);
         const totalPaymaya = filteredRows.reduce((acc, row) => acc + parseFloat(row.paymaya || 0), 0);
@@ -275,6 +286,7 @@ const exportToExcel = (dt) => {
         const totalGrabfood = filteredRows.reduce((acc, row) => acc + parseFloat(row.grabfood || 0), 0);
         const totalRepresentation = filteredRows.reduce((acc, row) => acc + parseFloat(row.representation || 0), 0);
 
+        // Add totals row
         const totalRow = worksheet.addRow({
             receiptid: 'Total',
             storename: '',
@@ -288,7 +300,8 @@ const exportToExcel = (dt) => {
             grabfood: totalGrabfood,
             representation: totalRepresentation
         });
-
+        
+        // Style and format the totals row
         totalRow.font = { bold: true };
         totalRow.fill = {
             type: 'pattern',
@@ -296,13 +309,15 @@ const exportToExcel = (dt) => {
             fgColor: { argb: 'FF007BFF' }
         };
         totalRow.font = { color: { argb: 'FFFFFFFF' } };
-
+        
+        // Format numeric cells in totals row with 2 decimal places and thousands separator
         for (let i = 4; i <= 11; i++) {
             if (totalRow.getCell(i).value !== null) {
                 totalRow.getCell(i).numFmt = '#,##0.00';
             }
         }
 
+        // Generate and download Excel file
         workbook.xlsx.writeBuffer().then((buffer) => {
             const blob = new Blob([buffer], { type: 'application/octet-stream' });
             const link = document.createElement('a');
@@ -314,12 +329,12 @@ const exportToExcel = (dt) => {
             isLoading.value = false;
             alert('Export completed successfully!');
         }).catch(error => {
-
+            console.error('Excel export error:', error);
             isLoading.value = false;
             alert('Error exporting to Excel: ' + error.message);
         });
     } catch (error) {
-
+        console.error('Error in Excel export:', error);
         isLoading.value = false;
         alert('Error preparing Excel export: ' + error.message);
     }
@@ -327,7 +342,7 @@ const exportToExcel = (dt) => {
 
 const options = {
     responsive: true,
-    order: [[1, 'asc'], [0, 'asc']],
+    order: [[1, 'asc'], [0, 'asc']], // Sort by store, then receipt id
     pageLength: 25,
     lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
     dom: 'Blfrtip',
@@ -345,11 +360,13 @@ const options = {
         'print'
     ],
     drawCallback: function(settings) {
-
+        // Get the DataTable API instance
         const api = new DataTablesCore.Api(settings);
-
+        
+        // Update total count
         totalCount.value = api.rows({ search: 'applied' }).count();
-
+        
+        // Calculate totals based on currently filtered/displayed data
         let totalCharge = 0;
         let totalGcash = 0;
         let totalPaymaya = 0;
@@ -359,6 +376,7 @@ const options = {
         let totalGrabfood = 0;
         let totalRepresentation = 0;
 
+        // Use api.rows({ search: 'applied' }) to get only filtered/searched rows
         api.rows({ search: 'applied' }).every(function(rowIdx) {
             const data = this.data();
             totalCharge += parseFloat(data.charge || 0);
@@ -371,6 +389,7 @@ const options = {
             totalRepresentation += parseFloat(data.representation || 0);
         });
 
+        // Update footer cells with new totals including thousands separator
         const footerRow = api.table().footer().querySelectorAll('td, th');
         if (footerRow[3]) footerRow[3].textContent = formatNumber(totalCharge);
         if (footerRow[4]) footerRow[4].textContent = formatNumber(totalGcash);
@@ -383,6 +402,7 @@ const options = {
     }
 }
 
+// Modify your filter change handler to add a delay
 const handleFilterChange = () => {
     if (startDate.value && endDate.value && new Date(startDate.value) > new Date(endDate.value)) {
         alert('Start date cannot be later than end date');
@@ -390,9 +410,10 @@ const handleFilterChange = () => {
         endDate.value = '';
         return;
     }
-
+    
     isLoading.value = true;
-
+    
+    // Add a small delay to ensure the component is ready
     setTimeout(() => {
         router.get(
             route('reports.ar'),
@@ -416,9 +437,10 @@ const handleFilterChange = () => {
     }, 100);
 };
 
+// Clear all filters
 const clearFilters = () => {
-    selectedStores.value = [];
-    startDate.value = '';
+    selectedStores.value = []; 
+    startDate.value = ''; 
     endDate.value = '';
     handleFilterChange();
 };
@@ -434,6 +456,7 @@ onUnmounted(() => {
 });
 </script>
 
+
 <template>
     <component :is="layoutComponent" active-tab="REPORTS">
         <template v-slot:main>
@@ -441,7 +464,7 @@ onUnmounted(() => {
             <div v-if="isLoading" class="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
                 <div class="bg-white p-4 rounded-lg shadow-lg">
                     <div class="flex items-center">
-                        <svg class="animate-spin h-6 w-6 mr-3 text-blue-500" xmlns="http:
+                        <svg class="animate-spin h-6 w-6 mr-3 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -449,10 +472,10 @@ onUnmounted(() => {
                     </div>
                 </div>
             </div>
-
+            
             <!-- Filters Section -->
             <div class="mb-4 flex flex-wrap gap-4 p-4 bg-white rounded-lg shadow z-[999] sticky top-0">
-                <div v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'"
+                <div v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'" 
                      class="flex-1 min-w-[200px]">
                     <MultiSelectDropdown
                         v-model="selectedStores"
@@ -469,7 +492,7 @@ onUnmounted(() => {
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
                 </div>
-
+                
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
                     <input
@@ -497,10 +520,10 @@ onUnmounted(() => {
                         Showing {{ totalCount }} record(s)
                     </div>
                 </div>
-
+                
                 <div v-if="!hasData" class="p-8 text-center bg-gray-50 rounded-lg">
                     <div class="text-gray-500 mb-4">
-                        <svg xmlns="http:
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                         </svg>
                         <p class="text-lg font-medium">No receivables found</p>
@@ -509,12 +532,12 @@ onUnmounted(() => {
                         Try adjusting your search filters or select a different date range.
                     </p>
                 </div>
-
-                <DataTable
+                
+                <DataTable 
                     v-if="hasData"
-                    :data="filteredData"
-                    :columns="columns"
-                    class="w-full relative display"
+                    :data="filteredData" 
+                    :columns="columns" 
+                    class="w-full relative display" 
                     :options="options"
                 >
                     <tfoot>
@@ -539,7 +562,7 @@ onUnmounted(() => {
 </template>
 
 <style>
-
+/* General Styling for DataTable */
 table.dataTable {
     width: 100%;
     border-collapse: collapse;
@@ -581,6 +604,7 @@ table.dataTable td {
     font-size: 13px;
 }
 
+/* Styling for Footer */
 .dataTable tfoot {
     background-color: #007bff;
     color: white;
@@ -592,6 +616,7 @@ table.dataTable td {
     padding: 12px 15px;
 }
 
+/* Styling for DataTable Buttons */
 .dt-buttons {
     display: flex;
     justify-content: flex-start;
@@ -621,6 +646,7 @@ table.dataTable td {
     background-color: darkblue;
 }
 
+/* Search Box Styling */
 .dataTables_filter {
     float: right;
     padding-bottom: 20px;
@@ -636,6 +662,7 @@ table.dataTable td {
     margin-left: 8px;
 }
 
+/* Pagination Styling */
 .dataTables_paginate {
     margin-top: 15px;
     text-align: right;
@@ -660,6 +687,7 @@ table.dataTable td {
     background-color: #e9ecef;
 }
 
+/* Length Menu Styling */
 .dataTables_length {
     margin-bottom: 15px;
 }
@@ -671,11 +699,13 @@ table.dataTable td {
     margin: 0 5px;
 }
 
+/* Info Styling */
 .dataTables_info {
     margin-top: 15px;
     color: #666;
 }
 
+/* Responsive Design */
 @media (max-width: 768px) {
     .dt-buttons {
         position: static;
@@ -697,7 +727,7 @@ table.dataTable td {
         text-align: center;
     }
 
-    table.dataTable th,
+    table.dataTable th, 
     table.dataTable td {
         padding: 8px;
         font-size: 12px;
@@ -712,6 +742,7 @@ table.dataTable td {
     }
 }
 
+/* Print Styling */
 @media print {
     .dt-buttons,
     .dataTables_filter,
@@ -731,6 +762,7 @@ table.dataTable td {
     }
 }
 
+/* Loading State */
 .dataTables_processing {
     position: absolute;
     top: 50%;
@@ -743,6 +775,7 @@ table.dataTable td {
     z-index: 1000;
 }
 
+/* Scrollbar Styling */
 .dataTables_scrollBody::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -761,10 +794,12 @@ table.dataTable td {
     background: #555;
 }
 
+/* Row highlighting */
 .highlight {
     background-color: #ffffcc !important;
 }
 
+/* Numerical column alignment */
 table.dataTable td:nth-child(4),
 table.dataTable td:nth-child(5),
 table.dataTable td:nth-child(6),
@@ -776,6 +811,7 @@ table.dataTable td:nth-child(11) {
     text-align: right;
 }
 
+/* Header and footer alignment for numerical columns */
 table.dataTable thead th:nth-child(4),
 table.dataTable thead th:nth-child(5),
 table.dataTable thead th:nth-child(6),
@@ -795,6 +831,7 @@ table.dataTable tfoot th:nth-child(11) {
     text-align: right;
 }
 
+/* Toast notifications */
 #toast-container {
     position: fixed;
     top: 20px;

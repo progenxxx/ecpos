@@ -50,8 +50,8 @@ const columns = [
     { data: 'ITEMID', title: 'ITEMID' },
     { data: 'itemname', title: 'ITEMNAME' },
     { data: 'itemgroup', title: 'CATEGORY' },
-    {
-        data: 'COUNTED',
+    { 
+        data: 'COUNTED', 
         title: 'COUNTED',
         render: function(data, type, row) {
             if (type === 'display') {
@@ -60,7 +60,11 @@ const columns = [
             return data;
         }
     },
-
+    /* {
+        data: null,
+        render: '#action',
+        title: 'Actions'
+    }, */
 ];
 
 const options = {
@@ -85,19 +89,19 @@ const toggleCreateModal = (journalid, newLINENUM) => {
     JOURNALID.value = journalid;
     LINENUM.value = newLINENUM;
     showCreateModal.value = true;
-
+    console.log(JOURNALID.value);
 };
 
 const toggleGetBWModal = (journalid) => {
     JOURNALID.value = journalid;
     showGetBWModal.value = true;
-
+    console.log(JOURNALID.value);
 };
 
 const toggleGetCFModal = (journalid) => {
     JOURNALID.value = journalid;
     showGetCFModal.value = true;
-
+    console.log(JOURNALID.value);
 };
 
 const createModalHandler = () => {
@@ -119,10 +123,11 @@ const handleCountedChange = async (event, rowData) => {
 
     try {
         await updateCountedValue(journalId, itemId, newValue);
-
+        // Update the local data
         rowData.COUNTED = newValue;
     } catch (error) {
-
+        console.error('Failed to update counted value:', error);
+        // Revert the input value to the original
         event.target.value = rowData.COUNTED;
     }
 };
@@ -134,14 +139,14 @@ const updateCountedValue = async (journalId, itemId, newValue) => {
             itemId,
             newValue
         });
-
+        
         if (response.data.success) {
-
+            console.log('Updated successfully');
         } else {
             throw new Error('Update failed');
         }
     } catch (error) {
-
+        console.error('Error updating counted value:', error);
         throw error;
     }
 };
@@ -160,7 +165,7 @@ const DeleteOrders = () => {
 };
 
 const handleSelectedItem = (item) => {
-
+  console.log('Selected Item:', item);
 };
 
 </script>
@@ -171,7 +176,7 @@ const handleSelectedItem = (item) => {
             <Create
                 :show-modal="showCreateModal"
                 :JOURNALID="JOURNALID"
-                :items="props.items"
+                :items="props.items" 
                 @toggle-active="createModalHandler"
                 @select-item="handleSelectedItem"
             />
@@ -199,6 +204,7 @@ const handleSelectedItem = (item) => {
                         <Back class="h-5" />
                         </PrimaryButton>
 
+                    
                         <!-- <PrimaryButton
                             type="button"
                             @click="toggleCreateModal(journalid)"
@@ -229,7 +235,7 @@ const handleSelectedItem = (item) => {
                         @click="updateAllCountedValues"
                         class="m-1 ml-2 bg-navy p-10 "
                         >
-                         Save
+                         Save 
                         </PrimaryButton>
 
                         <!-- <form @submit.prevent="submitForm"   class="px-2 py-3 max-h-[50vh] lg:max-h-[70vh] overflow-y-auto">
@@ -238,7 +244,7 @@ const handleSelectedItem = (item) => {
 
                         <div class="relative">
                             <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                                <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                             </div>
 
                             <input
@@ -256,10 +262,10 @@ const handleSelectedItem = (item) => {
                     </form> -->
                     </div>
                 </div>
-                <DataTable
-                    :data="inventjournaltransrepos"
-                    :columns="columns"
-                    class="w-full relative display"
+                <DataTable 
+                    :data="inventjournaltransrepos" 
+                    :columns="columns" 
+                    class="w-full relative display" 
                     :options="options"
                 >
                     <template #action="data">

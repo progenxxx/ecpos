@@ -1,4 +1,4 @@
-
+// resources/js/Pages/Reports/Inventory.vue
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { router } from '@inertiajs/vue3';
@@ -38,16 +38,21 @@ const props = defineProps({
     }
 });
 
+// Debug logging
 onMounted(() => {
-
+    console.log('Inventory prop:', props.inventory);
+    console.log('Inventory type:', typeof props.inventory);
+    console.log('Is Array:', Array.isArray(props.inventory));
 });
 
+// Initialize reactive refs with filter values
 const selectedStores = ref(props.filters.selectedStores || []);
 const startDate = ref(props.filters.startDate || '');
 const endDate = ref(props.filters.endDate || '');
 
+// DataTable columns configuration
 const columns = [
-    {
+    { 
         data: 'itemname',
         title: 'Item Name',
         className: 'min-w-[200px]'
@@ -124,13 +129,14 @@ const columns = [
     }
 ];
 
+// DataTable options
 const options = {
     responsive: true,
     order: [[0, 'asc']],
     pageLength: 25,
     dom: 'Bfrtip',
     buttons: [
-        'copy',
+        'copy', 
         {
             extend: 'csv',
             title: 'Inventory Report'
@@ -147,9 +153,10 @@ const options = {
     ]
 };
 
+// Calculate totals from inventory data with safety checks
 const totals = computed(() => {
     if (!props.inventory || !Array.isArray(props.inventory)) {
-
+        console.warn('Inventory is not an array:', props.inventory);
         return {
             beginning: 0,
             receivedDelivery: 0,
@@ -169,7 +176,7 @@ const totals = computed(() => {
     return props.inventory.reduce((acc, item) => {
         const safeNumber = (value) => Number(value || 0);
 
-        const itemWaste =
+        const itemWaste = 
             safeNumber(item.throw_away) +
             safeNumber(item.early_molds) +
             safeNumber(item.pull_out) +
@@ -206,17 +213,18 @@ const totals = computed(() => {
     });
 });
 
+// Handle filter changes with validation
 const handleFilterChange = () => {
     if (startDate.value && endDate.value) {
         const start = new Date(startDate.value);
         const end = new Date(endDate.value);
-
+        
         if (start > end) {
             alert('Start date cannot be later than end date');
             return;
         }
     }
-
+    
     router.get(
         route('reports.inventory'),
         {
@@ -228,12 +236,13 @@ const handleFilterChange = () => {
             preserveState: true,
             preserveScroll: true,
             onError: (errors) => {
-
+                console.error('Filter update failed:', errors);
             }
         }
     );
 };
 
+// Clear all filters
 const clearFilters = () => {
     selectedStores.value = [];
     startDate.value = '';
@@ -246,10 +255,11 @@ const totalNegativeVariance = computed(() => {
         return 0;
     }
 
+    // Filter out negative variance values and sum them up
     return props.inventory
-        .map(item => Number(item.variance || 0))
-        .filter(variance => variance < 0)
-        .reduce((sum, variance) => sum + variance, 0);
+        .map(item => Number(item.variance || 0))  // Convert to number and handle null/undefined
+        .filter(variance => variance < 0)  // Only keep negative variances
+        .reduce((sum, variance) => sum + variance, 0);  // Sum up the negative variances
 });
 
 const totalPositiveVariance = computed(() => {
@@ -257,22 +267,27 @@ const totalPositiveVariance = computed(() => {
         return 0;
     }
 
+    // Filter out negative variance values and sum them up
     return props.inventory
-        .map(item => Number(item.variance || 0))
-        .filter(variance => variance > 0)
-        .reduce((sum, variance) => sum + variance, 0);
+        .map(item => Number(item.variance || 0))  // Convert to number and handle null/undefined
+        .filter(variance => variance > 0)  // Only keep negative variances
+        .reduce((sum, variance) => sum + variance, 0);  // Sum up the negative variances
 });
 
+
+// Watch for filter changes with debounce
 let filterTimeout;
 watch([selectedStores, startDate, endDate], () => {
     clearTimeout(filterTimeout);
     filterTimeout = setTimeout(handleFilterChange, 500);
 }, { deep: true });
 
+// Cleanup
 onUnmounted(() => {
     clearTimeout(filterTimeout);
 });
 
+// Initialize component
 onMounted(() => {
     selectedStores.value = props.filters.selectedStores || [];
     startDate.value = props.filters.startDate || '';
@@ -285,8 +300,8 @@ onMounted(() => {
         <template v-slot:main>
             <!-- Filters Section -->
             <div class="mb-4 flex flex-wrap gap-4 p-4 bg-white rounded-lg shadow">
-                <div
-                    v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'"
+                <div 
+                    v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'" 
                     class="flex-1 min-w-[200px]"
                 >
                     <MultiSelectDropdown
@@ -304,7 +319,7 @@ onMounted(() => {
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
                 </div>
-
+                
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
                     <input
@@ -363,16 +378,16 @@ onMounted(() => {
                                 {{ totalPositiveVariance.toFixed(2) }}
                             </p>
                         </div>
-                    </div>
+                    </div>   
 
             </details>
 
             <!-- DataTable -->
             <TableContainer>
-                <DataTable
-                    :data="inventory"
-                    :columns="columns"
-                    class="w-full relative display"
+                <DataTable 
+                    :data="inventory" 
+                    :columns="columns" 
+                    class="w-full relative display" 
                     :options="options"
                 />
             </TableContainer>

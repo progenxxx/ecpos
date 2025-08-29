@@ -16,6 +16,7 @@ DataTable.use(DataTablesCore);
 const GROUPID = ref('');
 const NAME = ref('');
 
+
 const showModalUpdate = ref(false);
 const showCreateModal = ref(false);
 const showDeleteModal = ref(false);
@@ -30,7 +31,7 @@ const props = defineProps({
 const columns = [
     { data: 'GROUPID', title: 'GROUPID' },
     { data: 'NAME', title: 'SPECIAL GROUP' },
-
+   
     {
         data: null,
         render: '#action',
@@ -45,10 +46,11 @@ const options = {
     scrollCollapse: true,
 };
 
+
 const toggleUpdateModal = (newGROUPID, newNAME) => {
     GROUPID.value = newGROUPID;
     NAME.value = newNAME;
-
+  
     showModalUpdate.value = true;
 };
 const toggleDeleteModal = (newGROUPID) => {
@@ -59,6 +61,7 @@ const toggleDeleteModal = (newGROUPID) => {
 const toggleCreateModal = () => {
     showCreateModal.value = true;
 };
+
 
 const updateModalHandler = () => {
     showModalUpdate.value = false;

@@ -20,6 +20,7 @@ const props = defineProps({
     }
 });
 
+// Computed properties
 const user = computed(() => props.auth?.user || {});
 const userRole = computed(() => user.value?.role || '');
 const layoutComponent = computed(() => {
@@ -28,12 +29,14 @@ const layoutComponent = computed(() => {
 
 const isAdmin = computed(() => ['SUPERADMIN', 'ADMIN', 'OPIC'].includes(userRole.value));
 
+// Reactive state
 const previewAmount = ref(100);
 const showFloatingMenu = ref(false);
 const showCalculatorPanel = ref(false);
 const showDeleteModal = ref(false);
 const showExamplesPanel = ref(false);
 
+// Computed properties
 const discountTypeLabel = computed(() => {
     switch (props.discount.DISCOUNTTYPE) {
         case 'FIXED':
@@ -116,6 +119,7 @@ const discountPreview = computed(() => {
     };
 });
 
+// Methods
 const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-PH', {
         style: 'currency',
@@ -158,10 +162,11 @@ const toggleExamplesPanel = () => {
     closeFloatingMenu();
 };
 
+// Calculate example scenarios
 const calculateExample = (amount) => {
     const parameter = parseFloat(props.discount.PARAMETER);
     let discountAmount = 0;
-
+    
     switch (props.discount.DISCOUNTTYPE) {
         case 'FIXED':
             discountAmount = Math.min(parameter, amount);
@@ -173,7 +178,7 @@ const calculateExample = (amount) => {
             discountAmount = (amount * parameter) / 100;
             break;
     }
-
+    
     return {
         original: amount,
         discount: discountAmount,
@@ -182,9 +187,9 @@ const calculateExample = (amount) => {
 };
 
 const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
+    return new Date(dateString).toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
@@ -299,7 +304,7 @@ const formatDate = (dateString) => {
                 </div>
 
                 <!-- Flash Messages -->
-                <div v-if="flash.message"
+                <div v-if="flash.message" 
                      :class="[
                          'mb-4 lg:mb-6 px-4 py-3 rounded-lg mx-4 lg:mx-0',
                          flash.isSuccess ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'
@@ -410,7 +415,7 @@ const formatDate = (dateString) => {
                                             <p class="text-sm text-gray-900 mt-1">{{ formatDate(discount.updated_at) }}</p>
                                         </div>
                                     </div>
-
+                                    
                                     <!-- Discount Rules -->
                                     <div class="pt-4 border-t border-gray-200">
                                         <h4 class="font-medium text-gray-900 mb-3">How This Discount Works</h4>
@@ -421,7 +426,7 @@ const formatDate = (dateString) => {
                                                 <li>• If item costs less than discount, full item price is discounted</li>
                                             </ul>
                                         </div>
-
+                                        
                                         <div v-if="discount.DISCOUNTTYPE === 'FIXEDTOTAL'" class="p-3 bg-purple-50 border border-purple-200 rounded-lg">
                                             <ul class="text-sm text-purple-800 space-y-1">
                                                 <li>• ₱{{ Number(discount.PARAMETER).toFixed(2) }} deducted from total bill</li>
@@ -429,7 +434,7 @@ const formatDate = (dateString) => {
                                                 <li>• Minimum final amount is ₱0.00</li>
                                             </ul>
                                         </div>
-
+                                        
                                         <div v-if="discount.DISCOUNTTYPE === 'PERCENTAGE'" class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                                             <ul class="text-sm text-blue-800 space-y-1">
                                                 <li>• {{ discount.PARAMETER }}% discount applied to total amount</li>
@@ -454,7 +459,7 @@ const formatDate = (dateString) => {
                                         <div class="text-sm text-blue-700 font-medium">Discount Value</div>
                                         <div class="text-xs text-blue-600 mt-1">{{ discountTypeLabel }}</div>
                                     </div>
-
+                                    
                                     <!-- Quick Stats -->
                                     <div class="space-y-4">
                                         <div class="text-center p-4 bg-gray-50 rounded-lg">
@@ -489,7 +494,7 @@ const formatDate = (dateString) => {
                             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                 <h3 class="text-xl font-semibold text-gray-900 mb-4">How This Discount Works</h3>
                                 <p class="text-gray-600 mb-4">{{ discountTypeDescription }}</p>
-
+                                
                                 <div v-if="discount.DISCOUNTTYPE === 'FIXED'" class="p-4 bg-green-50 border border-green-200 rounded-lg">
                                     <h4 class="font-medium text-green-800 mb-2">Fixed Amount Rules</h4>
                                     <ul class="text-sm text-green-700 space-y-2">
@@ -513,7 +518,7 @@ const formatDate = (dateString) => {
                                         </li>
                                     </ul>
                                 </div>
-
+                                
                                 <div v-if="discount.DISCOUNTTYPE === 'FIXEDTOTAL'" class="p-4 bg-purple-50 border border-purple-200 rounded-lg">
                                     <h4 class="font-medium text-purple-800 mb-2">Fixed Total Rules</h4>
                                     <ul class="text-sm text-purple-700 space-y-2">
@@ -537,7 +542,7 @@ const formatDate = (dateString) => {
                                         </li>
                                     </ul>
                                 </div>
-
+                                
                                 <div v-if="discount.DISCOUNTTYPE === 'PERCENTAGE'" class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                                     <h4 class="font-medium text-blue-800 mb-2">Percentage Rules</h4>
                                     <ul class="text-sm text-blue-700 space-y-2">
@@ -629,7 +634,7 @@ const formatDate = (dateString) => {
                             <!-- Interactive Calculator -->
                             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Discount Calculator</h3>
-
+                                
                                 <div class="space-y-4">
                                     <!-- Test Amount Input -->
                                     <div>
@@ -699,7 +704,7 @@ const formatDate = (dateString) => {
                             <!-- Quick Actions -->
                             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-
+                                
                                 <div class="space-y-3">
                                     <Link
                                         v-if="isAdmin"
@@ -721,7 +726,7 @@ const formatDate = (dateString) => {
                                         </svg>
                                         All Discounts
                                     </Link>
-
+                                    
                                     <button
                                         v-if="isAdmin"
                                         @click="confirmDelete"
@@ -738,13 +743,13 @@ const formatDate = (dateString) => {
                             <!-- Discount Information Summary -->
                             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Information</h3>
-
+                                
                                 <div class="space-y-4">
                                     <div class="p-3 bg-gray-50 rounded-lg">
                                         <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Discount ID</div>
                                         <div class="text-lg font-semibold text-gray-900">#{{ discount.id }}</div>
                                     </div>
-
+                                    
                                     <div class="p-3 bg-gray-50 rounded-lg">
                                         <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Status</div>
                                         <div class="flex items-center">
@@ -1050,24 +1055,24 @@ const formatDate = (dateString) => {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L5.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
                                 </svg>
                             </div>
-
+                            
                             <h3 class="text-lg font-medium text-gray-900 mb-2">Delete Discount</h3>
-
+                            
                             <div class="mb-4">
                                 <p class="text-sm text-gray-500 mb-2">
                                     Are you sure you want to delete this discount?
                                 </p>
-
+                                
                                 <div class="p-3 bg-gray-50 rounded-lg border text-left">
                                     <p class="font-medium text-gray-900">{{ discount.DISCOFFERNAME }}</p>
                                     <p class="text-sm text-gray-600">{{ discountTypeLabel }} - {{ formatDiscountValue }}</p>
                                 </div>
-
+                                
                                 <p class="text-xs text-red-600 mt-3">
                                     <strong>Warning:</strong> This action cannot be undone and may affect existing transactions.
                                 </p>
                             </div>
-
+                            
                             <div class="flex space-x-3">
                                 <button
                                     @click="showDeleteModal = false"

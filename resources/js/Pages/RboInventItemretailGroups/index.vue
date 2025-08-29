@@ -14,12 +14,14 @@ import editblue from "@/Components/Svgs/editblue.vue";
 import moreblue from "@/Components/Svgs/moreblue.vue";
 import ExcelIcon from "@/Components/Svgs/Excel.vue";
 
+
 import DataTable from 'datatables.net-vue3';
 import DataTablesCore from 'datatables.net';
 DataTable.use(DataTablesCore);
 
 const GROUPID = ref('');
 const NAME = ref('');
+
 
 const showModalUpdate = ref(false);
 const showCreateModal = ref(false);
@@ -35,7 +37,7 @@ const props = defineProps({
 const columns = [
     { data: 'GROUPID', title: 'GROUPID' },
     { data: 'NAME', title: 'NAME' },
-
+   
     {
         data: null,
         render: '#action',
@@ -50,10 +52,11 @@ const options = {
     scrollCollapse: true,
 };
 
+
 const toggleUpdateModal = (newGROUPID, newNAME) => {
     GROUPID.value = newGROUPID;
     NAME.value = newNAME;
-
+  
     showModalUpdate.value = true;
 };
 const toggleDeleteModal = (newGROUPID) => {
@@ -64,6 +67,7 @@ const toggleDeleteModal = (newGROUPID) => {
 const toggleCreateModal = () => {
     showCreateModal.value = true;
 };
+
 
 const updateModalHandler = () => {
     showModalUpdate.value = false;

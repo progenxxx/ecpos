@@ -171,6 +171,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
+// Form state
 const loading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
@@ -189,11 +190,12 @@ const form = reactive({
     notes: ''
 })
 
+// Computed
 const filteredItems = computed(() => {
     if (!searchQuery.value) return props.items
-
+    
     const query = searchQuery.value.toLowerCase()
-    return props.items.filter(item =>
+    return props.items.filter(item => 
         item.itemname.toLowerCase().includes(query) ||
         item.itemid.toLowerCase().includes(query)
     )
@@ -204,10 +206,11 @@ const isValid = computed(() => {
     const hasItems = Object.values(selectedItems.value).some(selected => selected)
     const hasValidQuantities = Object.entries(selectedItems.value)
         .every(([itemId, selected]) => !selected || (quantities.value[itemId] && quantities.value[itemId] > 0))
-
+    
     return hasDestination && hasItems && hasValidQuantities
 })
 
+// Methods
 const closeModal = () => {
     emit('close')
     resetForm()

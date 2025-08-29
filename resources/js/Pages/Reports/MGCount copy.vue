@@ -48,7 +48,7 @@ const options = {
   scrollY: "60vh",
   scrollCollapse: true,
   error: function (xhr, error, thrown) {
-
+    console.error("DataTables error:", error);
   }
 };
 
@@ -92,13 +92,41 @@ const storeNames = computed(() => {
   return names;
 });
 
+/* const columns = computed(() => [
+  { title: 'ITEMID', data: 'ITEMID' },
+  { title: 'ITEMS', data: 'ITEMNAME' },
+  { title: 'CATEGORY', data: 'CATEGORY' },
+  { title: 'TOTAL', data: 'TOTAL' },
+  { 
+    title: 'MGCount', 
+    data: 'MGCount',
+    render: (data, type, row) => {
+      if (type === 'display') {
+        return `<input type="number" value="${data}" onchange="updateMGCount('${row.ITEMID}', this.value)" />`;
+      }
+      return data;
+    }
+  },
+  { title: 'BalanceCount', data: 'BalanceCount' },
+  ...Array.from(storeNames.value).map(storeName => ({ 
+    title: storeName, 
+    data: storeName,
+    render: (data, type, row) => {
+      if (type === 'display') {
+        return `<input type="number" value="${data}" onchange="updateCounted('${row.ITEMID}', '${storeName}', this.value)" />`;
+      }
+      return data;
+    }
+  }))
+]); */
+
 const columns = computed(() => [
   { title: 'ITEMID', data: 'ITEMID' },
   { title: 'ITEMS', data: 'ITEMNAME' },
   { title: 'CATEGORY', data: 'CATEGORY' },
   { title: 'TOTAL', data: 'TOTAL' },
-  {
-    title: 'ACTUAL INV COUNT',
+  { 
+    title: 'ACTUAL INV COUNT', 
     data: 'MGCount',
     render: (data, type, row) => {
       if (type === 'display') {
@@ -108,8 +136,8 @@ const columns = computed(() => [
     }
   },
   { title: 'BALANCECOUNT', data: 'BalanceCount' },
-  ...Array.from(storeNames.value).map(storeName => ({
-    title: storeName,
+  ...Array.from(storeNames.value).map(storeName => ({ 
+    title: storeName, 
     data: storeName,
     render: (data, type, row) => {
       if (type === 'display') {
@@ -125,16 +153,17 @@ window.updateMGCount = function(itemId, value) {
   if (item) {
     item.MGCount = parseInt(value, 10) || 0;
     item.BalanceCount =  item.MGCount - item.TOTAL;
-
+    
+    // Send update to server
     axios.post('/api/update-mgcount', {
       itemId: itemId,
       mgCount: item.MGCount
     })
     .then(response => {
-
+      console.log('MGCount updated successfully');
     })
     .catch(error => {
-
+      console.error('Error updating MGCount:', error);
     });
   }
 }
@@ -148,19 +177,22 @@ window.updateCounted = function(itemId, storeName, value) {
     }, 0);
     item.BalanceCount = item.TOTAL - item.MGCount;
 
+    // Send update to server
     axios.post('/api/update-counted', {
       itemId: itemId,
       storeName: storeName,
       counted: item[storeName]
     })
     .then(response => {
-
+      console.log('Counted updated successfully');
     })
     .catch(error => {
-
+      console.error('Error updating Counted:', error);
     });
   }
 }
+
+
 
 const processedOrders = computed(() => {
   return flattenedOrders.value.map(order => {
@@ -239,16 +271,19 @@ async function exportToExcel() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Flattened Orders');
 
+    // Define columns
     worksheet.columns = columns.value.map(column => ({
       header: column.title,
       key: column.data,
       width: 15
     }));
 
+    // Add rows
     processedOrders.value.forEach(order => {
       worksheet.addRow(order);
     });
 
+    // Generate Excel file
     const today = new Date();
     const filename = `FlattenedOrders_${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}.xlsx`;
     const buffer = await workbook.xlsx.writeBuffer();
@@ -258,7 +293,7 @@ async function exportToExcel() {
     link.download = filename;
     link.click();
   } catch (error) {
-
+    console.error('Error exporting to Excel:', error);
   }
 }
 
@@ -278,7 +313,7 @@ const picklist = () => {
               <div date-rangepicker class="flex items-center">
                 <div class="relative ml-5 ">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                   </div>
                   <input
                     id="StartDate"
@@ -294,7 +329,7 @@ const picklist = () => {
                 <span class="mx-4 text-gray-500">to</span>
                 <div class="relative">
                   <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
                   </div>
                   <input
                     id="EndDate"
@@ -337,11 +372,11 @@ const picklist = () => {
             </PrimaryButton>
           </div>
         </div>
-
-        <DataTable
-          :data="processedOrders"
-          :columns="columns"
-          class="w-full relative display"
+        
+        <DataTable 
+          :data="processedOrders" 
+          :columns="columns" 
+          class="w-full relative display" 
           :options="options"
         >
           <template #action="data">

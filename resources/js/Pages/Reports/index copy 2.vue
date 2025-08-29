@@ -99,7 +99,7 @@ const cards = ref([
 ]);
 
 const handleAction = (id) => {
-
+  console.log(`Action triggered for card ${id}`);
 };
 </script>
 
@@ -114,7 +114,7 @@ const handleAction = (id) => {
 
     <template v-slot:main>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
-        <div v-for="card in cards" :key="card.id"
+        <div v-for="card in cards" :key="card.id" 
              class="bg-white rounded-xl shadow-lg overflow-hidden transform transition-all duration-300 hover:scale-105">
           <div class="relative h-48 overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-br from-blue-100 to-purple-100">
@@ -128,7 +128,7 @@ const handleAction = (id) => {
                     <div class="dollar-sign">$</div>
                   </div>
                 </template>
-
+                
                 <!-- Happy Customer Animation -->
                 <template v-if="card.animationClass === 'happy-bounce'">
                   <div class="happy-face">
@@ -141,7 +141,7 @@ const handleAction = (id) => {
                     </div>
                   </div>
                 </template>
-
+                
                 <!-- Target Animation -->
                 <template v-if="card.animationClass === 'target-spin'">
                   <div class="target">
@@ -155,15 +155,15 @@ const handleAction = (id) => {
               </div>
             </div>
           </div>
-
+          
           <div class="p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-2">{{ card.title }}</h3>
             <p class="text-gray-600">{{ card.description }}</p>
-
+            
             <div class="mt-4 flex justify-between items-center">
               <span class="text-sm font-semibold text-purple-600">{{ card.category }}</span>
-              <button @click="handleAction(card.id)"
-                      class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600
+              <button @click="handleAction(card.id)" 
+                      class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 
                              transition-colors duration-200">
                 LINK
               </button>
@@ -185,6 +185,7 @@ const handleAction = (id) => {
   position: relative;
 }
 
+/* Money Rain Animation */
 .coin-container {
   position: relative;
   width: 100px;
@@ -234,6 +235,7 @@ const handleAction = (id) => {
   }
 }
 
+/* Happy Face Animation */
 .happy-face {
   width: 100px;
   height: 100px;
@@ -284,6 +286,7 @@ const handleAction = (id) => {
   }
 }
 
+/* Target Animation */
 .target {
   width: 100px;
   height: 100px;

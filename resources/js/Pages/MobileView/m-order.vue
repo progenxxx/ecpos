@@ -15,6 +15,7 @@ import Receipt from "@/Components/Svgs/Picklist.vue";
 import List from "@/Components/Nav/List.vue";
 import Cart from "@/Components/Svgs/Cart.vue";
 
+
 import { useRouter } from 'vue-router'
 import Create from "@/Components/Orders/Create.vue";
 import Update from "@/Components/Orders/Update.vue";
@@ -28,7 +29,7 @@ import Excel from "@/Components/Exports/Excel.vue";
 import TxtFile from "@/Components/Svgs/TxtFile.vue";
 import Send from "@/Components/Svgs/Send.vue";
 
-import Add from "@/Components/Svgs/Add.vue";
+import Add from "@/Components/Svgs/Add.vue";    
 import editblue from "@/Components/Svgs/editblue.vue";
 import moreblue from "@/Components/Svgs/moreblue.vue";
 import PostIcon from "@/Components/Svgs/Post.vue";
@@ -45,6 +46,7 @@ const journalid = ref('');
 const description = ref('');
 const createddatetime = ref('');
 const storeid = ref('');
+
 
 const showModalUpdate = ref(false);
 const showCreateModal = ref(false);
@@ -64,12 +66,12 @@ const props = defineProps({
 });
 const txtfilecolumns = [
     { data: 'STOREID', title: 'STOREID' },
-    {
-        data: 'POSTEDDATETIME',
+    { 
+        data: 'POSTEDDATETIME', 
         title: 'POSTEDDATETIME',
         render: function(data, type, row) {
             const date = new Date(data);
-            return date.toLocaleDateString();
+            return date.toLocaleDateString(); 
         }
     },
     { data: 'ITEMID', title: 'ITEMID' },
@@ -82,10 +84,10 @@ const columns = [
         data: 'createddatetime',
         title: 'DATE',
         render: function (data, type, row) {
-
+            // Format the date to YYYY-MM-DD (or any format you need)
             const date = new Date(data);
             const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
             const day = String(date.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         }
@@ -109,8 +111,9 @@ const togglePostModal = (newJOURNALID,) => {
     showPostModal.value = true;
 };
 
-const toggleUpdateModal = (newJOURNALID, newDESCRIPTION) => {
 
+const toggleUpdateModal = (newJOURNALID, newDESCRIPTION) => {
+    
     journalid.value = newJOURNALID;
     description.value = newDESCRIPTION;
     showModalUpdate.value = true;
@@ -129,6 +132,7 @@ const toggleMoreModal = (newJOURNALID) => {
     showModalMore.value = true;
 };
 
+
 const updateModalHandler = () => {
     showModalUpdate.value = false;
 };
@@ -136,7 +140,7 @@ const createModalHandler = () => {
     showCreateModal.value = false;
 };
 const sendModalHandler = () => {
-    showSendModal.value = false;
+    showSendModal.value = false;  
 };
 const MoreModalHandler = () => {
     showModalMore.value = false;
@@ -148,9 +152,16 @@ const postModalHandler = () => {
 const router = useRouter()
 
 const navigateToOrder = (journalid) => {
-
+  console.log('Redirecting to Item Order Entries for account:', journalid);
   window.location.href = `/m-ItemOrders/${journalid}`;
 };
+
+
+
+
+
+
+
 
 const currentDate = computed(() => {
     const now = new Date();
@@ -167,7 +178,7 @@ function generateTextFileContent(orders, columns) {
                 const date = new Date(order[column.data]);
                 return date.toLocaleDateString();
             } else if (column.data === 'COUNTED') {
-                return Math.floor(order[column.data]) || '';
+                return Math.floor(order[column.data]) || ''; 
             } else {
                 return order[column.data] || '';
             }
@@ -189,6 +200,18 @@ function downloadTextFile(filename, content) {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 }
+
+/* function generateAndDownloadTextFile() {
+    const storeID = props.orders[0].STOREID;
+    const postedDate = new Date(props.orders[0].POSTEDDATETIME); 
+    const formattedDate = `${postedDate.getFullYear()}${(postedDate.getMonth() + 1).toString().padStart(2, '0')}${postedDate.getDate().toString().padStart(2, '0')}`;
+    const filename = `${storeID}${formattedDate}.txt`;
+    const header = `${storeID}|${postedDate.toLocaleDateString()}`;
+    const dataRows = props.orders.map(order => `${order.ITEMID}|${Math.floor(order.COUNTED)}`);
+    const content = [header, ...dataRows].join('\n');
+
+    downloadTextFile(filename, content);
+} */
 
 async function generateAndDownloadTextFile() {
     const storeID = props.orders[0].STOREID;
@@ -212,13 +235,13 @@ async function generateAndDownloadTextFile() {
         const data = await response.json();
 
         if (data.success) {
-
+            /* alert(`File saved successfully. You can access it at: ${data.path}`); */
             alert(`Your order has been successfully sent to the head office!`);
         } else {
             alert('Error saving file');
         }
     } catch (error) {
-
+        console.error('Error:', error);
         alert('Error saving file');
     }
 }
@@ -245,6 +268,7 @@ function saveFileToPublicDirectory(filePath, content) {
     </div>
 </header>
 
+
   <!-- Main content area -->
   <main class="flex-grow px-4 pb-20">
     <div class="">
@@ -261,7 +285,7 @@ function saveFileToPublicDirectory(filePath, content) {
 
         <div class="flex justify-start items-center ">
             <PrimaryButton
-                type="button"
+                type="button" 
                 @click="toggleCreateModal"
                 class="bg-red-900 ml-2  "
             >
@@ -270,6 +294,7 @@ function saveFileToPublicDirectory(filePath, content) {
             </div>
         </div>
     <TableContainer class="overflow-x-auto">
+        
 
       <DataTable :data="inventjournaltables" :columns="columns" class="w-full relative display" :options="options">
         <template #action="data">
@@ -305,7 +330,7 @@ function saveFileToPublicDirectory(filePath, content) {
           </SuccessButton>
         </div>
       </div>
-
+    
       <DataTable :data="orders" :columns="txtfilecolumns" class="w-full relative display" :options="options">
         <template #action="data">
           <div class="flex justify-start">
@@ -319,7 +344,7 @@ function saveFileToPublicDirectory(filePath, content) {
   <nav class="fixed bottom-0 left-0 right-0 bg-navy shadow-lg">
     <div class="flex justify-around items-center h-16 relative">
       <a href="/dashboard" class="flex flex-col items-center text-blue-400">
-        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http:
+        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
           <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
         </svg>
         <span class="text-xs mt-1">Home</span>
@@ -329,7 +354,7 @@ function saveFileToPublicDirectory(filePath, content) {
         <span class="text-xs mt-1">Retail</span>
       </a>
       <button onclick="window.location.href='/m-order'"  class="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-blue-700 rounded-full shadow-lg flex items-center justify-center border-2 border-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-        <!-- <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http:
+        <!-- <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
         </svg> --><span class="text-xs mt-1 font-bold text-white">EC</span>
       </button>

@@ -22,7 +22,7 @@ const groupedPicklist = ref(Object.entries(page.props.groupedPicklist).reduce((a
     actual: item.ACTUAL
   }));
   return acc;
-}, {}));
+}, {})); 
 
 const groupedDR = ref(Object.entries(page.props.groupedPicklist).reduce((acc, [storeName, items]) => {
   acc[storeName] = items.map(item => ({
@@ -40,6 +40,23 @@ const formatCurrency = (value) => {
   return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
 };
 
+
+/* const calculateTotalCounted = (items) => {
+  return items.reduce((sum, item) => sum + Number(item.COUNTED), 0);
+};
+
+const calculateTotalAdjustment = (items) => {
+  return items.reduce((sum, item) => sum + Number(item.ADJUSTMENT), 0);
+};
+
+const calculateTotalCountedPlusAdjustment = (items) => {
+  return items.reduce((sum, item) => sum + Number(item.COUNTED) + Number(item.ADJUSTMENT), 0);
+};
+
+const calculateTotalAmount = (items) => {
+  return items.reduce((sum, item) => sum + (Number(item.COST) * Number(item.COUNTED)), 0);
+}; */
+
 const calculateTotalTarget = (items) => {
   return items.reduce((sum, item) => sum + Number(item.CHECKINGCOUNT || 0), 0);
 };
@@ -49,7 +66,7 @@ const calculateTotalAlloc = (items) => {
 };
 
 const calculateTotalReceived = (items) => {
-
+  // This should be updated if there's a specific field for received quantity
   return 0;
 };
 
@@ -60,6 +77,7 @@ const calculateTotalTransferCost = (items) => {
 const calculateTotalAmount = (items) => {
   return items.reduce((sum, item) => sum + (Number(item.COST || 0) * Number(item.CHECKINGCOUNT || 0)), 0);
 };
+
 
 const id = ref('');
 const subject = ref('');
@@ -138,6 +156,7 @@ const calculateActualTotal = (items) => {
   return items.reduce((sum, item) => sum + parseFloat(item.actual || 0), 0);
 };
 
+
 const getCurrentDate = () => {
   const date = new Date();
   return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().substr(-2)}`;
@@ -161,17 +180,17 @@ const updateActual = async (storeName, itemName, itemId, value) => {
     const item = store.find(i => i.ITEMID === itemId);
 
     if (!item) {
-
+      console.error('Item not found');
       return;
     }
 
     if (!item.JOURNALID) {
-
+      console.error('JOURNALID is missing for this item');
       return;
     }
 
     const response = await axios.post('/api/update-actual', {
-      journal_id: item.JOURNALID,
+      journal_id: item.JOURNALID, // Use 'journal_id' instead of 'journalid'
       store_name: storeName,
       item_name: itemName,
       item_id: itemId,
@@ -179,24 +198,26 @@ const updateActual = async (storeName, itemName, itemId, value) => {
     });
 
     if (response.data.success) {
-
+      // Update the local state
       item.ACTUAL = value;
     } else {
-
+      console.error('Failed to update ACTUAL value', response.data);
+      // You might want to show an error message to the user here
     }
   } catch (error) {
     if (error.response && error.response.data) {
-
+      console.error('Server validation errors:', error.response.data.errors);
+      // Log all validation errors
       Object.entries(error.response.data.errors).forEach(([field, messages]) => {
-
+        console.error(`${field}: ${messages.join(', ')}`);
       });
     } else {
-
+      console.error('Error updating ACTUAL value:', error.message);
     }
-
+    // You might want to show an error message to the user here
   }
 };
-
+  
 const printableContent = ref(null);
 
 const getPickListInputData = () => {
@@ -207,13 +228,16 @@ const picklistreload = () => {
   window.location.href = '/picklist';
 };
 
-const BackPre = () => {
+const BackPre = () => { 
     window.location.href = '/mgcount';
 };
 
+
+
+
 const printListForm = () => {
   const windowPrint = window.open('', '', 'left=0,top=0,width=800,height=600,toolbar=0,scrollbars=0,status=0');
-
+  
   const stores = Object.entries(groupedPicklist.value);
   let content = '';
 
@@ -292,8 +316,8 @@ const printListForm = () => {
             size: legal portrait;
             margin: 0;
           }
-          body {
-            font-family: Arial, sans-serif;
+          body { 
+            font-family: Arial, sans-serif; 
             font-size: 16px;
             margin: 0;
             padding: 0;
@@ -307,19 +331,19 @@ const printListForm = () => {
             display: flex;
             justify-content: space-between;
           }
-          .store-section {
-            width: 48%;
-            max-width: 48%;
+          .store-section { 
+            width: 48%; 
+            max-width: 48%; 
           }
-          table {
-            width: 100%;
-            border-collapse: collapse;
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
             margin-bottom: 5mm;
           }
-          th, td {
-            border: 1px solid black;
-            padding: 2px;
-            font-size: 16px;
+          th, td { 
+            border: 1px solid black; 
+            padding: 2px; 
+            font-size: 16px; 
           }
           .text-center { text-align: center; }
           .bg-blue-800 { background-color: #2b6cb0; color: white; text-align: center; padding: 3px 0; font-weight: bold; }
@@ -346,7 +370,7 @@ const printListForm = () => {
 
 const printPackingList = () => {
   const windowPrint = window.open('', '', 'left=0,top=0,width=800,height=600,toolbar=0,scrollbars=0,status=0');
-
+  
   const stores = Object.entries(groupedPicklist.value);
   let content = '';
 
@@ -425,8 +449,8 @@ const printPackingList = () => {
             size: legal portrait;
             margin: 0;
           }
-          body {
-            font-family: Arial, sans-serif;
+          body { 
+            font-family: Arial, sans-serif; 
             font-size: 16px;
             margin: 0;
             padding: 0;
@@ -440,19 +464,19 @@ const printPackingList = () => {
             display: flex;
             justify-content: space-between;
           }
-          .store-section {
-            width: 48%;
-            max-width: 48%;
+          .store-section { 
+            width: 48%; 
+            max-width: 48%; 
           }
-          table {
-            width: 100%;
-            border-collapse: collapse;
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
             margin-bottom: 5mm;
           }
-          th, td {
-            border: 1px solid black;
-            padding: 2px;
-            font-size: 16px;
+          th, td { 
+            border: 1px solid black; 
+            padding: 2px; 
+            font-size: 16px; 
           }
           .text-center { text-align: center; }
           .bg-blue-800 { background-color: #2b6cb0; color: white; text-align: center; padding: 3px 0; font-weight: bold; }
@@ -479,7 +503,7 @@ const printPackingList = () => {
 
 const printDeliveryReceipt = () => {
   const windowPrint = window.open('', '', 'left=0,top=0,width=800,height=600,toolbar=0,scrollbars=0,status=0');
-
+  
   let content = '';
   for (const [storeName, storeData] of Object.entries(groupedPicklist.value)) {
     content += `
@@ -490,10 +514,10 @@ const printDeliveryReceipt = () => {
           <p>TARLAC CITY</p>
           <h3 class="font-bold">DELIVERY GOODS RECEIPT: BW PRODUCTS</h3>
         </div>
-
+        
         <div class="flex justify-between mb-4">
           <div>
-            <p>DR #: ${storeData[0].JOURNALID}</p>
+            <p>DR #: ${storeData[0].JOURNALID}</p> 
             <p>DELIVERY DATE: NOT POSTED</p>
           </div>
           <div>
@@ -505,7 +529,7 @@ const printDeliveryReceipt = () => {
             <p>${storeName}</p>
           </div>
         </div>
-
+        
         <table class="w-full border-collapse border border-gray-300">
           <thead>
             <tr class="bg-gray-200">
@@ -541,7 +565,7 @@ const printDeliveryReceipt = () => {
             </tr>
           </tbody>
         </table>
-
+        
         <div class="mt-8 flex justify-between">
           <div>
             <p>ENDORSED BY: DISPATCHING</p>
@@ -568,8 +592,8 @@ const printDeliveryReceipt = () => {
             size: A4 portrait;
             margin: 1cm;
           }
-          body {
-            font-family: Arial, sans-serif;
+          body { 
+            font-family: Arial, sans-serif; 
             font-size: 16px;
             margin: 0;
             padding: 0;
@@ -579,14 +603,14 @@ const printDeliveryReceipt = () => {
             height: 100%;
             page-break-after: always;
           }
-          table {
-            width: 100%;
-            border-collapse: collapse;
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
           }
-          th, td {
-            border: 1px solid black;
-            padding: 4px;
-            font-size: 16px;
+          th, td { 
+            border: 1px solid black; 
+            padding: 4px; 
+            font-size: 16px; 
           }
           .text-center { text-align: center; }
           .text-right { text-align: right; }
@@ -611,15 +635,16 @@ const printDeliveryReceipt = () => {
 };
   </script>
 
+
 <template>
   <Main active-tab="INVENTORY">
     <template v-slot:modals>
       <Create v-if="showCreateModal" @toggle-active="createModalHandler" />
-      <Update
-        v-if="showModalUpdate"
-        :ID="id"
-        :SUBJECT="subject"
-        :DESCRIPTION="description"
+      <Update 
+        v-if="showModalUpdate"  
+        :ID="id" 
+        :SUBJECT="subject"  
+        :DESCRIPTION="description" 
         @toggle-active="updateModalHandler"
       />
     </template>
@@ -708,12 +733,12 @@ const printDeliveryReceipt = () => {
 
             <form @submit.prevent="submitForm" class="flex items-center mt-4">
               <input type="hidden" name="_token" :value="$page.props.csrf_token">
-
+              
               <div class="mr-2">
                 <InputLabel for="STORE" value="STORE" class="sr-only" />
                 <select
                   id="STORE"
-                  v-model="form.STORE"
+                  v-model="form.STORE" 
                   class="input input-bordered w-64"
                 >
                   <option disabled value="">Select Store</option>
@@ -727,7 +752,7 @@ const printDeliveryReceipt = () => {
                 <Search class="h-8" />
               </TransparentButton>
             </form>
-
+          
         </div>
       </div>
 
@@ -741,8 +766,8 @@ const printDeliveryReceipt = () => {
                   <p class="text-gray-600 text-lg">Loading...</p>
                 </div>
               </template>
-
-              <template v-else-if="error">
+              
+              <template v-else-if="error">  
                 <div class="col-span-full text-center mt-8">
                   <p class="text-red-600 text-lg">{{ error }}</p>
                 </div>
@@ -755,7 +780,7 @@ const printDeliveryReceipt = () => {
                   </div>
                 </div>
               </template>
-
+              
               <template v-else>
                 <div v-for="(storeItems, storeName) in groupedPicklist" :key="storeName" class="w-full mb-8">
                   <div class="max-w-xl mx-auto bg-white shadow-lg" ref="printableContent">
@@ -783,7 +808,7 @@ const printDeliveryReceipt = () => {
                           <div class="w-1/2 p-2 border-r border-gray-300">{{ item.ITEMNAME }}</div>
                           <div class="w-1/4 p-2 text-center border-r border-gray-300">{{ formatNumber(item.COUNTED) }}</div>
                           <div class="w-1/4 p-2 text-center">
-                            <input
+                            <input 
                               v-model="item.ACTUAL"
                               type="number"
                               class="w-full text-center border border-gray-300 rounded"
@@ -793,7 +818,7 @@ const printDeliveryReceipt = () => {
                             >
                           </div>
                         </div>
-
+                        
                         <div class="flex bg-red-200">
                           <div class="w-1/2 p-2 border-r border-gray-300">TOTAL</div>
                           <div class="w-1/4 p-2 text-center border-r border-gray-300">{{ formatNumber(calculateTotalDT(storeItems)) }}</div>
@@ -832,14 +857,16 @@ const printDeliveryReceipt = () => {
 
         <input type="radio" name="my_tabs_2" role="tab" class="tab" aria-label="DR" />
         <div role="tabpanel" class="tab-content bg-base-100 border-base-200 p-6 h-[85vh] overflow-y-auto">
+          
+          
 
               <template v-if="isLoading">
                 <div class="col-span-full text-center mt-8">
                   <p class="text-gray-600 text-lg">Loading...</p>
                 </div>
               </template>
-
-              <template v-else-if="error">
+              
+              <template v-else-if="error">  
                 <div class="col-span-full text-center mt-8">
                   <p class="text-red-600 text-lg">{{ error }}</p>
                 </div>
@@ -852,7 +879,7 @@ const printDeliveryReceipt = () => {
                   </div>
                 </div>
               </template>
-
+              
             <template v-else>
             <!-- div v-for="(storeData, storeName) in groupedDR" :key="storeName" class="max-w-3xl mx-auto bg-gray-100 p-8 mb-8"> -->
               <div v-for="(storeData, storeName) in groupedDR" :key="storeName" class="max-w-3xl mx-auto bg-gray-100 p-8 mb-8">
@@ -863,10 +890,10 @@ const printDeliveryReceipt = () => {
                 <p>TARLAC CITY</p>
                 <h1 class="font-bold">DELIVERY GOODS RECEIPT: BW PRODUCTS</h1>
               </div>
-
+              
               <div class="flex justify-between mb-4">
                 <div>
-                  <p>DR #: {{ storeData[0].JOURNALID }}</p>
+                  <p>DR #: {{ storeData[0].JOURNALID }}</p> 
                   <p>DELIVERY DATE: NOT POSTED</p>
                 </div>
                 <div>
@@ -878,7 +905,7 @@ const printDeliveryReceipt = () => {
                   <p>{{ storeName }}</p>
                 </div>
               </div>
-
+              
               <table class="w-full border-collapse border border-gray-300">
                 <thead>
                   <tr class="bg-gray-200">
@@ -916,7 +943,9 @@ const printDeliveryReceipt = () => {
                   </tr>
                 </tbody>
               </table>
-
+              
+              
+              
               <div class="mt-8 flex justify-between">
                 <div>
                   <p>ENDORSED BY: DISPATCHING</p>
@@ -940,8 +969,9 @@ const printDeliveryReceipt = () => {
 
 <style>
 .store-dropdown {
-  max-height: 240px;
+  max-height: 240px; 
   overflow-y: auto;
 }
 </style>
+
 

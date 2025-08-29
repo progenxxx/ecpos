@@ -2,7 +2,7 @@
 
 <template>
     <Head :title="'Links - ' + mainItem.itemname" />
-
+    
     <Main active-tab="RETAILITEMS">
         <template v-slot:modals>
             <CreateLink
@@ -41,13 +41,13 @@
                                 Item Links
                             </h2>
                             <p class="mt-1 text-sm text-gray-600">
-                                Managing links for: {{ mainItem.itemname }}
+                                Managing links for: {{ mainItem.itemname }} 
                                 <span class="text-gray-400">({{ mainItem.itemid }})</span>
                             </p>
                         </div>
-
-                        <Link
-                            :href="route('items.index')"
+                        
+                        <Link 
+                            :href="route('items.index')" 
                             class="text-blue-600 hover:text-blue-800 text-sm mr-4"
                         >
                             Back to Items
@@ -110,8 +110,8 @@
                                         </td>
                                     </tr>
 
-                                    <tr v-for="link in linkedItems"
-                                        :key="link.id"
+                                    <tr v-for="link in linkedItems" 
+                                        :key="link.id" 
                                         class="hover:bg-gray-50 transition-colors"
                                     >
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -190,9 +190,9 @@ const props = defineProps({
         type: Object,
         required: true,
         validator: (value) => {
-            return value &&
-                   typeof value === 'object' &&
-                   'itemid' in value &&
+            return value && 
+                   typeof value === 'object' && 
+                   'itemid' in value && 
                    'itemname' in value;
         }
     },
@@ -213,10 +213,12 @@ const showCreateModal = ref(false);
 const showUpdateModal = ref(false);
 const selectedLink = ref(null);
 
+// Computed
 const activeLinksCount = computed(() => {
     return props.linkedItems.filter(link => link.active).length;
 });
 
+// Methods
 const toggleCreateModal = () => {
     showCreateModal.value = !showCreateModal.value;
 };
@@ -231,9 +233,14 @@ const getRelatedItemName = (link) => {
     return relatedItem?.itemname || 'Unknown Item';
 };
 
+/* const formatQuantity = (quantity) => {
+    return Number(quantity).toFixed(2);
+}; */
+
 const formatQuantity = (quantity) => {
     return Math.floor(Number(quantity));
 };
+
 
 const formatLinkType = (type) => {
     return type.charAt(0).toUpperCase() + type.slice(1);
@@ -249,11 +256,11 @@ const formatDate = (date) => {
 
 const confirmDelete = (link) => {
     if (!confirm(`Are you sure you want to delete this link?`)) return;
-
+    
     router.delete(route('item-links.destroy', link.id), {
         preserveScroll: true,
         onSuccess: () => {
-
+            // Success handling is automatic through flash messages
         }
     });
 };

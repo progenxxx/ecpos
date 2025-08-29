@@ -79,8 +79,10 @@ const toggleCreateModal = (offerid) => {
     }
 
     showCreateModal.value = true;
-
+    console.log(OFFERID.value); 
 };
+
+
 
 const updateModalHandler = () => {
     showModalUpdate.value = false;
@@ -96,15 +98,20 @@ const navigateToPosDiscount = () => {
   window.location.href = '/posperiodicdiscounts';
 };
 
-const navigateToposmmlinegroups = (offerid) => {
+/* const navigateToposmmlinegroups = () => {
+  window.location.href = '/posmmlinegroups';
+}; */
 
+const navigateToposmmlinegroups = (offerid) => {
+  console.log('Redirecting to Line Group Entries:', offerid);
   window.location.href = `/POSMMMLINEGROUPS/${offerid}`;
 };
 
 const reload = (offerid) => {
-
+  /* console.log('Redirecting to Line Group Entries:', offerid); */
   window.location.href = `/MNM/${offerid}`;
 };
+
 
 </script>
 
@@ -154,6 +161,7 @@ const reload = (offerid) => {
                         </DangerButton>
 
                         <!-- <h3 class="text-blue-900 ml-6">Need to execute reload trigger to get offerid</h3> -->
+                        
 
                     </div>
                 </div>

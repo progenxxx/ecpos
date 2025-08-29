@@ -26,6 +26,7 @@ import DataTable from 'datatables.net-vue3';
 import DataTablesCore from 'datatables.net';
 DataTable.use(DataTablesCore);
 
+
 const itemid = ref('');
 const itemname = ref('');
 const itembarcode = ref('');
@@ -34,8 +35,10 @@ const itemdepartment = ref('');
 const priceinltax = ref('');
 const showModalUpdate = ref(false);
 const showCreateModal = ref(false);
-
+/* const showDeleteModal = ref(false); */
 const showModalMore = ref(false);
+
+
 
 const props = defineProps({
     items: {
@@ -49,7 +52,7 @@ const columns = [
     { data: 'itemname', title: 'ITEMNAME' },
     { data: 'barcode', title: 'BARCODE' },
     { data: 'itemgroup', title: 'CATEGORY' },
-
+    /* { data: 'specialgroup', title: 'SPECIALGROUP' }, */
     { data: 'price', title: 'PRICE' },
 
 	  {
@@ -66,10 +69,15 @@ const options = {
     scrollCollapse: true,
 };
 
+
 const toggleUpdateModal = (newID) => {
     itemid.value = newID;
     showModalUpdate.value = true;
 };
+/* const toggleDeleteModal = (newID) => {
+    itemid.value = newID;
+    showDeleteModal.value = true;
+}; */
 
 const toggleCreateModal = () => {
     showCreateModal.value = true;
@@ -80,13 +88,16 @@ const toggleMoreModal = (newID) => {
     showModalMore.value = true;
 };
 
+
 const updateModalHandler = () => {
     showModalUpdate.value = false;
 };
 const createModalHandler = () => {
     showCreateModal.value = false;
 };
-
+/* const deleteModalHandler = () => {
+    showDeleteModal.value = false;
+}; */
 const MoreModalHandler = () => {
     showModalMore.value = false;
 };
@@ -109,6 +120,7 @@ const submitForm = () => {
 
 <template>
     <Main active-tab="RETAILITEMS">
+
 
       <template v-slot:modals>
         <Create :show-modal="showCreateModal" @toggle-active="createModalHandler" />
@@ -134,7 +146,11 @@ const submitForm = () => {
 
       </template>
 
+
       <template v-slot:main>
+        
+
+
 
         <TableContainer>
 
@@ -170,7 +186,7 @@ const submitForm = () => {
             </div>
 
           </div>
-
+          
           <DataTable
             :data="items"
             :columns="columns"
@@ -188,7 +204,7 @@ const submitForm = () => {
                 class="me-1"
               >
                 <editblue class="h-6"></editblue>
-
+                
               </TransparentButton>
 
               <TransparentButton
@@ -210,6 +226,7 @@ const submitForm = () => {
     </Main>
   </template>
 
+
 <script>
 import RetailPanel from "@/Layouts/RetailPanel.vue";
 
@@ -219,13 +236,18 @@ export default {
   },
   data() {
     return {
-      showPanel: true
+      showPanel: true // Initially show the panel
     };
   },
 
+  /* created() {
+    // Listen for the 'hide-panel' event emitted by RetailPanel.vue
+    this.$root.$on('hide-panel', this.hidePanel);
+  }, */
+
   methods: {
     hidePanel() {
-
+      // Method to hide the panel
       this.showPanel = false;
     }
   }

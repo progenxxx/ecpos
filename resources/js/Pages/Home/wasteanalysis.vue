@@ -33,13 +33,14 @@ const formatCurrency = (value) => {
 
 const initializeWasteChart = (wastesData) => {
   if (!wasteChartRef.value) return;
-
+  
   const ctx = wasteChartRef.value.getContext('2d');
-
+  
   if (wasteChart) {
     wasteChart.destroy();
   }
 
+  // Extract data from the response
   const labels = wastesData.map(item => item.itemname);
   const quantities = wastesData.map(item => Math.abs(Number(item.total_waste_quantity)));
   const costs = wastesData.map(item => Math.abs(Number(item.total_waste_cost)));
@@ -129,13 +130,13 @@ const fetchWasteData = async () => {
     const payload = {
       start_date: props.selectedDateRange.start_date,
       end_date: props.selectedDateRange.end_date,
-      stores: props.selectedStores.map(store =>
+      stores: props.selectedStores.map(store => 
         typeof store === 'object' ? store.NAME : store
       )
     };
 
     const response = await axios.post(route('get.top.wastes'), payload);
-
+    
     if (response.data && response.data.data) {
       const wastesData = response.data.data;
       wasteAnalytics.value = {
@@ -147,7 +148,7 @@ const fetchWasteData = async () => {
       initializeWasteChart(wastesData);
     }
   } catch (error) {
-
+    console.error('Error fetching waste data:', error);
     wasteAnalytics.value = {
       totalWasteCost: 0,
       totalWasteQuantity: 0,
@@ -157,6 +158,7 @@ const fetchWasteData = async () => {
   }
 };
 
+// Watch for changes in props
 watch(
   [
     () => props.selectedDateRange.start_date,
@@ -176,11 +178,11 @@ onMounted(() => {
 <template>
   <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.02] transition-all duration-300">
     <div class="absolute inset-0 opacity-10 bg-red-100"></div>
-
+    
     <div class="relative z-10 space-y-6">
       <div class="flex items-center justify-between">
         <h3 class="text-xl font-bold text-gray-800 flex items-center">
-          <svg xmlns="http:
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
           Top Waste Analysis

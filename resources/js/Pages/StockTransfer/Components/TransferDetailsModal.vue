@@ -1,8 +1,8 @@
 # resources/js/Pages/StockTransfer/Components/TransferDetailsModal.vue
 
 <template>
-  <div
-    class="modal fade"
+  <div 
+    class="modal fade" 
     :class="{ 'show d-block': modelValue }"
     tabindex="-1"
     style="background-color: rgba(0, 0, 0, 0.5)"
@@ -13,9 +13,9 @@
           <h5 class="modal-title">
             Transfer Details - {{ transfer.transfer_number }}
           </h5>
-          <button
-            type="button"
-            class="btn-close"
+          <button 
+            type="button" 
+            class="btn-close" 
             @click="$emit('update:modelValue', false)"
           ></button>
         </div>
@@ -25,7 +25,7 @@
             <div class="row">
               <div class="col-md-6">
                 <p><strong>From Store:</strong> {{ transfer.from_store.name }}</p>
-                <p><strong>Status:</strong>
+                <p><strong>Status:</strong> 
                   <span :class="getStatusBadgeClass(transfer.status)">
                     {{ transfer.status }}
                   </span>
@@ -75,9 +75,9 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
             @click="$emit('update:modelValue', false)"
           >
             Close
