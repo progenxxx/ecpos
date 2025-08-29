@@ -2132,8 +2132,8 @@ public function syncInventoryVariance(Request $request)
 
         // First, check if inventory_summaries table exists and has data for the date/store
         $existingRecords = DB::table('inventory_summaries')
-            ->where('report_date', $syncDate)
             ->where('storename', $storeName)
+            ->whereDate('report_date', $syncDate)
             ->count();
 
         if ($existingRecords === 0) {
@@ -2144,100 +2144,212 @@ public function syncInventoryVariance(Request $request)
             ], 404);
         }
 
-        // Update waste data with improved query structure
-        $wasteTypes = [
-            'throw_away' => ['THROW_AWAY', 'THROW AWAY'],
-            'early_molds' => ['EARLY_MOLDS', 'EARLY MOLDS'],
-            'pull_out' => ['PULL_OUT', 'PULL OUT'],
-            'rat_bites' => ['RAT_BITES', 'RAT BITES'],
-            'ant_bites' => ['ANT_BITES', 'ANT BITES']
-        ];
+        // Step 1: Update Beginning Inventory (from previous day)
+        $beginningQuery = "
+            UPDATE inventory_summaries 
+            INNER JOIN (
+                SELECT itemid, counted as beginning_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND CAST(TRANSDATE AS DATE) = DATE_SUB(?, INTERVAL 1 DAY)
+                  AND counted != 0
+            ) temp_beginning ON inventory_summaries.itemid = temp_beginning.itemid
+            SET inventory_summaries.beginning = temp_beginning.beginning_qty,
+                inventory_summaries.updated_at = CURRENT_TIMESTAMP
+            WHERE inventory_summaries.storename = ?
+              AND CAST(inventory_summaries.report_date AS DATE) = ?
+        ";
+        $beginningResult = DB::update($beginningQuery, [$storeName, $syncDate, $storeName, $syncDate]);
 
-        $wasteResults = [];
-        foreach ($wasteTypes as $field => $types) {
-            $placeholders = str_repeat('?,', count($types) - 1) . '?';
-            $wasteQuery = "
-                UPDATE inventory_summaries 
-                SET {$field} = (
-                    SELECT COALESCE(SUM(WASTECOUNT), 0)
-                    FROM stockcountingtrans 
-                    WHERE stockcountingtrans.ITEMID = inventory_summaries.itemid
-                      AND stockcountingtrans.STORENAME = ?
-                      AND UPPER(TRIM(stockcountingtrans.WASTETYPE)) IN ({$placeholders})
-                      AND DATE(stockcountingtrans.TRANSDATE) = ?
-                )
-                WHERE DATE(inventory_summaries.report_date) = ?
-                  AND inventory_summaries.storename = ?
-            ";
-
-            $params = array_merge([$storeName], $types, [$syncDate, $syncDate, $storeName]);
-            $wasteResults[$field] = DB::update($wasteQuery, $params);
-        }
-
-        // Update received_delivery data from stockcountingtrans
+        // Step 2: Update Received Delivery (adjustments)
         $receivedQuery = "
             UPDATE inventory_summaries 
-            SET received_delivery = (
-                SELECT COALESCE(SUM(RECEIVEDCOUNT), 0)
+            INNER JOIN (
+                SELECT itemid, SUM(adjustment) as received_qty
                 FROM stockcountingtrans 
-                WHERE stockcountingtrans.ITEMID = inventory_summaries.itemid
-                  AND stockcountingtrans.STORENAME = ?
-                  AND DATE(stockcountingtrans.TRANSDATE) = ?
-            )
-            WHERE DATE(inventory_summaries.report_date) = ?
-              AND inventory_summaries.storename = ?
+                WHERE storename = ?
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND adjustment != 0
+                GROUP BY itemid
+            ) temp_received ON inventory_summaries.itemid = temp_received.itemid
+            SET inventory_summaries.received_delivery = temp_received.received_qty,
+                inventory_summaries.updated_at = CURRENT_TIMESTAMP
+            WHERE inventory_summaries.storename = ?
+              AND CAST(inventory_summaries.report_date AS DATE) = ?
         ";
+        $receivedResult = DB::update($receivedQuery, [$storeName, $syncDate, $storeName, $syncDate]);
 
-        $receivedResult = DB::update($receivedQuery, [$storeName, $syncDate, $syncDate, $storeName]);
-
-        // Update sales data from rbotransactionsalestrans for more accurate sales figures
+        // Step 3: Update Direct Sales
         $salesQuery = "
             UPDATE inventory_summaries 
-            SET sales = (
-                SELECT COALESCE(SUM(qty), 0)
+            INNER JOIN (
+                SELECT itemid, SUM(qty) as sales_qty
                 FROM rbotransactionsalestrans 
-                WHERE rbotransactionsalestrans.itemid = inventory_summaries.itemid
-                  AND rbotransactionsalestrans.store = ?
-                  AND DATE(rbotransactionsalestrans.createddate) = ?
-                  AND rbotransactionsalestrans.itemname NOT LIKE '%BUNDLE%'
-            )
-            WHERE DATE(inventory_summaries.report_date) = ?
-              AND inventory_summaries.storename = ?
+                WHERE store = ?
+                  AND CAST(CREATEDDATE AS DATE) = ?
+                GROUP BY itemid
+            ) temp_direct_sales ON inventory_summaries.itemid = temp_direct_sales.itemid
+            SET inventory_summaries.sales = temp_direct_sales.sales_qty,
+                inventory_summaries.updated_at = CURRENT_TIMESTAMP
+            WHERE inventory_summaries.storename = ?
+              AND CAST(inventory_summaries.report_date AS DATE) = ?
         ";
+        $salesResult = DB::update($salesQuery, [$storeName, $syncDate, $storeName, $syncDate]);
 
-        $salesResult = DB::update($salesQuery, [$storeName, $syncDate, $syncDate, $storeName]);
-
-        // Update bundle sales if the table exists
-        $bundleSalesResult = 0;
-        if (Schema::hasTable('bundle_sales')) {
-            $bundleSalesQuery = "
-                UPDATE inventory_summaries 
-                SET bundle_sales = (
-                    SELECT COALESCE(SUM(qty), 0)
-                    FROM bundle_sales 
-                    WHERE bundle_sales.component_itemid = inventory_summaries.itemid
-                      AND bundle_sales.store = ?
-                      AND DATE(bundle_sales.created_at) = ?
-                )
-                WHERE DATE(inventory_summaries.report_date) = ?
-                  AND inventory_summaries.storename = ?
-            ";
-
-            $bundleSalesResult = DB::update($bundleSalesQuery, [$storeName, $syncDate, $syncDate, $storeName]);
-        }
-
-        // Recalculate ending and variance with proper formula
-        $recalculateQuery = "
+        // Step 4: Update Bundle Sales (using item_links table)
+        $bundleSalesQuery = "
             UPDATE inventory_summaries 
-            SET 
-                ending = GREATEST(0, beginning + received_delivery + COALESCE(stock_transfer, 0) - sales - COALESCE(bundle_sales, 0) - throw_away - early_molds - pull_out - rat_bites - ant_bites),
-                variance = (beginning + received_delivery + COALESCE(stock_transfer, 0) - sales - COALESCE(bundle_sales, 0) - throw_away - early_molds - pull_out - rat_bites - ant_bites) - item_count,
-                updated_at = NOW()
-            WHERE DATE(report_date) = ?
-              AND storename = ?
+            INNER JOIN (
+                SELECT 
+                    il.child_itemid as itemid,
+                    SUM(il.quantity * rts.qty) as bundle_qty
+                FROM item_links il
+                INNER JOIN rbotransactionsalestrans rts ON il.parent_itemid = rts.itemid
+                LEFT JOIN inventtables inv ON inv.itemid = il.child_itemid
+                WHERE il.active = 1 
+                  AND rts.store = ?
+                  AND CAST(rts.createddate AS DATE) = ?
+                GROUP BY il.child_itemid
+            ) temp_bundle_sales ON inventory_summaries.itemid = temp_bundle_sales.itemid
+            SET inventory_summaries.bundle_sales = temp_bundle_sales.bundle_qty,
+                inventory_summaries.updated_at = CURRENT_TIMESTAMP
+            WHERE inventory_summaries.storename = ?
+              AND CAST(inventory_summaries.report_date AS DATE) = ?
         ";
+        $bundleSalesResult = DB::update($bundleSalesQuery, [$storeName, $syncDate, $storeName, $syncDate]);
 
-        $recalculateResult = DB::update($recalculateQuery, [$syncDate, $storeName]);
+        // Step 5: Update Throw Away
+        $throwAwayQuery = "
+            UPDATE inventory_summaries 
+            INNER JOIN (
+                SELECT itemid, SUM(wastecount) as throw_away_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND wastetype = 'Throw Away'
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND wastecount != 0
+                GROUP BY itemid
+            ) temp_throw_away ON inventory_summaries.itemid = temp_throw_away.itemid
+            SET inventory_summaries.throw_away = temp_throw_away.throw_away_qty,
+                inventory_summaries.updated_at = CURRENT_TIMESTAMP
+            WHERE inventory_summaries.storename = ?
+              AND CAST(inventory_summaries.report_date AS DATE) = ?
+        ";
+        $throwAwayResult = DB::update($throwAwayQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+
+        // Step 6: Update Pull Out
+        $pullOutQuery = "
+            UPDATE inventory_summaries 
+            INNER JOIN (
+                SELECT itemid, SUM(wastecount) as pull_out_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND wastetype = 'Pull Out'
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND wastecount != 0
+                GROUP BY itemid
+            ) temp_pull_out ON inventory_summaries.itemid = temp_pull_out.itemid
+            SET inventory_summaries.pull_out = temp_pull_out.pull_out_qty,
+                inventory_summaries.updated_at = CURRENT_TIMESTAMP
+            WHERE inventory_summaries.storename = ?
+              AND CAST(inventory_summaries.report_date AS DATE) = ?
+        ";
+        $pullOutResult = DB::update($pullOutQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+
+        // Step 7: Update Rat Bites
+        $ratBitesQuery = "
+            UPDATE inventory_summaries 
+            INNER JOIN (
+                SELECT itemid, SUM(wastecount) as rat_bites_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND wastetype LIKE '%Rat%'
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND wastecount != 0
+                GROUP BY itemid
+            ) temp_rat_bites ON inventory_summaries.itemid = temp_rat_bites.itemid
+            SET inventory_summaries.rat_bites = temp_rat_bites.rat_bites_qty,
+                inventory_summaries.updated_at = CURRENT_TIMESTAMP
+            WHERE inventory_summaries.storename = ?
+              AND CAST(inventory_summaries.report_date AS DATE) = ?
+        ";
+        $ratBitesResult = DB::update($ratBitesQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+
+        // Step 8: Update Ant Bites
+        $antBitesQuery = "
+            UPDATE inventory_summaries 
+            INNER JOIN (
+                SELECT itemid, SUM(wastecount) as ant_bites_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND wastetype LIKE '%Ant%'
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND wastecount != 0
+                GROUP BY itemid
+            ) temp_ant_bites ON inventory_summaries.itemid = temp_ant_bites.itemid
+            SET inventory_summaries.ant_bites = temp_ant_bites.ant_bites_qty,
+                inventory_summaries.updated_at = CURRENT_TIMESTAMP
+            WHERE inventory_summaries.storename = ?
+              AND CAST(inventory_summaries.report_date AS DATE) = ?
+        ";
+        $antBitesResult = DB::update($antBitesQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+
+        // Step 9: Update Early Molds
+        $earlyMoldsQuery = "
+            UPDATE inventory_summaries 
+            INNER JOIN (
+                SELECT itemid, SUM(wastecount) as early_molds_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND wastetype LIKE '%Molds%'
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND wastecount != 0
+                GROUP BY itemid
+            ) temp_early_molds ON inventory_summaries.itemid = temp_early_molds.itemid
+            SET inventory_summaries.early_molds = temp_early_molds.early_molds_qty,
+                inventory_summaries.updated_at = CURRENT_TIMESTAMP
+            WHERE inventory_summaries.storename = ?
+              AND CAST(inventory_summaries.report_date AS DATE) = ?
+        ";
+        $earlyMoldsResult = DB::update($earlyMoldsQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+
+        // Step 10: Update Item Count (Staff Count)
+        $staffCountQuery = "
+            UPDATE inventory_summaries 
+            INNER JOIN (
+                SELECT itemid, counted as staff_count_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND counted != 0
+            ) temp_staff_count ON inventory_summaries.itemid = temp_staff_count.itemid
+            SET inventory_summaries.item_count = temp_staff_count.staff_count_qty,
+                inventory_summaries.updated_at = CURRENT_TIMESTAMP
+            WHERE inventory_summaries.storename = ?
+              AND CAST(inventory_summaries.report_date AS DATE) = ?
+        ";
+        $staffCountResult = DB::update($staffCountQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+
+        // Step 11: Calculate and Update Ending Inventory for all records
+        $endingQuery = "
+            UPDATE inventory_summaries 
+            SET ending = (beginning + received_delivery + COALESCE(stock_transfer, 0)) 
+                       - (sales + bundle_sales + throw_away + early_molds + pull_out + rat_bites + ant_bites),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE storename = ?
+              AND CAST(report_date AS DATE) = ?
+        ";
+        $endingResult = DB::update($endingQuery, [$storeName, $syncDate]);
+
+        // Step 12: Calculate and Update Variance for all records
+        $varianceQuery = "
+            UPDATE inventory_summaries 
+            SET variance = ending - item_count,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE storename = ?
+              AND CAST(report_date AS DATE) = ?
+        ";
+        $varianceResult = DB::update($varianceQuery, [$storeName, $syncDate]);
 
         // Log the sync operation in a sync_logs table if it exists
         if (Schema::hasTable('sync_logs')) {
@@ -2246,12 +2358,20 @@ public function syncInventoryVariance(Request $request)
                 'sync_date' => $syncDate,
                 'store_name' => $storeName,
                 'user_id' => Auth::id(),
-                'affected_records' => $recalculateResult,
+                'affected_records' => $endingResult,
                 'sync_details' => json_encode([
-                    'waste_updates' => $wasteResults,
+                    'beginning_updates' => $beginningResult,
                     'received_updates' => $receivedResult,
                     'sales_updates' => $salesResult,
-                    'bundle_sales_updates' => $bundleSalesResult
+                    'bundle_sales_updates' => $bundleSalesResult,
+                    'throw_away_updates' => $throwAwayResult,
+                    'pull_out_updates' => $pullOutResult,
+                    'rat_bites_updates' => $ratBitesResult,
+                    'ant_bites_updates' => $antBitesResult,
+                    'early_molds_updates' => $earlyMoldsResult,
+                    'staff_count_updates' => $staffCountResult,
+                    'ending_calculations' => $endingResult,
+                    'variance_calculations' => $varianceResult
                 ]),
                 'created_at' => now(),
                 'updated_at' => now()
@@ -2260,18 +2380,49 @@ public function syncInventoryVariance(Request $request)
 
         DB::commit();
 
-        $totalAffectedRows = array_sum($wasteResults) + $receivedResult + $salesResult + $bundleSalesResult + $recalculateResult;
+        $totalAffectedRows = $beginningResult + $receivedResult + $salesResult + $bundleSalesResult + 
+                           $throwAwayResult + $pullOutResult + $ratBitesResult + $antBitesResult + 
+                           $earlyMoldsResult + $staffCountResult + $endingResult + $varianceResult;
 
         Log::info('Inventory variance sync completed successfully', [
             'sync_date' => $syncDate,
             'store_name' => $storeName,
-            'waste_results' => $wasteResults,
+            'beginning_rows' => $beginningResult,
             'received_rows' => $receivedResult,
             'sales_rows' => $salesResult,
             'bundle_sales_rows' => $bundleSalesResult,
-            'recalculate_rows' => $recalculateResult,
+            'waste_rows' => [
+                'throw_away' => $throwAwayResult,
+                'pull_out' => $pullOutResult,
+                'rat_bites' => $ratBitesResult,
+                'ant_bites' => $antBitesResult,
+                'early_molds' => $earlyMoldsResult
+            ],
+            'staff_count_rows' => $staffCountResult,
+            'ending_rows' => $endingResult,
+            'variance_rows' => $varianceResult,
             'total_affected_rows' => $totalAffectedRows
         ]);
+
+        // Get summary of updated records to return
+        $updatedRecords = DB::table('inventory_summaries')
+            ->select([
+                'itemid',
+                'itemname',
+                'beginning',
+                'received_delivery',
+                'sales',
+                'bundle_sales',
+                DB::raw('throw_away + early_molds + pull_out + rat_bites + ant_bites as total_waste'),
+                'item_count',
+                'ending',
+                'variance',
+                'updated_at'
+            ])
+            ->where('storename', $storeName)
+            ->whereDate('report_date', $syncDate)
+            ->orderBy('itemid')
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -2280,14 +2431,25 @@ public function syncInventoryVariance(Request $request)
                 'sync_date' => $syncDate,
                 'store_name' => $storeName,
                 'records_found' => $existingRecords,
+                'records_updated' => $updatedRecords->count(),
                 'affected_rows' => [
-                    'waste_updates' => $wasteResults,
+                    'beginning_inventory' => $beginningResult,
                     'received_delivery' => $receivedResult,
-                    'sales' => $salesResult,
+                    'direct_sales' => $salesResult,
                     'bundle_sales' => $bundleSalesResult,
-                    'totals_recalculated' => $recalculateResult
+                    'waste_types' => [
+                        'throw_away' => $throwAwayResult,
+                        'pull_out' => $pullOutResult,
+                        'rat_bites' => $ratBitesResult,
+                        'ant_bites' => $antBitesResult,
+                        'early_molds' => $earlyMoldsResult
+                    ],
+                    'staff_count' => $staffCountResult,
+                    'ending_calculations' => $endingResult,
+                    'variance_calculations' => $varianceResult
                 ],
-                'total_affected_rows' => $totalAffectedRows
+                'total_affected_rows' => $totalAffectedRows,
+                'summary_records' => $updatedRecords
             ]
         ]);
 
