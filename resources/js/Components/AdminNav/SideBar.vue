@@ -14,8 +14,10 @@ import Stock from "@/Components/Svgs/Stock.vue";
 import Logout from "@/Components/Svgs/Logout.vue";
 import Receipt from "@/Components/Svgs/Picklist.vue";
 import List from "@/Components/Nav/List.vue";
-import Customers from "@/Components/Svgs/Customers.vue";
+import Customers from "@/Components/Svgs/Customers-black.vue";
 import Attendance from "@/Components/Svgs/Attendance.vue";
+import BatchCount from "@/Components/Svgs/batchcount.vue";
+import Tag from "@/Components/Svgs/Discount-tag.vue";
 
 import { ref, computed, defineProps, toRefs } from 'vue';
 
@@ -82,12 +84,20 @@ const logout = () => {
                 </List>
             </li>
 
-            <div class="tooltip tooltip-right tooltip-primary" data-tip="Attendance">
+            <!-- <div class="tooltip tooltip-right tooltip-primary" data-tip="Attendance">
                 <List :active-tab="activeTab" tabName="ATTENDANCE" url="/attendance"><Attendance class="h-6 lg:h-8"/> </List>
+            </div> -->
+
+            <!-- <div class="tooltip tooltip-right tooltip-primary" data-tip="Customer">
+                <List :active-tab="activeTab" tabName="CUSTOMERS" url="/customers"><Customers class="h-6 lg:h-8"/> </List>
+            </div> -->
+
+            <div class="tooltip tooltip-right tooltip-primary" data-tip="Discount">
+                <List :active-tab="activeTab" tabName="DISCOUNT" url="/discountsv2"><Tag class="h-6 lg:h-8"/> </List>
             </div>
 
-            <div class="tooltip tooltip-right tooltip-primary" data-tip="Customer">
-                <List :active-tab="activeTab" tabName="CUSTOMERS" url="/customers"><Customers class="h-6 lg:h-8"/> </List>
+            <div class="tooltip tooltip-right tooltip-primary" data-tip="BatchCount">
+                <List :active-tab="activeTab" tabName="Batch Count" url="/batchcount"><BatchCount class="h-6 lg:h-8"/> </List>
             </div>
 
             <li v-if="$page.props.auth.user.role != 'DISPATCH'" class="tooltip tooltip-right tooltip-primary" data-tip="REPORTS">

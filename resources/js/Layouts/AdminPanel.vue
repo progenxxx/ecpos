@@ -20,6 +20,9 @@ import CustomerGroup from "@/Components/Svgs/CustomerGroup.vue";
 import RetailGroup from "@/Components/Svgs/RetailGroup.vue";
 import SpecialGroup from "@/Components/Svgs/SpecialGroup.vue";
 
+import Customers from "@/Components/Svgs/Customers-black.vue";
+import Attendance from "@/Components/Svgs/Attendance.vue";
+
 import { ref, onMounted, onUnmounted } from 'vue';
 
 // Check if screen is small or mobile portrait
@@ -58,8 +61,8 @@ const rboinventitemretailgroups = () => {
     window.location.href = '/rboinventitemretailgroups';
 };
 
-const rbospecialgroups = () => {
-    window.location.href = '/rbospecialgroups';
+const attendance = () => {
+    window.location.href = '/attendance';
 };
 
 const posperiodicdiscounts = () => {
@@ -110,17 +113,17 @@ onUnmounted(() => {
                     <RetailGroup class="h-5" @click="rboinventitemretailgroups('/rboinventitemretailgroups')"></RetailGroup>
                 </div>
 
-                <!-- <div class="tooltip tooltip-bottom tooltip-primary cursor-pointer" data-tip="Link Items">
-                    <SpecialGroup class="h-5" @click="rbospecialgroups('/rbospecialgroups')"></SpecialGroup>
-                </div> -->
-
-                <!-- <div class="tooltip tooltip-bottom tooltip-primary cursor-pointer" data-tip="Discount">
-                    <Transactions class="h-5"></Transactions>
-                </div> -->
-
-                <div class="tooltip tooltip-bottom tooltip-primary cursor-pointer" data-tip="Manage Discount">
-                    <Discount class="h-5" @click="posperiodicdiscounts('/discountsv2')"></Discount>
+                <div class="tooltip tooltip-bottom tooltip-primary cursor-pointer" data-tip="Attendance">
+                    <Attendance class="h-5" @click="attendance('/attendance')"></Attendance>
                 </div>
+
+                <div class="tooltip tooltip-bottom tooltip-primary cursor-pointer" data-tip="Customers">
+                    <Customers class="h-5"></Customers>
+                </div>
+
+                <!-- <div class="tooltip tooltip-bottom tooltip-primary cursor-pointer" data-tip="Manage Discount">
+                    <Discount class="h-5" @click="posperiodicdiscounts('/discountsv2')"></Discount>
+                </div> -->
 
                 <!-- <div class="tooltip tooltip-bottom tooltip-primary cursor-pointer" data-tip="Barcode">
                     <Barcodes class="h-5"></Barcodes>
