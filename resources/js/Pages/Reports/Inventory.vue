@@ -70,6 +70,31 @@ const isLongPress = ref(false);
 const storeSearchQuery = ref('');
 const showStoreDropdown = ref(false);
 
+// Adjustment modal state
+const showAdjustmentModal = ref(false);
+const selectedItem = ref(null);
+const adjustmentForm = ref({
+    adjustment_value: '',
+    adjustment_type: 'set',
+    remarks: ''
+});
+const adjustmentLoading = ref(false);
+
+// History modal state
+const showHistoryModal = ref(false);
+const adjustmentHistory = ref([]);
+const historyLoading = ref(false);
+
+// Sync functionality state
+const showSyncModal = ref(false);
+const syncForm = ref({
+    sync_date: '',
+    store_name: ''
+});
+const syncLoading = ref(false);
+const syncStatus = ref(null);
+const syncStatusLoading = ref(false);
+
 // Filtered stores based on search - handle both string and object formats
 const filteredStores = computed(() => {
     let stores = [];
@@ -114,21 +139,6 @@ const filteredStores = computed(() => {
         store.toLowerCase().includes(storeSearchQuery.value.toLowerCase())
     );
 });
-
-// Adjustment modal state
-const showAdjustmentModal = ref(false);
-const selectedItem = ref(null);
-const adjustmentForm = ref({
-    adjustment_value: '',
-    adjustment_type: 'set',
-    remarks: ''
-});
-const adjustmentLoading = ref(false);
-
-// History modal state
-const showHistoryModal = ref(false);
-const adjustmentHistory = ref([]);
-const historyLoading = ref(false);
 
 // Mobile interaction handlers - Fixed to work on ALL screen sizes
 const handleItemClick = (item) => {
@@ -468,6 +478,115 @@ const closeHistoryModal = () => {
     adjustmentHistory.value = [];
 };
 
+// Open sync modal
+const openSyncModal = () => {
+    syncForm.value = {
+        sync_date: endDate.value || startDate.value || new Date().toISOString().split('T')[0],
+        store_name: selectedStores.value.length === 1 ? selectedStores.value[0] : ''
+    };
+    showSyncModal.value = true;
+    closeFloatingMenu();
+    
+    // Get sync status when modal opens
+    getSyncStatus();
+};
+
+// Close sync modal
+const closeSyncModal = () => {
+    showSyncModal.value = false;
+    syncForm.value = {
+        sync_date: '',
+        store_name: ''
+    };
+    syncStatus.value = null;
+};
+
+// Get sync status
+const getSyncStatus = async () => {
+    if (!syncForm.value.sync_date) return;
+    
+    syncStatusLoading.value = true;
+    
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        const response = await fetch('/inventory/sync-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                sync_date: syncForm.value.sync_date,
+                store_name: syncForm.value.store_name
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            syncStatus.value = data.data;
+        } else {
+            console.error('Failed to get sync status:', data.message);
+        }
+    } catch (error) {
+        console.error('Error getting sync status:', error);
+    } finally {
+        syncStatusLoading.value = false;
+    }
+};
+
+// Perform sync
+const performSync = async () => {
+    if (!syncForm.value.sync_date) {
+        alert('Please select a sync date');
+        return;
+    }
+
+    if ((props.userRole.toUpperCase() === 'ADMIN' || props.userRole.toUpperCase() === 'SUPERADMIN') && !syncForm.value.store_name) {
+        alert('Please select a store');
+        return;
+    }
+
+    syncLoading.value = true;
+
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        const response = await fetch('/inventory/sync-variance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                sync_date: syncForm.value.sync_date,
+                store_name: syncForm.value.store_name
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`Sync completed successfully!\n\nStore: ${data.data.store_name}\nDate: ${data.data.sync_date}\nRecords Updated: ${data.data.total_affected_rows}`);
+            
+            closeSyncModal();
+            
+            // Refresh the page to show updated data
+            window.location.reload();
+        } else {
+            alert('Sync failed: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error performing sync:', error);
+        alert('An error occurred during sync: ' + error.message);
+    } finally {
+        syncLoading.value = false;
+    }
+};
+
 // DataTable columns for desktop - with enhanced interactions
 const columns = [
     { 
@@ -787,6 +906,13 @@ const handleClickOutside = (event) => {
     }
 };
 
+// Watch for sync form changes to update status
+watch([() => syncForm.value.sync_date, () => syncForm.value.store_name], () => {
+    if (showSyncModal.value) {
+        getSyncStatus();
+    }
+}, { deep: true });
+
 // Debounced filter handling
 let filterTimeout;
 watch([selectedStores, startDate, endDate], () => {
@@ -919,13 +1045,24 @@ onMounted(() => {
                 </div>
 
                 <div class="flex items-end">
-                    <button
-                        @click="clearFilters"
-                        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md"
-                    >
-                        Clear Filters
-                    </button>
-                </div>
+    <button
+        @click="clearFilters"
+        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md mr-2"
+    >
+        Clear Filters
+    </button>
+    
+    <!-- ADD THIS SYNC BUTTON -->
+    <button
+        @click="openSyncModal"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+    >
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Sync Data
+    </button>
+</div>
             </div>
 
             <!-- Touch/Click Instructions for All Devices -->
@@ -935,7 +1072,7 @@ onMounted(() => {
                     • <strong>Hold/Long press 1 second:</strong> View adjustment history<br>
                     • <strong>Double click/tap:</strong> Adjust item count<br>
                     • <strong>Single click buttons:</strong> Direct actions<br>
-                    <span v-if="isMobile">• <strong>Use floating menu</strong> for exports and filters</span>
+                    <span v-if="isMobile">• <strong>Use floating menu</strong> for exports and sync</span>
                 </p>
             </div>
 
@@ -1189,6 +1326,19 @@ onMounted(() => {
 
                     <div class="border-t border-gray-200 my-2"></div>
 
+                    <!-- Sync Options -->
+                    <button
+                        @click="openSyncModal"
+                        class="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    >
+                        <svg class="h-4 w-4 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Sync Inventory Data
+                    </button>
+
+                    <div class="border-t border-gray-200 my-2"></div>
+
                     <!-- Filter Options -->
                     <button
                         @click="clearFilters"
@@ -1387,6 +1537,125 @@ onMounted(() => {
                                 class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                             >
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sync Modal -->
+            <div v-if="showSyncModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                    <div class="mt-3">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">
+                            Sync Inventory Variance
+                        </h3>
+                        
+                        <div class="mb-4 p-3 bg-blue-50 rounded">
+                            <p class="text-sm text-blue-700">
+                                This will update inventory data by syncing with waste declarations, received orders, and sales data.
+                            </p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Sync Date *</label>
+                                <input 
+                                    type="date" 
+                                    v-model="syncForm.sync_date"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    required
+                                >
+                            </div>
+
+                            <div v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'">
+                                <label class="block text-sm font-medium text-gray-700">Store *</label>
+                                <select 
+                                    v-model="syncForm.store_name"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    required
+                                >
+                                    <option value="">Select a store...</option>
+                                    <option v-for="store in filteredStores" :key="store" :value="store">
+                                        {{ store }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Sync Status Display -->
+                            <div v-if="syncStatus" class="p-4 bg-gray-50 rounded-lg">
+                                <h4 class="text-sm font-medium text-gray-900 mb-2">Current Data Status</h4>
+                                
+                                <div v-if="syncStatusLoading" class="flex items-center">
+                                    <div class="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-indigo-500"></div>
+                                    <span class="ml-2 text-sm">Checking status...</span>
+                                </div>
+                                
+                                <div v-else class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>Inventory Records:</span>
+                                        <span :class="syncStatus.status.inventory_records > 0 ? 'text-green-600' : 'text-red-600'">
+                                            {{ syncStatus.status.inventory_records }}
+                                        </span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Waste Records:</span>
+                                        <span class="text-gray-600">{{ syncStatus.status.waste_records }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Received Records:</span>
+                                        <span class="text-gray-600">{{ syncStatus.status.received_records }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Sales Records:</span>
+                                        <span class="text-gray-600">{{ syncStatus.status.sales_records }}</span>
+                                    </div>
+                                    
+                                    <div v-if="syncStatus.status.last_sync" class="mt-3 pt-3 border-t border-gray-200">
+                                        <p class="text-xs text-gray-500">
+                                            Last sync: {{ new Date(syncStatus.status.last_sync.created_at).toLocaleString() }}
+                                            <br>
+                                            Affected records: {{ syncStatus.status.last_sync.affected_records }}
+                                        </p>
+                                    </div>
+                                    
+                                    <div v-if="!syncStatus.status.can_sync" class="mt-3 p-2 bg-red-50 rounded text-red-700 text-xs">
+                                        ⚠️ No inventory records found for this date/store. Cannot perform sync.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Warning message -->
+                            <div class="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                                <div class="flex">
+                                    <svg class="h-5 w-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <p class="text-yellow-800 text-sm">
+                                            <strong>Warning:</strong> This will overwrite existing waste, received, and sales data with values from the source tables. 
+                                            Make sure the source data is accurate before proceeding.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-3 mt-6">
+                            <button 
+                                @click="closeSyncModal"
+                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                                :disabled="syncLoading"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                @click="performSync"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-indigo-300"
+                                :disabled="syncLoading || !syncForm.sync_date || (syncStatus && !syncStatus.status.can_sync)"
+                            >
+                                <span v-if="syncLoading">Syncing...</span>
+                                <span v-else>Start Sync</span>
                             </button>
                         </div>
                     </div>

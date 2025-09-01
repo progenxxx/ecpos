@@ -13,7 +13,8 @@ const startDate = ref('');
 const endDate = ref('');
 
 const props = defineProps({
-    ar: {
+    // FIXED: Changed from 'ar' to 'bo' to match controller
+    bo: {
         type: Array,
         required: true,
     },
@@ -42,92 +43,83 @@ onMounted(() => {
     endDate.value = props.filters.endDate || '';
 });
 
-const filteredData = computed(() => {
-    let filtered = [...props.ar];
-    
-    if (selectedStores.value.length > 0) {
-        filtered = filtered.filter(item => 
-            selectedStores.value.includes(item.storename)
-        );
-    }
-    
-    if (startDate.value && endDate.value) {
-        filtered = filtered.filter(item => {
-            const itemDate = new Date(item.createddate);
-            const start = new Date(startDate.value);
-            const end = new Date(endDate.value);
-            return itemDate >= start && itemDate <= end;
-        });
-    }
-    
-    return filtered;
+// FIXED: Remove client-side filtering since server handles it
+// This eliminates conflicts between server and client filtering
+const tableData = computed(() => {
+    return props.bo; // Use server-filtered data directly
 });
 
+// FIXED: Updated columns to match Bad Orders data structure
 const columns = [
     { data: 'storename', title: 'STORE' },
-    { data: 'receiptid', title: 'RECEIPT' },
+    { data: 'itemid', title: 'ITEM ID' },
+    { data: 'itemname', title: 'ITEM NAME' },
+    { data: 'category', title: 'CATEGORY' },
     { 
-        data: 'createddate', 
-        title: 'CREATED DATE', 
+        data: 'batchdate', 
+        title: 'BATCH DATE', 
         render: function(data, type, row) {
+            if (!data) return '';
             const date = new Date(data);
             return date.toLocaleDateString();  
         }
     },
     { 
-        data: 'charge', 
-        title: 'CHARGE',
-        render: function(data) {
-            return parseFloat(data).toFixed(2);
+        data: 'waste_declaration_date', 
+        title: 'WASTE DATE', 
+        render: function(data, type, row) {
+            if (!data) return '';
+            const date = new Date(data);
+            return date.toLocaleDateString();  
         }
     },
     { 
-        data: 'gcash', 
-        title: 'GCASH',
+        data: 'price', 
+        title: 'PRICE',
         render: function(data) {
-            return parseFloat(data).toFixed(2);
+            return '₱' + parseFloat(data || 0).toFixed(2);
         }
     },
     { 
-        data: 'paymaya', 
-        title: 'PAYMAYA',
+        data: 'throw_away', 
+        title: 'THROW AWAY',
         render: function(data) {
-            return parseFloat(data).toFixed(2);
+            return parseFloat(data || 0).toFixed(2);
         }
     },
     { 
-        data: 'card', 
-        title: 'CARD',
+        data: 'early_molds', 
+        title: 'EARLY MOLDS',
         render: function(data) {
-            return parseFloat(data).toFixed(2);
+            return parseFloat(data || 0).toFixed(2);
         }
     },
     { 
-        data: 'loyaltycard', 
-        title: 'LOYALTY CARD',
+        data: 'pull_out', 
+        title: 'PULL OUT',
         render: function(data) {
-            return parseFloat(data).toFixed(2);
+            return parseFloat(data || 0).toFixed(2);
         }
     },
     { 
-        data: 'foodpanda', 
-        title: 'FOODPANDA',
+        data: 'rat_bites', 
+        title: 'RAT BITES',
         render: function(data) {
-            return parseFloat(data).toFixed(2);
+            return parseFloat(data || 0).toFixed(2);
         }
     },
     { 
-        data: 'grabfood', 
-        title: 'GRABFOOD',
+        data: 'ant_bites', 
+        title: 'ANT BITES',
         render: function(data) {
-            return parseFloat(data).toFixed(2);
+            return parseFloat(data || 0).toFixed(2);
         }
     },
     { 
-        data: 'representation', 
-        title: 'REPRESENTATION',
+        data: 'total_price', 
+        title: 'TOTAL PRICE',
         render: function(data) {
-            return parseFloat(data).toFixed(2);
+            return '₱' + parseFloat(data || 0).toFixed(2);
         }
     }
 ];
@@ -145,19 +137,24 @@ const options = {
 };
 
 const handleFilterChange = () => {
-    if (startDate.value && endDate.value && new Date(startDate.value) > new Date(endDate.value)) {
-        alert('Start date cannot be later than end date');
-        startDate.value = '';
-        endDate.value = '';
-        return;
+    // FIXED: Improved date validation
+    if (startDate.value && endDate.value) {
+        const start = new Date(startDate.value);
+        const end = new Date(endDate.value);
+        
+        if (start > end) {
+            alert('Start date cannot be later than end date');
+            return;
+        }
     }
     
+    // FIXED: Use correct route name for Bad Orders
     router.get(
-        route('reports.ar'),
+        route('reports.bo'), // Changed from 'reports.ar' to 'reports.bo'
         {
-            startDate: startDate.value,
-            endDate: endDate.value,
-            stores: selectedStores.value
+            startDate: startDate.value || null,
+            endDate: endDate.value || null,
+            stores: selectedStores.value.length > 0 ? selectedStores.value : null
         },
         {
             preserveState: true,
@@ -176,28 +173,34 @@ onUnmounted(() => {
     clearTimeout(filterTimeout);
 });
 
+// FIXED: Updated totals calculation for Bad Orders data
 const totals = computed(() => {
-    return filteredData.value.reduce((acc, curr) => {
-        acc.charge += parseFloat(curr.charge || 0);
-        acc.gcash += parseFloat(curr.gcash || 0);
-        acc.paymaya += parseFloat(curr.paymaya || 0);
-        acc.card += parseFloat(curr.card || 0);
-        acc.loyaltycard += parseFloat(curr.loyaltycard || 0);
-        acc.foodpanda += parseFloat(curr.foodpanda || 0);
-        acc.grabfood += parseFloat(curr.grabfood || 0);
-        acc.representation += parseFloat(curr.representation || 0);
+    return tableData.value.reduce((acc, curr) => {
+        acc.throw_away += parseFloat(curr.throw_away || 0);
+        acc.early_molds += parseFloat(curr.early_molds || 0);
+        acc.pull_out += parseFloat(curr.pull_out || 0);
+        acc.rat_bites += parseFloat(curr.rat_bites || 0);
+        acc.ant_bites += parseFloat(curr.ant_bites || 0);
+        acc.total_price += parseFloat(curr.total_price || 0);
         return acc;
     }, {
-        charge: 0,
-        gcash: 0,
-        paymaya: 0,
-        card: 0,
-        loyaltycard: 0,
-        foodpanda: 0,
-        grabfood: 0,
-        representation: 0
+        throw_away: 0,
+        early_molds: 0,
+        pull_out: 0,
+        rat_bites: 0,
+        ant_bites: 0,
+        total_price: 0
     });
 });
+
+// FIXED: Clear filters function
+const clearFilters = () => {
+    selectedStores.value = [];
+    startDate.value = '';
+    endDate.value = '';
+    // Trigger immediate filter change
+    handleFilterChange();
+};
 </script>
 
 <template>
@@ -205,7 +208,7 @@ const totals = computed(() => {
         <template v-slot:main>
             <div class="mb-4 flex flex-wrap gap-4 p-4 bg-white rounded-lg shadow">
                 
-                <div v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'MANAGER'" class="flex-1 min-w-[200px]">
+                <div v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'" class="flex-1 min-w-[200px]">
                   <MultiSelectDropdown
                     v-model="selectedStores"
                     :options="stores"
@@ -233,7 +236,7 @@ const totals = computed(() => {
 
                 <div class="flex items-end">
                     <button
-                        @click="() => { selectedStores = []; startDate = ''; endDate = ''; }"
+                        @click="clearFilters"
                         class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md"
                     >
                         Clear Filters
@@ -242,27 +245,44 @@ const totals = computed(() => {
             </div>
 
             <details class="collapse collapse-plus bg-gray-100 rounded-none">
-                    <summary class="collapse-title text-sm font-medium">AR DETAILS</summary>
-                    <div class="collapse-content"> 
-                      <div class="mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                          <div v-for="(value, key) in totals" :key="key" 
-                              class="bg-white p-4 rounded-lg shadow">
-                              <h3 class="text-sm font-medium text-gray-500 uppercase">Total {{ key }}</h3>
-                              <p class="mt-1 text-lg font-semibold">₱ {{ value.toFixed(2) }}</p>
-                          </div>
-                      </div>
+                <summary class="collapse-title text-sm font-medium">BAD ORDERS SUMMARY</summary>
+                <div class="collapse-content"> 
+                    <div class="mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h3 class="text-sm font-medium text-gray-500 uppercase">Total Throw Away</h3>
+                            <p class="mt-1 text-lg font-semibold">{{ totals.throw_away.toFixed(2) }}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h3 class="text-sm font-medium text-gray-500 uppercase">Total Early Molds</h3>
+                            <p class="mt-1 text-lg font-semibold">{{ totals.early_molds.toFixed(2) }}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h3 class="text-sm font-medium text-gray-500 uppercase">Total Pull Out</h3>
+                            <p class="mt-1 text-lg font-semibold">{{ totals.pull_out.toFixed(2) }}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h3 class="text-sm font-medium text-gray-500 uppercase">Total Rat Bites</h3>
+                            <p class="mt-1 text-lg font-semibold">{{ totals.rat_bites.toFixed(2) }}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h3 class="text-sm font-medium text-gray-500 uppercase">Total Ant Bites</h3>
+                            <p class="mt-1 text-lg font-semibold">{{ totals.ant_bites.toFixed(2) }}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h3 class="text-sm font-medium text-gray-500 uppercase">Total Price</h3>
+                            <p class="mt-1 text-lg font-semibold text-red-600">₱{{ totals.total_price.toFixed(2) }}</p>
+                        </div>
                     </div>
-              </details>
+                </div>
+            </details>
 
             <TableContainer>
                 <DataTable 
-                    :data="filteredData" 
+                    :data="tableData" 
                     :columns="columns" 
                     class="w-full relative display" 
                     :options="options"
                 >
-                    <template #action="data">
-                    </template>
                 </DataTable>
             </TableContainer>
         </template>

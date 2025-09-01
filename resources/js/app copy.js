@@ -1,7 +1,6 @@
 import './bootstrap';
 import '../css/app.css';
-import '@fortawesome/fontawesome-free/js/all.js';
-
+import { registerSW } from 'virtual:pwa-register'
 
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
@@ -16,7 +15,7 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         return createApp({ render: () => h(App, props) })
             .use(plugin)
-            .use(ZiggyVue, Ziggy)
+            .use(ZiggyVue)
             .mount(el);
     },
     progress: {
@@ -24,15 +23,19 @@ createInertiaApp({
     },
 });
 
-// PWA
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(registration => {
-                console.log('Service Worker registered with scope:', registration.scope);
-            })
-            .catch(error => {
-                console.error('Service Worker registration failed:', error);
-            });
-    });
+  registerSW()
 }
+
+/* if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/serviceworker.js')
+      .then(registration => {
+        console.log('ServiceWorker registered: ', registration);
+      })
+      .catch(registrationError => {
+        console.log('ServiceWorker registration failed: ', registrationError);
+      });
+  });
+} */
+  

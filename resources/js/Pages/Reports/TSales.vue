@@ -1,148 +1,194 @@
 <template>
     <component :is="layoutComponent" active-tab="REPORTS">
         <template v-slot:main>
-            <!-- Enhanced Header Section -->
-            <!-- <div class="mb-6">
-                <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg shadow-lg">
-                    <h1 class="text-2xl font-bold mb-2">Transaction Sales Report</h1>
-                    <p class="text-blue-100">Detailed sales transaction analysis with payment methods and commissions</p>
-                </div>
-            </div> -->
-
             <!-- Enhanced Filters Section -->
-            <div class="mb-6 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"></path>
-                        </svg>
-                        Filters & Options
-                    </h3>
-                </div>
-                
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <!-- Store Selection -->
-                        <div 
-                            v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'" 
-                            class="store-dropdown-container relative"
-                        >
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                </svg>
-                                Store Selection
-                            </label>
-                            <div class="relative">
-                                <button
-                                    @click="showStoreDropdown = !showStoreDropdown"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-left bg-white hover:bg-gray-50 transition-colors"
-                                >
-                                    <span v-if="selectedStores.length === 0" class="text-gray-500">Select stores...</span>
-                                    <span v-else-if="selectedStores.length === 1" class="text-gray-900">{{ selectedStores[0] }}</span>
-                                    <span v-else class="text-gray-900">{{ selectedStores.length }} stores selected</span>
-                                    <svg class="float-right mt-1 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            <div class="mb-6 bg-white rounded-xl shadow-lg border border-gray-200">
+                <div class="mb-6">
+                    <div class="p-6 z-1">
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+                            <!-- Store Selection -->
+                            <div 
+                                v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'" 
+                                class="store-dropdown-container relative"
+                            >
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                                     </svg>
-                                </button>
+                                    Store Selection
+                                </label>
+                                <div class="relative">
+                                    <button
+                                        @click="showStoreDropdown = !showStoreDropdown"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-left bg-white hover:bg-gray-50 transition-colors"
+                                    >
+                                        <span v-if="selectedStores.length === 0" class="text-gray-500">Select stores...</span>
+                                        <span v-else-if="selectedStores.length === 1" class="text-gray-900">{{ selectedStores[0] }}</span>
+                                        <span v-else class="text-gray-900">{{ selectedStores.length }} stores selected</span>
+                                        <svg class="float-right mt-1 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
 
-                                <!-- Enhanced Dropdown -->
-                                <div v-if="showStoreDropdown" class="absolute z-50 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-xl max-h-72 overflow-hidden">
-                                    <!-- Search input -->
-                                    <div class="p-3 border-b border-gray-200 bg-gray-50">
-                                        <input
-                                            ref="storeSearchInput"
-                                            v-model="storeSearchQuery"
-                                            type="text"
-                                            placeholder="Search stores..."
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            @click.stop
-                                            @input="handleStoreSearch"
-                                        >
-                                    </div>
-
-                                    <!-- Action buttons -->
-                                    <div class="p-3 border-b border-gray-200 flex gap-2 bg-gray-50">
-                                        <button
-                                            @click="selectAllStores"
-                                            class="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
-                                        >
-                                            Select All
-                                        </button>
-                                        <button
-                                            @click="clearStoreSelection"
-                                            class="flex-1 px-3 py-2 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 transition-colors"
-                                        >
-                                            Clear
-                                        </button>
-                                    </div>
-
-                                    <!-- Store options -->
-                                    <div class="max-h-48 overflow-y-auto">
-                                        <label 
-                                            v-for="store in filteredStores" 
-                                            :key="store"
-                                            class="flex items-center px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors"
-                                        >
+                                    <!-- Enhanced Dropdown -->
+                                    <div v-if="showStoreDropdown" class="absolute z-50 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-xl max-h-72 overflow-hidden">
+                                        <!-- Search input -->
+                                        <div class="p-3 border-b border-gray-200 bg-gray-50">
                                             <input
-                                                type="checkbox"
-                                                :checked="isStoreSelected(store)"
-                                                @change="toggleStoreSelection(store)"
-                                                class="mr-3 form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                ref="storeSearchInput"
+                                                v-model="storeSearchQuery"
+                                                type="text"
+                                                placeholder="Search stores..."
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                @click.stop
+                                                @input="handleStoreSearch"
                                             >
-                                            <span class="text-sm text-gray-700">{{ store }}</span>
-                                        </label>
-                                    </div>
+                                        </div>
 
-                                    <div v-if="filteredStores.length === 0" class="p-4 text-sm text-gray-500 text-center">
-                                        No stores found
+                                        <!-- Action buttons -->
+                                        <div class="p-3 border-b border-gray-200 flex gap-2 bg-gray-50">
+                                            <button
+                                                @click="selectAllStores"
+                                                class="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                                            >
+                                                Select All
+                                            </button>
+                                            <button
+                                                @click="clearStoreSelection"
+                                                class="flex-1 px-3 py-2 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 transition-colors"
+                                            >
+                                                Clear
+                                            </button>
+                                        </div>
+
+                                        <!-- Store options -->
+                                        <div class="max-h-48 overflow-y-auto">
+                                            <label 
+                                                v-for="store in filteredStores" 
+                                                :key="store"
+                                                class="flex items-center px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    :checked="isStoreSelected(store)"
+                                                    @change="toggleStoreSelection(store)"
+                                                    class="mr-3 form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                >
+                                                <span class="text-sm text-gray-700">{{ store }}</span>
+                                            </label>
+                                        </div>
+
+                                        <div v-if="filteredStores.length === 0" class="p-4 text-sm text-gray-500 text-center">
+                                            No stores found
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Date filters -->
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                Start Date
-                            </label>
-                            <input
-                                type="date"
-                                v-model="startDate"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
+                            <!-- Date filters -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    Start Date
+                                </label>
+                                <input
+                                    type="date"
+                                    v-model="startDate"
+                                    @change="handleDateChange"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                >
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    End Date
+                                </label>
+                                <input
+                                    type="date"
+                                    v-model="endDate"
+                                    @change="handleDateChange"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                >
+                            </div>
+
+                            <!-- Apply Filters Button -->
+                            <div class="flex items-end">
+                                <button
+                                    @click="applyFilters"
+                                    :disabled="isLoading"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center"
+                                >
+                                    <svg v-if="isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                    {{ isLoading ? 'Loading...' : 'Apply Filters' }}
+                                </button>
+                            </div>
+
+                            <!-- Clear Filters Button -->
+                            <div class="flex items-end">
+                                <button
+                                    @click="clearFilters"
+                                    class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center"
+                                >
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                    Clear Filters
+                                </button>
+                            </div>
                         </div>
                         
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                End Date
-                            </label>
-                            <input
-                                type="date"
-                                v-model="endDate"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                        </div>
-
-                        <!-- Action buttons -->
-                        <div class="flex items-end">
+                        <!-- Quick Date Buttons -->
+                        <div class="mt-4 flex flex-wrap gap-2">
                             <button
-                                @click="clearFilters"
-                                class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center"
+                                @click="setDateRange('today')"
+                                :class="{'bg-blue-600 text-white': isToday, 'bg-gray-100 text-gray-700': !isToday}"
+                                class="px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-blue-500 hover:text-white"
                             >
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                </svg>
-                                Clear Filters
+                                Today
+                            </button>
+                            <button
+                                @click="setDateRange('yesterday')"
+                                class="px-3 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium transition-colors hover:bg-blue-500 hover:text-white"
+                            >
+                                Yesterday
+                            </button>
+                            <button
+                                @click="setDateRange('thisWeek')"
+                                class="px-3 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium transition-colors hover:bg-blue-500 hover:text-white"
+                            >
+                                This Week
+                            </button>
+                            <button
+                                @click="setDateRange('thisMonth')"
+                                class="px-3 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium transition-colors hover:bg-blue-500 hover:text-white"
+                            >
+                                This Month
                             </button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Data Status Info -->
+            <div v-if="isInitialLoad" class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-blue-800 text-sm">
+                        Showing today's transactions for faster loading. Use date filters above to view different date ranges.
+                    </span>
                 </div>
             </div>
 
@@ -154,7 +200,7 @@
                     </svg>
                     Sales Summary
                 </h3>
-                <div v-if="isTableLoading" class="flex justify-center items-center py-8">
+                <div v-if="isLoading" class="flex justify-center items-center py-8">
                     <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
                     <span class="ml-3 text-gray-600">Loading data...</span>
                 </div>
@@ -180,22 +226,7 @@
 
             <!-- Enhanced Data Display -->
             <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                <!-- Header -->
-                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-                            <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            Transaction Sales Data
-                        </h3>
-                        <div class="text-sm text-gray-500">
-                            {{ filteredData.length }} transactions
-                        </div>
-                    </div>
-                </div>
-
-                <div v-if="isTableLoading" class="flex justify-center items-center py-16">
+                <div v-if="isLoading" class="flex justify-center items-center py-16">
                     <div class="text-center">
                         <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
                         <span class="mt-4 text-lg text-gray-600 block">Loading sales data...</span>
@@ -203,9 +234,9 @@
                 </div>
                 
                 <!-- Mobile View with Enhanced Cards -->
-                <div v-if="isMobile && !isTableLoading" class="overflow-hidden">
+                <div v-if="isMobile && !isLoading" class="overflow-hidden">
                     <div class="max-h-96 overflow-y-auto">
-                        <div v-for="(item, index) in filteredData" :key="`${item.transactionid}-${index}`" 
+                        <div v-for="(item, index) in currentData" :key="`${item.transactionid}-${index}`" 
                              class="border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors cursor-pointer select-none mobile-sales-item"
                              @touchstart="handleTouchStart(item, $event)"
                              @touchend="handleTouchEnd($event)"
@@ -269,7 +300,7 @@
                             </div>
                         </div>
                         
-                        <div v-if="filteredData.length === 0" class="text-center py-12 text-gray-500">
+                        <div v-if="currentData.length === 0" class="text-center py-12 text-gray-500">
                             <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
@@ -279,11 +310,11 @@
                 </div>
 
                 <!-- Enhanced Desktop DataTable -->
-                <div v-if="!isMobile && !isTableLoading" class="overflow-hidden">
+                <div v-if="!isMobile && !isLoading" class="overflow-hidden">
                     <TableContainer class="max-h-[75vh] overflow-x-auto overflow-y-auto">
                         <DataTable 
-                            v-if="filteredData.length > 0"
-                            :data="filteredData" 
+                            v-if="currentData.length > 0"
+                            :data="currentData" 
                             :columns="columns" 
                             class="w-full relative display enhanced-table" 
                             :options="options"
@@ -609,6 +640,7 @@ import Main from "@/Layouts/AdminPanel.vue";
 import StorePanel from "@/Layouts/Main.vue";
 import TableContainer from "@/Components/Tables/TableContainer.vue";
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { router } from '@inertiajs/vue3';
 import 'datatables.net-buttons';
 import DataTable from 'datatables.net-vue3';
 import DataTablesCore from 'datatables.net';
@@ -623,11 +655,11 @@ import CloseIcon from "@/Components/Svgs/Close.vue";
 
 DataTable.use(DataTablesCore);
 
+// Reactive variables
 const selectedStores = ref([]);
 const startDate = ref('');
 const endDate = ref('');
 const isLoading = ref(false);
-const isTableLoading = ref(true);
 
 // Mobile responsive state
 const showFloatingMenu = ref(false);
@@ -686,12 +718,107 @@ const props = defineProps({
             endDate: '',
             selectedStores: []
         })
+    },
+    isInitialLoad: {
+        type: Boolean,
+        default: false
     }
 });
 
 const layoutComponent = computed(() => {
     return props.userRole.toUpperCase() === 'STORE' ? StorePanel : Main;
 });
+
+// Current data being displayed
+const currentData = ref([]);
+
+// Check if showing today's data
+const isToday = computed(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return startDate.value === today && endDate.value === today;
+});
+
+// Date change handler with debouncing
+let dateChangeTimeout = null;
+const handleDateChange = () => {
+    if (dateChangeTimeout) {
+        clearTimeout(dateChangeTimeout);
+    }
+    dateChangeTimeout = setTimeout(() => {
+        if (startDate.value && endDate.value) {
+            applyFilters();
+        }
+    }, 500);
+};
+
+const applyFilters = () => {
+    if (isLoading.value) return;
+    
+    // Debug the current state
+    console.log('Applying filters with stores:', selectedStores.value);
+    
+    isLoading.value = true;
+    
+    const params = {
+        startDate: startDate.value,
+        endDate: endDate.value,
+        stores: selectedStores.value.length > 0 ? selectedStores.value : null
+    };
+
+    // Remove null/empty parameters
+    Object.keys(params).forEach(key => {
+        if (params[key] === null || params[key] === '' || (Array.isArray(params[key]) && params[key].length === 0)) {
+            delete params[key];
+        }
+    });
+
+    console.log('Final params being sent:', params);
+
+    // Use window.location to navigate with query parameters
+    const url = new URL(window.location.origin + '/reports/tsales');
+    Object.keys(params).forEach(key => {
+        if (Array.isArray(params[key])) {
+            params[key].forEach(value => url.searchParams.append(`${key}[]`, value));
+        } else {
+            url.searchParams.set(key, params[key]);
+        }
+    });
+
+    console.log('Final URL:', url.toString());
+
+    // Navigate to the new URL
+    window.location.href = url.toString();
+};
+
+// Quick date range setters
+const setDateRange = (range) => {
+    const today = new Date();
+    let start, end;
+
+    switch (range) {
+        case 'today':
+            start = end = today;
+            break;
+        case 'yesterday':
+            start = end = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+            break;
+        case 'thisWeek':
+            start = new Date(today);
+            start.setDate(today.getDate() - today.getDay());
+            end = new Date(start);
+            end.setDate(start.getDate() + 6);
+            break;
+        case 'thisMonth':
+            start = new Date(today.getFullYear(), today.getMonth(), 1);
+            end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            break;
+    }
+
+    startDate.value = start.toISOString().split('T')[0];
+    endDate.value = end.toISOString().split('T')[0];
+    
+    applyFilters();
+};
 
 // Mobile long press handlers
 const handleTouchStart = (item, event) => {
@@ -729,44 +856,15 @@ const closeItemDetail = () => {
     selectedItem.value = null;
 };
 
-// Filtered stores based on search
 const filteredStores = computed(() => {
     let stores = [];
     
     if (Array.isArray(props.stores)) {
-        stores = props.stores.map(store => {
-            if (typeof store === 'string') {
-                return store;
-            }
-            
-            if (typeof store === 'object' && store !== null) {
-                if (store.NAME) {
-                    return store.NAME;
-                }
-                if (store.name) {
-                    return store.name;
-                }
-                if (store.storename) {
-                    return store.storename;
-                }
-                if (store.store_name) {
-                    return store.store_name;
-                }
-                
-                const storeStr = JSON.stringify(store);
-                const nameMatch = storeStr.match(/"NAME"\s*:\s*"([^"]+)"/);
-                if (nameMatch) {
-                    return nameMatch[1];
-                }
-                
-                return storeStr.replace(/[{}":]/g, '').replace(/STOREID[^,]*,?\s*/g, '').replace(/NAME/g, '').trim() || 'Unknown Store';
-            }
-            
-            return String(store);
-        });
+        stores = props.stores.map(store => extractStoreName(store));
     }
     
-    stores = [...new Set(stores)].sort();
+    // Remove duplicates and sort
+    stores = [...new Set(stores)].filter(store => store && store !== 'Unknown Store').sort();
     
     if (!storeSearchQuery.value || storeSearchQuery.value.trim() === '') {
         return stores;
@@ -777,6 +875,18 @@ const filteredStores = computed(() => {
         store.toLowerCase().includes(searchTerm)
     );
 });
+
+const debugStoreData = () => {
+    console.log('Debug Store Data:');
+    console.log('Props stores:', props.stores);
+    console.log('Selected stores:', selectedStores.value);
+    console.log('Filtered stores:', filteredStores.value);
+    
+    if (props.stores && props.stores.length > 0) {
+        console.log('First store object:', props.stores[0]);
+        console.log('Extracted name:', extractStoreName(props.stores[0]));
+    }
+};
 
 // Store selection functions
 const toggleStoreSelection = (store) => {
@@ -798,37 +908,8 @@ const clearStoreSelection = () => {
 };
 
 const selectAllStores = () => {
-    const allStores = props.stores.map(store => {
-        if (typeof store === 'string') {
-            return store;
-        }
-        
-        if (typeof store === 'object' && store !== null) {
-            if (store.NAME) {
-                return store.NAME;
-            }
-            if (store.name) {
-                return store.name;
-            }
-            if (store.storename) {
-                return store.storename;
-            }
-            if (store.store_name) {
-                return store.store_name;
-            }
-            
-            const storeStr = JSON.stringify(store);
-            const nameMatch = storeStr.match(/"NAME"\s*:\s*"([^"]+)"/);
-            if (nameMatch) {
-                return nameMatch[1];
-            }
-            
-            return storeStr.replace(/[{}":]/g, '').replace(/STOREID[^,]*,?\s*/g, '').replace(/NAME/g, '').trim() || 'Unknown Store';
-        }
-        return String(store);
-    });
-    
-    selectedStores.value = [...new Set(allStores)];
+    const allStores = props.stores.map(store => extractStoreName(store));
+    selectedStores.value = [...new Set(allStores)].filter(store => store && store !== 'Unknown Store');
     showStoreDropdown.value = false;
 };
 
@@ -849,23 +930,28 @@ const closeFloatingMenu = () => {
 // Clear all filters
 const clearFilters = () => {
     selectedStores.value = [];
-    startDate.value = '';
-    endDate.value = '';
+    const today = new Date().toISOString().split('T')[0];
+    startDate.value = today;
+    endDate.value = today;
     closeFloatingMenu();
+    applyFilters();
 };
 
 onMounted(() => {
+    // Initialize with current data
+    currentData.value = props.ec || [];
+    
+    // Initialize filter values
     selectedStores.value = props.filters.selectedStores || [];
-    startDate.value = props.filters.startDate || '';
-    endDate.value = props.filters.endDate || '';
+    startDate.value = props.filters.startDate || new Date().toISOString().split('T')[0];
+    endDate.value = props.filters.endDate || new Date().toISOString().split('T')[0];
+    
+    // Debug store data (remove this after testing)
+    debugStoreData();
     
     window.addEventListener('resize', checkScreenSize);
     document.addEventListener('click', handleClickOutside);
     checkScreenSize();
-    
-    setTimeout(() => {
-        isTableLoading.value = false;
-    }, 500);
 });
 
 // Click outside handlers
@@ -881,31 +967,13 @@ onUnmounted(() => {
     if (longPressTimer.value) {
         clearTimeout(longPressTimer.value);
     }
-});
-
-const filteredData = computed(() => {
-    let filtered = [...props.ec];
-    
-    if (selectedStores.value.length > 0) {
-        filtered = filtered.filter(item => 
-            selectedStores.value.includes(item.storename)
-        );
+    if (dateChangeTimeout) {
+        clearTimeout(dateChangeTimeout);
     }
-    
-    if (startDate.value && endDate.value) {
-        filtered = filtered.filter(item => {
-            const itemDate = new Date(item.createddate);
-            const start = new Date(startDate.value);
-            const end = new Date(endDate.value);
-            return itemDate >= start && itemDate <= end;
-        });
-    }
-    
-    return filtered;
 });
 
 const footerTotals = computed(() => {
-    return filteredData.value.reduce((acc, row) => {
+    return currentData.value.reduce((acc, row) => {
         acc.total_discamount += (parseFloat(row.total_discamount) || 0);
         acc.total_costprice += (parseFloat(row.total_costprice) || 0);
         acc.total_netamount += (parseFloat(row.total_netamount) || 0);
@@ -964,240 +1032,46 @@ const footerTotals = computed(() => {
     });
 });
 
+// DataTable columns configuration
 const columns = [
-    { 
-        data: 'storename', 
-        title: 'Store', 
-        footer: 'Grand Total',
-        className: 'min-w-[100px] max-w-[120px] font-medium'
-    },
-    { 
-        data: 'staff', 
-        title: 'Staff', 
-        footer: '',
-        className: 'min-w-[100px] max-w-[140px]'
-    },
-    { 
-        data: 'createddate', 
-        title: 'Date', 
-        footer: '',
-        className: 'min-w-[85px] max-w-[100px] text-center'
-    },
-    { 
-        data: 'timeonly', 
-        title: 'Time', 
-        footer: '',
-        className: 'min-w-[70px] max-w-[80px] text-center'
-    },
-    { 
-        data: 'transactionid', 
-        title: 'Transaction ID', 
-        footer: '',
-        className: 'min-w-[120px] max-w-[140px] font-mono text-sm'
-    },
-    { 
-        data: 'receiptid', 
-        title: 'Receipt ID', 
-        footer: '',
-        className: 'min-w-[100px] max-w-[120px] font-mono text-sm'
-    },
-    { 
-        data: 'custaccount', 
-        title: 'Customer', 
-        footer: '',
-        className: 'min-w-[120px] max-w-[150px]'
-    },
-    { 
-        data: 'itemname', 
-        title: 'Item Name', 
-        footer: '',
-        className: 'min-w-[150px] max-w-[200px] font-medium'
-    },
-    { 
-        data: 'itemgroup', 
-        title: 'Item Group', 
-        footer: '',
-        className: 'min-w-[100px] max-w-[120px]'
-    },
-    { 
-        data: 'discofferid', 
-        title: 'PROMO', 
-        footer: '',
-        className: 'min-w-[100px] max-w-[200px] text-sm'
-    },
-    
-    // Columns with footer calculations
-    { 
-        data: 'qty', 
-        title: 'Qty',
-        render: (data) => Math.round(data || 0),
-        footer: '',
-        className: 'text-right min-w-[60px] max-w-[80px] font-semibold'
-    },
-    { 
-        data: 'total_costprice', 
-        title: 'Cost Price',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[90px] max-w-[110px]'
-    },
-    { 
-        data: 'total_grossamount', 
-        title: 'Gross Amount',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[100px] max-w-[120px] font-semibold'
-    },
-    { 
-        data: 'total_costamount', 
-        title: 'Cost Amount',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[100px] max-w-[120px]'
-    },
-    { 
-        data: 'total_discamount', 
-        title: 'Discount Amount',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[110px] max-w-[130px] text-red-600'
-    },
-    { 
-        data: 'total_netamount', 
-        title: 'Net Amount',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[100px] max-w-[120px] font-bold text-green-600'
-    },
-    { 
-        data: 'commission', 
-        title: 'Commission',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[100px] max-w-[120px] font-bold text-orange-600'
-    },
-    { 
-        data: 'vatablesales', 
-        title: 'Vatable Sales',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[100px] max-w-[120px]'
-    },
-    { 
-        data: 'vat', 
-        title: 'VAT',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[80px] max-w-[100px]'
-    },
-
+    { data: 'storename', title: 'Store', footer: 'Grand Total', className: 'min-w-[100px] max-w-[120px] font-medium' },
+    { data: 'staff', title: 'Staff', footer: '', className: 'min-w-[100px] max-w-[140px]' },
+    { data: 'createddate', title: 'Date', footer: '', className: 'min-w-[85px] max-w-[100px] text-center' },
+    { data: 'timeonly', title: 'Time', footer: '', className: 'min-w-[70px] max-w-[80px] text-center' },
+    { data: 'transactionid', title: 'Transaction ID', footer: '', className: 'min-w-[120px] max-w-[140px] font-mono text-sm' },
+    { data: 'receiptid', title: 'Receipt ID', footer: '', className: 'min-w-[100px] max-w-[120px] font-mono text-sm' },
+    { data: 'custaccount', title: 'Customer', footer: '', className: 'min-w-[120px] max-w-[150px]' },
+    { data: 'itemname', title: 'Item Name', footer: '', className: 'min-w-[150px] max-w-[200px] font-medium' },
+    { data: 'itemgroup', title: 'Item Group', footer: '', className: 'min-w-[100px] max-w-[120px]' },
+    { data: 'discofferid', title: 'PROMO', footer: '', className: 'min-w-[100px] max-w-[200px] text-sm' },
+    { data: 'qty', title: 'Qty', render: (data) => Math.round(data || 0), footer: '', className: 'text-right min-w-[60px] max-w-[80px] font-semibold' },
+    { data: 'total_costprice', title: 'Cost Price', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[90px] max-w-[110px]' },
+    { data: 'total_grossamount', title: 'Gross Amount', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[100px] max-w-[120px] font-semibold' },
+    { data: 'total_costamount', title: 'Cost Amount', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[100px] max-w-[120px]' },
+    { data: 'total_discamount', title: 'Discount Amount', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[110px] max-w-[130px] text-red-600' },
+    { data: 'total_netamount', title: 'Net Amount', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[100px] max-w-[120px] font-bold text-green-600' },
+    { data: 'commission', title: 'Commission', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[100px] max-w-[120px] font-bold text-orange-600' },
+    { data: 'vatablesales', title: 'Vatable Sales', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[100px] max-w-[120px]' },
+    { data: 'vat', title: 'VAT', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[80px] max-w-[100px]' },
     // Payment Method Columns
-    { 
-        data: 'cash', 
-        title: 'Cash',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[80px] max-w-[100px]'
-    },
-    { 
-        data: 'charge', 
-        title: 'Charge',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[80px] max-w-[100px]'
-    },
-    { 
-        data: 'representation', 
-        title: 'Representation',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[100px] max-w-[120px]'
-    },
-    { 
-        data: 'gcash', 
-        title: 'GCash',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[80px] max-w-[100px]'
-    },
-    { 
-        data: 'paymaya', 
-        title: 'PayMaya',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[80px] max-w-[100px]'
-    },
-    { 
-        data: 'card', 
-        title: 'Card',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[80px] max-w-[100px]'
-    },
-    { 
-        data: 'loyaltycard', 
-        title: 'Loyalty Card',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[90px] max-w-[110px]'
-    },
-    { 
-        data: 'foodpanda', 
-        title: 'FoodPanda',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[90px] max-w-[110px]'
-    },
-    { 
-        data: 'grabfood', 
-        title: 'GrabFood',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[90px] max-w-[110px]'
-    },
-    { 
-        data: 'mrktgdisc', 
-        title: 'Mktg Disc',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[80px] max-w-[100px] text-purple-600'
-    },
-    { 
-        data: 'rddisc', 
-        title: 'RD Disc',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[80px] max-w-[100px] text-blue-600'
-    },
-    { 
-        data: 'bw_products', 
-        title: 'BW PRODUCTS',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[100px] max-w-[120px]'
-    },
-    { 
-        data: 'merchandise', 
-        title: 'MERCHANDISE',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[100px] max-w-[120px]'
-    },
-    { 
-        data: 'partycakes', 
-        title: 'PARTYCAKES',
-        render: (data) => (parseFloat(data) || 0).toFixed(2),
-        footer: '',
-        className: 'text-right min-w-[100px] max-w-[120px]'
-    },
-    { 
-        data: 'remarks', 
-        title: 'NOTE', 
-        footer: '',
-        className: 'min-w-[120px] max-w-[150px] text-sm'
-    }
+    { data: 'cash', title: 'Cash', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[80px] max-w-[100px]' },
+    { data: 'charge', title: 'Charge', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[80px] max-w-[100px]' },
+    { data: 'representation', title: 'Representation', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[100px] max-w-[120px]' },
+    { data: 'gcash', title: 'GCash', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[80px] max-w-[100px]' },
+    { data: 'paymaya', title: 'PayMaya', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[80px] max-w-[100px]' },
+    { data: 'card', title: 'Card', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[80px] max-w-[100px]' },
+    { data: 'loyaltycard', title: 'Loyalty Card', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[90px] max-w-[110px]' },
+    { data: 'foodpanda', title: 'FoodPanda', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[90px] max-w-[110px]' },
+    { data: 'grabfood', title: 'GrabFood', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[90px] max-w-[110px]' },
+    { data: 'mrktgdisc', title: 'Mktg Disc', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[80px] max-w-[100px] text-purple-600' },
+    { data: 'rddisc', title: 'RD Disc', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[80px] max-w-[100px] text-blue-600' },
+    { data: 'bw_products', title: 'BW PRODUCTS', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[100px] max-w-[120px]' },
+    { data: 'merchandise', title: 'MERCHANDISE', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[100px] max-w-[120px]' },
+    { data: 'partycakes', title: 'PARTYCAKES', render: (data) => (parseFloat(data) || 0).toFixed(2), footer: '', className: 'text-right min-w-[100px] max-w-[120px]' },
+    { data: 'remarks', title: 'NOTE', footer: '', className: 'min-w-[120px] max-w-[150px] text-sm' }
 ];
 
+// DataTable options
 const options = {
     responsive: true,
     order: [[0, 'asc']],
@@ -1208,68 +1082,28 @@ const options = {
     autoWidth: false,
     columnDefs: [
         // Numeric columns - right align
-        { 
-            targets: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32], 
-            className: 'text-right'
-        },
+        { targets: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32], className: 'text-right' },
         // Date column - center align
         { targets: [2], className: 'text-center' },
         // Time column - center align  
         { targets: [3], className: 'text-center' }
     ],
     buttons: [
-        {
-            text: '<i class="fas fa-copy"></i> Copy',
-            extend: 'copy',
-            className: 'btn-export btn-copy'
-        },
-        {
-            text: '<i class="fas fa-file-excel"></i> Excel',
-            action: function(e, dt, node, config) {
-                exportToExcel(dt);
-            },
-            className: 'btn-export btn-excel'
-        },
-        {
-            text: '<i class="fas fa-file-pdf"></i> PDF',
-            extend: 'pdf',
-            className: 'btn-export btn-pdf'
-        },
-        {
-            text: '<i class="fas fa-print"></i> Print',
-            extend: 'print',
-            className: 'btn-export btn-print'
-        }
+        { text: '<i class="fas fa-copy"></i> Copy', extend: 'copy', className: 'btn-export btn-copy' },
+        { text: '<i class="fas fa-file-excel"></i> Excel', action: function(e, dt, node, config) { exportToExcel(dt); }, className: 'btn-export btn-excel' },
+        { text: '<i class="fas fa-file-pdf"></i> PDF', extend: 'pdf', className: 'btn-export btn-pdf' },
+        { text: '<i class="fas fa-print"></i> Print', extend: 'print', className: 'btn-export btn-print' }
     ],
     drawCallback: function(settings) {
         const api = new DataTablesCore.Api(settings);
-        isTableLoading.value = false;
         
         // Initialize totals object for filtered data
         const filteredTotals = {
-            total_qty: 0,
-            total_costprice: 0,
-            total_grossamount: 0,
-            total_costamount: 0,
-            total_discamount: 0,
-            total_netamount: 0,
-            commission: 0,
-            vatablesales: 0,
-            vat: 0,
-            cash: 0,
-            charge: 0,
-            representation: 0,
-            gcash: 0,
-            paymaya: 0,
-            card: 0,
-            loyaltycard: 0,
-            foodpanda: 0,
-            grabfood: 0,
-            mrktgdisc: 0,
-            rddisc: 0,
-            bw_products: 0,
-            merchandise: 0,
-            partycakes: 0
+            total_qty: 0, total_costprice: 0, total_grossamount: 0, total_costamount: 0,
+            total_discamount: 0, total_netamount: 0, commission: 0, vatablesales: 0, vat: 0,
+            cash: 0, charge: 0, representation: 0, gcash: 0, paymaya: 0, card: 0,
+            loyaltycard: 0, foodpanda: 0, grabfood: 0, mrktgdisc: 0, rddisc: 0,
+            bw_products: 0, merchandise: 0, partycakes: 0
         };
 
         // Calculate totals only for filtered/searched rows
@@ -1300,15 +1134,12 @@ const options = {
             filteredTotals.partycakes += Number(data.partycakes) || 0;
         });
 
-        // Helper function to format numbers with commas and 2 decimal places
+        // Helper function to format numbers
         function formatNumber(num, isInteger = false) {
             if (isInteger) {
                 return Math.round(num).toLocaleString('en-US');
             }
-            return num.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
+            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         // Update footer with new totals
@@ -1352,6 +1183,41 @@ const options = {
             });
         }
     }
+};
+
+const extractStoreName = (store) => {
+    if (typeof store === 'string') {
+        return store;
+    }
+    
+    if (typeof store === 'object' && store !== null) {
+        // Check for NAME property first (most common)
+        if (store.NAME) {
+            return store.NAME;
+        }
+        // Check for other possible name properties
+        if (store.name) {
+            return store.name;
+        }
+        if (store.storename) {
+            return store.storename;
+        }
+        if (store.store_name) {
+            return store.store_name;
+        }
+        
+        // If no direct property found, try to parse JSON string representation
+        const storeStr = JSON.stringify(store);
+        const nameMatch = storeStr.match(/"NAME"\s*:\s*"([^"]+)"/);
+        if (nameMatch) {
+            return nameMatch[1];
+        }
+        
+        // Last resort - clean up the string representation
+        return storeStr.replace(/[{}":]/g, '').replace(/STOREID[^,]*,?\s*/g, '').replace(/NAME/g, '').trim() || 'Unknown Store';
+    }
+    
+    return String(store);
 };
 
 // Export functions for mobile menu
@@ -1412,19 +1278,15 @@ const exportToExcel = (dt) => {
     // Style the header row
     const headerRow = worksheet.getRow(1);
     headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    headerRow.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FF4F46E5' }
-    };
+    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } };
 
-    // Get filtered data from DataTable or use filteredData
-    let dataToExport = filteredData.value;
+    // Get current data to export
+    let dataToExport = currentData.value;
     if (dt) {
         dataToExport = dt.rows({ search: 'applied' }).data().toArray();
     }
     
-    // Add filtered data to worksheet
+    // Add data to worksheet
     dataToExport.forEach(row => {
         worksheet.addRow({
             storename: row.storename || '',
@@ -1464,136 +1326,64 @@ const exportToExcel = (dt) => {
         });
     });
 
-    // Calculate totals for filtered data
-    const filteredTotals = dataToExport.reduce((acc, row) => ({
-        total_qty: acc.total_qty + Math.round(Number(row.qty) || 0),
-        total_costprice: acc.total_costprice + Number(row.total_costprice || 0),
-        total_grossamount: acc.total_grossamount + Number(row.total_grossamount || 0),
-        total_costamount: acc.total_costamount + Number(row.total_costamount || 0),
-        total_discamount: acc.total_discamount + Number(row.total_discamount || 0),
-        total_netamount: acc.total_netamount + Number(row.total_netamount || 0),
-        commission: acc.commission + Number(row.commission || 0),
-        vatablesales: acc.vatablesales + Number(row.vatablesales || 0),
-        vat: acc.vat + Number(row.vat || 0),
-        cash: acc.cash + Number(row.cash || 0),
-        charge: acc.charge + Number(row.charge || 0),
-        representation: acc.representation + Number(row.representation || 0),
-        gcash: acc.gcash + Number(row.gcash || 0),
-        paymaya: acc.paymaya + Number(row.paymaya || 0),
-        card: acc.card + Number(row.card || 0),
-        loyaltycard: acc.loyaltycard + Number(row.loyaltycard || 0),
-        foodpanda: acc.foodpanda + Number(row.foodpanda || 0),
-        grabfood: acc.grabfood + Number(row.grabfood || 0),
-        mrktgdisc: acc.mrktgdisc + Number(row.mrktgdisc || 0),
-        rddisc: acc.rddisc + Number(row.rddisc || 0),
-        bw_products: acc.bw_products + Number(row.bw_products || 0),
-        merchandise: acc.merchandise + Number(row.merchandise || 0),
-        partycakes: acc.partycakes + Number(row.partycakes || 0)
-    }), {
-        total_qty: 0,
-        total_costprice: 0,
-        total_grossamount: 0,
-        total_costamount: 0,
-        total_discamount: 0,
-        total_netamount: 0,
-        commission: 0,
-        vatablesales: 0,
-        vat: 0,
-        cash: 0,
-        charge: 0,
-        representation: 0,
-        gcash: 0,
-        paymaya: 0,
-        card: 0,
-        loyaltycard: 0,
-        foodpanda: 0,
-        grabfood: 0,
-        mrktgdisc: 0,
-        rddisc: 0,
-        bw_products: 0,
-        merchandise: 0,
-        partycakes: 0
-    });
+    // Calculate totals for the current data
+    const totals = footerTotals.value;
 
     // Add totals row
     const totalsRow = worksheet.addRow({
         storename: 'GRAND TOTAL',
-        staff: '',
-        createddate: '',
-        timeonly: '',
-        transactionid: '',
-        receiptid: '',
-        custaccount: '',
-        itemname: '',
-        itemgroup: '',
-        discofferid: '',
-        qty: filteredTotals.total_qty,
-        total_costprice: filteredTotals.total_costprice,
-        total_grossamount: filteredTotals.total_grossamount,
-        total_costamount: filteredTotals.total_costamount,
-        total_discamount: filteredTotals.total_discamount,
-        total_netamount: filteredTotals.total_netamount,
-        commission: filteredTotals.commission,
-        vatablesales: filteredTotals.vatablesales,
-        vat: filteredTotals.vat,
-        cash: filteredTotals.cash,
-        charge: filteredTotals.charge,
-        representation: filteredTotals.representation,
-        gcash: filteredTotals.gcash,
-        paymaya: filteredTotals.paymaya,
-        card: filteredTotals.card,
-        loyaltycard: filteredTotals.loyaltycard,
-        foodpanda: filteredTotals.foodpanda,
-        grabfood: filteredTotals.grabfood,
-        mrktgdisc: filteredTotals.mrktgdisc,
-        rddisc: filteredTotals.rddisc,
-        bw_products: filteredTotals.bw_products,
-        merchandise: filteredTotals.merchandise,
-        partycakes: filteredTotals.partycakes,
+        staff: '', createddate: '', timeonly: '', transactionid: '', receiptid: '', custaccount: '', itemname: '', itemgroup: '', discofferid: '',
+        qty: totals.total_qty,
+        total_costprice: totals.total_costprice,
+        total_grossamount: totals.total_grossamount,
+        total_costamount: totals.total_costamount,
+        total_discamount: totals.total_discamount,
+        total_netamount: totals.total_netamount,
+        commission: totals.commission,
+        vatablesales: totals.vatablesales,
+        vat: totals.vat,
+        cash: totals.cash,
+        charge: totals.charge,
+        representation: totals.representation,
+        gcash: totals.gcash,
+        paymaya: totals.paymaya,
+        card: totals.card,
+        loyaltycard: totals.loyaltycard,
+        foodpanda: totals.foodpanda,
+        grabfood: totals.grabfood,
+        mrktgdisc: totals.mrktgdisc,
+        rddisc: totals.rddisc,
+        bw_products: totals.bw_products,
+        merchandise: totals.merchandise,
+        partycakes: totals.partycakes,
         remarks: ''
     });
 
     // Style totals row
     totalsRow.font = { bold: true };
-    totalsRow.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FFE5E7EB' }
-    };
+    totalsRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
 
     // Format date cells
     worksheet.getColumn('createddate').numFmt = 'yyyy-mm-dd';
 
     // Add autofilter
-    worksheet.autoFilter = {
-        from: { row: 1, column: 1 },
-        to: { row: 1, column: worksheet.columns.length }
-    };
+    worksheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: worksheet.columns.length } };
 
     // Apply borders to all cells
     worksheet.eachRow((row, rowNumber) => {
         row.eachCell((cell) => {
-            cell.border = {
-                top: { style: 'thin' },
-                left: { style: 'thin' },
-                bottom: { style: 'thin' },
-                right: { style: 'thin' }
-            };
+            cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
         });
     });
 
     // Freeze the header row
-    worksheet.views = [
-        { state: 'frozen', xSplit: 0, ySplit: 1, topLeftCell: 'A2', activeCell: 'A2' }
-    ];
+    worksheet.views = [{ state: 'frozen', xSplit: 0, ySplit: 1, topLeftCell: 'A2', activeCell: 'A2' }];
 
     // Generate and download the file
     try {
         workbook.xlsx.writeBuffer()
             .then(buffer => {
-                const blob = new Blob([buffer], { 
-                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-                });
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
@@ -1605,19 +1395,11 @@ const exportToExcel = (dt) => {
             })
             .catch(error => {
                 console.error('Error generating Excel file:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Export Failed',
-                    text: 'Failed to generate Excel file. Please try again.'
-                });
+                Swal.fire({ icon: 'error', title: 'Export Failed', text: 'Failed to generate Excel file. Please try again.' });
             });
     } catch (error) {
         console.error('Error in Excel export:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Export Failed',
-            text: 'An error occurred while exporting to Excel.'
-        });
+        Swal.fire({ icon: 'error', title: 'Export Failed', text: 'An error occurred while exporting to Excel.' });
     }
     
     closeFloatingMenu();
@@ -1642,347 +1424,90 @@ const printReport = () => {
     }
     closeFloatingMenu();
 };
-
-const formatCurrency = (value) => {
-    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-};
 </script>
 
 <style scoped>
-/* Enhanced table styling */
-.enhanced-table {
-    font-size: 13px;
-    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-}
-
-.enhanced-table :deep(.dataTable) {
-    width: 100% !important;
-    border-collapse: collapse;
-    border-spacing: 0;
-    margin-top: 0;
-    table-layout: auto;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.enhanced-table :deep(.dataTable thead th) {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    color: #ffffff;
-    padding: 16px 12px;
-    border-bottom: 3px solid #0ea5e9;
-    font-weight: 600;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    font-size: 13px;
-    white-space: nowrap;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.enhanced-table :deep(.dataTable tbody tr) {
-    border-bottom: 1px solid #e2e8f0;
-    transition: all 0.2s ease;
-}
-
-.enhanced-table :deep(.dataTable tbody tr:nth-child(odd)) {
-    background-color: #ffffff;
-}
-
-.enhanced-table :deep(.dataTable tbody tr:nth-child(even)) {
-    background-color: #f8fafc;
-}
-
-.enhanced-table :deep(.dataTable tbody tr:hover) {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    transform: scale(1.01);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-    cursor: pointer;
-}
-
-.enhanced-table :deep(.dataTable th),
-.enhanced-table :deep(.dataTable td) {
-    padding: 12px 10px;
-    text-align: left;
-    border: 1px solid #e2e8f0;
-    font-size: 12px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: middle;
-}
-
-/* Color coding for different types of data */
-.enhanced-table :deep(.dataTable .text-green-600) {
-    color: #059669 !important;
-    font-weight: 600;
-}
-
-.enhanced-table :deep(.dataTable .text-red-600) {
-    color: #dc2626 !important;
-    font-weight: 600;
-}
-
-.enhanced-table :deep(.dataTable .text-orange-600) {
-    color: #ea580c !important;
-    font-weight: 600;
-}
-
-.enhanced-table :deep(.dataTable .text-purple-600) {
-    color: #9333ea !important;
-    font-weight: 600;
-}
-
-.enhanced-table :deep(.dataTable .text-blue-600) {
-    color: #2563eb !important;
-    font-weight: 600;
-}
-
-/* Enhanced footer styling */
-.enhanced-table :deep(.dataTable tfoot) {
-    background: linear-gradient(135deg, #7c2d12 0%, #991b1b 100%);
-    color: white !important;
-    font-weight: bold;
-    text-align: center;
-    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.enhanced-table :deep(.dataTable tfoot td),
-.enhanced-table :deep(.dataTable tfoot th) {
-    padding: 16px 12px !important;
-    font-size: 13px !important;
-    font-weight: bold !important;
-    background: linear-gradient(135deg, #7c2d12 0%, #991b1b 100%) !important;
-    color: white !important;
-    border: 1px solid #92400e !important;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* Enhanced button styling */
-.enhanced-table :deep(.dt-buttons) {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    position: absolute;
-    z-index: 1000;
-    margin: 20px;
-    right: 0;
-    top: 0;
-    gap: 12px;
-}
-
-.enhanced-table :deep(.btn-export) {
-    padding: 12px 20px !important;
-    margin: 0 !important;
-    border-radius: 10px !important;
-    color: white !important;
-    border: none !important;
-    cursor: pointer !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-    transition: all 0.3s ease !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-width: 100px !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-}
-
-.enhanced-table :deep(.btn-copy) {
-    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
-}
-
-.enhanced-table :deep(.btn-excel) {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-}
-
-.enhanced-table :deep(.btn-pdf) {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
-}
-
-.enhanced-table :deep(.btn-print) {
-    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
-}
-
-.enhanced-table :deep(.btn-export:hover) {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2) !important;
-}
-
-.enhanced-table :deep(.btn-export:active) {
-    transform: translateY(0px) !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Enhanced search and pagination */
-.enhanced-table :deep(.dataTables_filter) {
-    float: right;
-    padding: 20px;
-    position: relative;
-    z-index: 999;
-    margin-right: 220px;
-}
-
-.enhanced-table :deep(.dataTables_filter input) {
-    padding: 10px 16px;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    margin-left: 8px;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    background: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.enhanced-table :deep(.dataTables_filter input:focus) {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    outline: none;
-}
-
-.enhanced-table :deep(.dataTables_wrapper .dataTables_paginate) {
-    padding: 20px;
-    text-align: right;
-}
-
-.enhanced-table :deep(.dataTables_wrapper .dataTables_paginate .paginate_button) {
-    margin-left: 8px;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    border: 1px solid #e2e8f0;
-    background: white;
-    transition: all 0.2s ease;
-}
-
-.enhanced-table :deep(.dataTables_wrapper .dataTables_paginate .paginate_button:hover) {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-}
-
-.enhanced-table :deep(.dataTables_wrapper .dataTables_paginate .paginate_button.current) {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    color: white !important;
-    border-color: #2563eb;
-}
-
-.enhanced-table :deep(.dataTables_wrapper .dataTables_info) {
-    padding: 20px;
-    font-size: 14px;
-    color: #64748b;
-    font-weight: 500;
-}
-
-/* Mobile long press visual feedback */
-@media (max-width: 768px) {
-    .mobile-item:active,
-    .mobile-item.touching {
-        background-color: #dbeafe !important;
-        transform: scale(0.98);
-        transition: all 0.1s ease;
-    }
-    
-    .mobile-sales-item {
-        user-select: none;
-        -webkit-user-select: none;
-        -webkit-touch-callout: none;
-        -webkit-tap-highlight-color: transparent;
-    }
-    
-    .mobile-sales-item:active {
-        background-color: #dbeafe !important;
-        transform: scale(0.98);
-    }
-    
-    .long-press-indicator {
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .long-press-indicator::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
-        transition: left 0.5s ease;
-    }
-    
-    .long-press-indicator.pressing::before {
-        left: 100%;
-    }
-}
-
-/* Enhanced scrollbar styling */
-.enhanced-table :deep(.dataTables_scrollBody::-webkit-scrollbar) {
-    height: 10px;
-    width: 10px;
-}
-
-.enhanced-table :deep(.dataTables_scrollBody::-webkit-scrollbar-track) {
-    background: #f1f5f9;
-    border-radius: 5px;
-}
-
-.enhanced-table :deep(.dataTables_scrollBody::-webkit-scrollbar-thumb) {
-    background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
-    border-radius: 5px;
-}
-
-.enhanced-table :deep(.dataTables_scrollBody::-webkit-scrollbar-thumb:hover) {
-    background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
-}
-
 /* Store dropdown styling */
 .store-dropdown-container .relative > div {
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     border: 1px solid #e2e8f0;
 }
 
-/* Loading spinner */
-.loading-spinner {
+/* Smooth transitions for dropdown arrow */
+.transition-transform {
+    transition: transform 0.2s ease-in-out;
+}
+
+.rotate-180 {
+    transform: rotate(180deg);
+}
+
+/* Ensure proper z-index layering */
+.z-40 {
+    z-index: 40;
+}
+
+.z-50 {
+    z-index: 50;
+}
+
+/* Enhanced scrollbar for dropdown */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Mobile long press animation */
+.mobile-sales-item.touching {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+}
+
+.mobile-sales-item.pressing {
+    background-color: #e0f2fe;
+    animation: longPressIndicator 0.5s ease-in-out;
+}
+
+@keyframes longPressIndicator {
+    0% { 
+        background-color: #f9fafb; 
+        border-left: 4px solid transparent;
+    }
+    100% { 
+        background-color: #e0f2fe; 
+        border-left: 4px solid #2563eb;
+    }
+}
+
+/* Quick date buttons active state */
+.bg-blue-600 {
+    background-color: #2563eb;
+}
+
+/* Loading animation improvements */
+.animate-spin {
     animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* Gradient backgrounds for cards */
-.bg-gradient-to-br {
-    background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
-}
-
-/* Smooth transitions */
-.transition-smooth {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Enhanced card hover effects */
-.card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-/* Floating menu animation */
-.floating-menu-enter-active,
-.floating-menu-leave-active {
-    transition: all 0.3s ease;
-}
-
-.floating-menu-enter-from,
-.floating-menu-leave-to {
-    opacity: 0;
-    transform: translateY(10px) scale(0.95);
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 </style>

@@ -48,7 +48,7 @@ onMounted(() => {
                             Sign In
                         </Link>
                         <Link :href="route('register')" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
-                            Licence
+                            License
                         </Link>
                     </template>
                 </div>
