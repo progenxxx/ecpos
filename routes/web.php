@@ -67,7 +67,8 @@ use App\Http\Controllers\{
     StockTransferController,
     AttendanceController,
     ImportProductsController,
-    Discountv2Controller
+    Discountv2Controller,
+    ChatBotController
 };
 
 Route::get('/', function () {
@@ -183,10 +184,24 @@ Route::middleware(['auth', 'role:ADMIN,SUPERADMIN'])->group(function () {
     Route::get('/autopost', [ItemOrderController::class, 'autopost'])->name('autopost');
 
     Route::get('/get-stores', [HomeController::class, 'getStores'])->name('get.stores');
+    Route::get('/get-products', [HomeController::class, 'getProducts'])->name('get.products');
+    Route::get('/get-categories', [HomeController::class, 'getCategories'])->name('get.categories');
     Route::post('/get-metrics', [HomeController::class, 'getMetrics'])->name('get.metrics');
     Route::post('/get-top-bottom-products', [HomeController::class, 'getTopBottomProducts'])->name('get.top.bottom.products');
     Route::post('/get-monthly-sales', [HomeController::class, 'getMonthlySales'])->name('get.monthly.sales');
     Route::post('/get-top-wastes', [HomeController::class, 'getTopWastes'])->name('get.top.wastes');
+    Route::post('/get-transaction-sales', [HomeController::class, 'getTransactionSales'])->name('get.transaction.sales');
+    Route::post('/get-sales-by-hour', [HomeController::class, 'getSalesByHour'])->name('get.sales.by.hour');
+    Route::post('/get-top-stores', [HomeController::class, 'getTopStores'])->name('get.top.stores');
+    Route::post('/get-advanced-analysis', [HomeController::class, 'getAdvancedAnalysis'])->name('get.advanced.analysis');
+    Route::post('/get-received-delivery-vs-sales', [HomeController::class, 'getReceivedDeliveryVsSales'])->name('get.received.delivery.vs.sales');
+    Route::post('/get-sales-by-category', [HomeController::class, 'getSalesByCategory'])->name('get.sales.by.category');
+    Route::post('/get-top-variance-stores', [HomeController::class, 'getTopVarianceStores'])->name('get.top.variance.stores');
+
+    // ChatBot routes
+    Route::post('/chatbot/send-message', [ChatBotController::class, 'sendMessage'])->name('chatbot.send.message');
+    Route::get('/chatbot/sample-questions', [ChatBotController::class, 'getSampleQuestions'])->name('chatbot.sample.questions');
+    Route::get('/chatbot/welcome', [ChatBotController::class, 'getWelcomeMessage'])->name('chatbot.welcome');
 
     Route::resource('attendance', AttendanceController::class);
 
@@ -198,6 +213,10 @@ Route::middleware(['auth', 'role:ADMIN,SUPERADMIN'])->group(function () {
 
     Route::post('/inventory/sync-variance', [ECReportController::class, 'syncInventoryVariance'])->name('inventory.sync-variance');
     Route::post('/inventory/sync-status', [ECReportController::class, 'getSyncStatus'])->name('inventory.sync-status');
+    
+    // Import count functionality routes
+    Route::post('/inventory/download-count-template', [ECReportController::class, 'downloadCountTemplate'])->name('inventory.download-template');
+    Route::post('/inventory/import-count-data', [ECReportController::class, 'importCountData'])->name('inventory.import-count');
 
     /* Route::resource('discountsv2', Discountv2Controller::class);
     Route::get('/api/discountsv2', [Discountv2Controller::class, 'getDiscounts'])->name('discounts.api');

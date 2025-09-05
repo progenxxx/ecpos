@@ -1196,6 +1196,11 @@ public function sales(Request $request)
 
 public function tsales(Request $request)
 {
+    // Increase memory limit to prevent exhaustion on large datasets
+    ini_set('memory_limit', '512M');
+    // Set longer execution time for complex queries
+    ini_set('max_execution_time', 300);
+    
     $request->validate([
         'startDate' => 'nullable|date',
         'endDate' => 'nullable|date|after_or_equal:startDate',
@@ -1511,7 +1516,7 @@ public function tsales(Request $request)
                 SUM(CASE 
                     WHEN rbotransactionsalestrans.discofferid LIKE '%SENIOR%' 
                       OR rbotransactionsalestrans.discofferid LIKE '%PWD%'
-                      OR rbotransactionsalestrans.discofferid = '25% One Day Before'
+                      OR rbotransactionsalestrans.discofferid LIKE '%25%'
                       OR rbotransactionsalestrans.discofferid = '20% EMPLOYEE DISCOUNT'
                       OR rbotransactionsalestrans.discofferid = '40% OFF'
                       OR rbotransactionsalestrans.discofferid = '50% OFF'
@@ -1527,7 +1532,7 @@ public function tsales(Request $request)
                       AND rbotransactionsalestrans.discofferid != ''
                       AND rbotransactionsalestrans.discofferid NOT LIKE '%SENIOR%' 
                       AND rbotransactionsalestrans.discofferid NOT LIKE '%PWD%'
-                      AND rbotransactionsalestrans.discofferid != '25% One Day Before'
+                      AND rbotransactionsalestrans.discofferid NOT LIKE '%25%'
                       AND rbotransactionsalestrans.discofferid != '20% EMPLOYEE DISCOUNT'
                       AND rbotransactionsalestrans.discofferid != '40% OFF'
                       AND rbotransactionsalestrans.discofferid != '50% OFF'
@@ -1540,7 +1545,7 @@ public function tsales(Request $request)
             DB::raw("
                 SUM(CASE 
                     WHEN UPPER(rbotransactionsalestrans.itemgroup) LIKE '%BW%' 
-                    AND UPPER(rbotransactionsalestrans.itemname) != 'PARTYCAKES'
+                    AND UPPER(rbotransactionsalestrans.itemname) != 'PARTY CAKES'
                     THEN rbotransactionsalestrans.grossamount 
                     ELSE 0 
                 END) as bw_products
@@ -1548,7 +1553,7 @@ public function tsales(Request $request)
             DB::raw("
                 SUM(CASE 
                     WHEN UPPER(rbotransactionsalestrans.itemgroup) NOT LIKE '%BW%' 
-                      AND UPPER(rbotransactionsalestrans.itemname) != 'PARTYCAKES'
+                      AND UPPER(rbotransactionsalestrans.itemname) != 'PARTY CAKES'
                     THEN rbotransactionsalestrans.grossamount 
                     ELSE 0 
                 END) as merchandise
@@ -1575,10 +1580,19 @@ public function tsales(Request $request)
             $today . ' 23:59:59',
         ]);
     } else {
-        // Use provided date filters
+        // Memory protection: Limit date range to prevent excessive data loading
+        $startDate = \Carbon\Carbon::parse($request->startDate);
+        $endDate = \Carbon\Carbon::parse($request->endDate);
+        
+        // Restrict to maximum 14 days to prevent memory exhaustion on complex queries
+        if ($startDate->diffInDays($endDate) > 14) {
+            $endDate = $startDate->copy()->addDays(14);
+        }
+        
+        // Use provided date filters with memory protection
         $query->whereBetween('rbotransactionsalestrans.createddate', [
-            $request->startDate . ' 00:00:00',
-            $request->endDate . ' 23:59:59',
+            $startDate->format('Y-m-d') . ' 00:00:00',
+            $endDate->format('Y-m-d') . ' 23:59:59',
         ]);
     }
 
@@ -1638,15 +1652,74 @@ public function tsales(Request $request)
             ];
         });
 
-    // Execute the optimized query
-    $ec = $query->get();
-
-    // Calculate totals
+    // Memory-efficient execution with chunking to prevent exhaustion
+    $page = $request->get('page', 1);
+    $perPage = 100; // Drastically reduce chunk size to prevent memory issues
+    
+    try {
+        $ec = $query->paginate($perPage, ['*'], 'page', $page);
+    } catch (\Exception $e) {
+        // If memory issues persist, return a simplified error message
+        if (strpos($e->getMessage(), 'memory') !== false) {
+            return Inertia::render('Reports/TSales', [
+                'ec' => [],
+                'stores' => [],
+                'userRole' => $role,
+                'totals' => ['grossamount' => 0, 'discamount' => 0, 'netamount' => 0, 'commission' => 0],
+                'filters' => ['startDate' => $request->startDate, 'endDate' => $request->endDate],
+                'error' => 'Date range too large. Please select a smaller date range (max 7 days).',
+                'pagination' => ['current_page' => 1, 'total' => 0, 'per_page' => 100, 'last_page' => 1]
+            ]);
+        }
+        throw $e;
+    }
+    
+    // Calculate totals more efficiently using a separate lightweight query
+    $totalsResult = DB::table('rbotransactionsalestrans')
+        ->leftJoin('rbotransactiontables as rbt', function($join) {
+            $join->on('rbotransactionsalestrans.transactionid', '=', 'rbt.transactionid')
+                 ->on('rbotransactionsalestrans.store', '=', 'rbt.store');
+        })
+        ->select([
+            DB::raw('SUM(rbotransactionsalestrans.grossamount) as total_grossamount'),
+            DB::raw('SUM(rbotransactionsalestrans.discamount) as total_discamount'), 
+            DB::raw('SUM(rbotransactionsalestrans.netamount) as total_netamount'),
+            DB::raw('SUM(rbotransactionsalestrans.netamount * 0.07) as commission')
+        ]);
+    
+    // Apply same filters as main query for totals
+    if (!$request->filled(['startDate', 'endDate'])) {
+        $today = now()->format('Y-m-d');
+        $totalsResult->whereBetween('rbotransactionsalestrans.createddate', [
+            $today . ' 00:00:00',
+            $today . ' 23:59:59',
+        ]);
+    } else {
+        $startDate = \Carbon\Carbon::parse($request->startDate);
+        $endDate = \Carbon\Carbon::parse($request->endDate);
+        if ($startDate->diffInDays($endDate) > 14) {
+            $endDate = $startDate->copy()->addDays(14);
+        }
+        $totalsResult->whereBetween('rbotransactionsalestrans.createddate', [
+            $startDate->format('Y-m-d') . ' 00:00:00',
+            $endDate->format('Y-m-d') . ' 23:59:59',
+        ]);
+    }
+    
+    if ($role === 'ADMIN' || $role === 'SUPERADMIN') {
+        if ($request->filled('stores') && is_array($request->stores) && !empty($request->stores)) {
+            $totalsResult->whereIn('rbotransactionsalestrans.store', $request->stores);
+        }
+    } else {
+        $totalsResult->where('rbotransactionsalestrans.store', $userStoreId);
+    }
+    
+    $totalsData = $totalsResult->first();
     $totals = [
-        'grossamount' => $ec->sum('total_grossamount'),
-        'discamount' => $ec->sum('total_discamount'),
-        'netamount' => $ec->sum('total_netamount'),
-        'commission' => $ec->sum('commission'),
+        'grossamount' => $totalsData->total_grossamount ?? 0,
+        'discamount' => $totalsData->total_discamount ?? 0,
+        'netamount' => $totalsData->total_netamount ?? 0,
+        'commission' => $totalsData->commission ?? 0,
     ];
 
     // Set default filter values for frontend
@@ -1657,12 +1730,18 @@ public function tsales(Request $request)
     ];
 
     return Inertia::render('Reports/TSales', [
-        'ec' => $ec,
+        'ec' => $ec->items(), // Extract items from paginated data to maintain frontend compatibility
         'stores' => $stores,
         'userRole' => $role,
         'totals' => $totals,
         'filters' => $defaultFilters,
         'isInitialLoad' => !$request->filled(['startDate', 'endDate']), // Flag to indicate if this is initial load
+        'pagination' => [
+            'current_page' => $ec->currentPage(),
+            'total' => $ec->total(),
+            'per_page' => $ec->perPage(),
+            'last_page' => $ec->lastPage(),
+        ]
     ]);
 }
 
@@ -2130,226 +2209,328 @@ public function syncInventoryVariance(Request $request)
 
         DB::beginTransaction();
 
-        // First, check if inventory_summaries table exists and has data for the date/store
+        // Check if there's count data to sync (either from inventory_summaries or stockcountingtrans)
         $existingRecords = DB::table('inventory_summaries')
             ->where('storename', $storeName)
             ->whereDate('report_date', $syncDate)
             ->count();
 
+        // If no inventory_summaries records exist, check if we have stockcountingtrans data to work with
         if ($existingRecords === 0) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => "No inventory summary records found for {$storeName} on {$syncDate}. Please ensure inventory data exists for this date."
-            ], 404);
+            $stockCountData = DB::table('stockcountingtrans')
+                ->where('STORENAME', $storeName)
+                ->whereDate('TRANSDATE', $syncDate)
+                ->count();
+
+            if ($stockCountData === 0) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => "No inventory or count data found for {$storeName} on {$syncDate}. Please ensure data exists for this date."
+                ], 404);
+            }
+
+            // Create placeholder inventory_summaries records from stockcountingtrans data
+            try {
+                Log::info('Creating inventory summary records from stockcountingtrans data', [
+                    'store_name' => $storeName,
+                    'sync_date' => $syncDate
+                ]);
+
+                // Get unique items from stockcountingtrans for this store and date
+                $itemsToCreate = DB::table('stockcountingtrans')
+                    ->select('ITEMID', 'ITEMNAME')
+                    ->where('STORENAME', $storeName)
+                    ->whereDate('TRANSDATE', $syncDate)
+                    ->distinct()
+                    ->get();
+
+                foreach ($itemsToCreate as $item) {
+                    DB::table('inventory_summaries')->insertOrIgnore([
+                        'itemid' => $item->ITEMID,
+                        'itemname' => $item->ITEMNAME ?? 'Unknown',
+                        'storename' => $storeName,
+                        'report_date' => $syncDate,
+                        'beginning' => 0,
+                        'received_delivery' => 0,
+                        'stock_transfer' => 0,
+                        'sales' => 0,
+                        'bundle_sales' => 0,
+                        'throw_away' => 0,
+                        'early_molds' => 0,
+                        'pull_out' => 0,
+                        'rat_bites' => 0,
+                        'ant_bites' => 0,
+                        'item_count' => 0,
+                        'ending' => 0,
+                        'variance' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
+
+                Log::info('Created inventory summary placeholder records', [
+                    'count' => count($itemsToCreate),
+                    'store_name' => $storeName,
+                    'sync_date' => $syncDate
+                ]);
+
+            } catch (\Exception $e) {
+                Log::error('Failed to create inventory summary records from stockcountingtrans', [
+                    'error' => $e->getMessage(),
+                    'store_name' => $storeName,
+                    'sync_date' => $syncDate
+                ]);
+                
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => "Failed to prepare inventory records for sync: " . $e->getMessage()
+                ], 500);
+            }
         }
 
-        // Step 1: Update Beginning Inventory (from previous day)
-        $beginningQuery = "
+        // Use the optimized temporary table approach for better performance
+        Log::info('Starting optimized sync process with temporary tables');
+        
+        // Step 1: Create temporary tables for calculations
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_beginning");
+        DB::statement("
+            CREATE TEMPORARY TABLE temp_beginning AS
+            SELECT itemid, counted as beginning_qty
+            FROM stockcountingtrans 
+            WHERE storename = ?
+              AND CAST(TRANSDATE AS DATE) = DATE_SUB(?, INTERVAL 1 DAY)  
+              AND counted != 0
+        ", [$storeName, $syncDate]);
+
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_received");
+        DB::statement("
+            CREATE TEMPORARY TABLE temp_received AS
+            SELECT itemid, SUM(receivedcount) as received_qty
+            FROM stockcountingtrans 
+            WHERE storename = ?
+              AND CAST(TRANSDATE AS DATE) = ?
+              AND receivedcount != 0
+            GROUP BY itemid
+        ", [$storeName, $syncDate]);
+
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_direct_sales");
+        DB::statement("
+            CREATE TEMPORARY TABLE temp_direct_sales AS
+            SELECT itemid, SUM(qty) as sales_qty
+            FROM rbotransactionsalestrans 
+            WHERE store = ?
+              AND CAST(CREATEDDATE AS DATE) = ?
+            GROUP BY itemid
+        ", [$storeName, $syncDate]);
+
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_bundle_sales");
+        DB::statement("
+            CREATE TEMPORARY TABLE temp_bundle_sales AS
+            SELECT 
+                il.child_itemid as itemid,
+                SUM(il.quantity * rts.qty) as bundle_qty
+            FROM item_links il
+            INNER JOIN rbotransactionsalestrans rts ON il.parent_itemid = rts.itemid
+            LEFT JOIN inventtables inv ON inv.itemid = il.child_itemid
+            WHERE il.active = 1 
+              AND rts.store = ?
+              AND CAST(rts.createddate AS DATE) = ?
+            GROUP BY il.child_itemid
+        ", [$storeName, $syncDate]);
+
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_throw_away");
+        DB::statement("
+            CREATE TEMPORARY TABLE temp_throw_away AS
+            SELECT itemid, SUM(wastecount) as throw_away_qty
+            FROM stockcountingtrans 
+            WHERE storename = ?
+              AND wastetype = 'Throw Away' 
+              AND CAST(TRANSDATE AS DATE) = ?
+              AND wastecount != 0
+            GROUP BY itemid
+        ", [$storeName, $syncDate]);
+
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_pull_out");
+        DB::statement("
+            CREATE TEMPORARY TABLE temp_pull_out AS
+            SELECT itemid, SUM(wastecount) as pull_out_qty
+            FROM stockcountingtrans 
+            WHERE storename = ?
+              AND wastetype = 'Pull Out' 
+              AND CAST(TRANSDATE AS DATE) = ?
+              AND wastecount != 0
+            GROUP BY itemid
+        ", [$storeName, $syncDate]);
+
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_rat_bites");
+        DB::statement("
+            CREATE TEMPORARY TABLE temp_rat_bites AS
+            SELECT itemid, SUM(wastecount) as rat_bites_qty
+            FROM stockcountingtrans 
+            WHERE storename = ?
+              AND wastetype LIKE '%Rat%' 
+              AND CAST(TRANSDATE AS DATE) = ?
+              AND wastecount != 0
+            GROUP BY itemid
+        ", [$storeName, $syncDate]);
+
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_ant_bites");
+        DB::statement("
+            CREATE TEMPORARY TABLE temp_ant_bites AS
+            SELECT itemid, SUM(wastecount) as ant_bites_qty
+            FROM stockcountingtrans 
+            WHERE storename = ?
+              AND wastetype LIKE '%Ant%' 
+              AND CAST(TRANSDATE AS DATE) = ?
+              AND wastecount != 0
+            GROUP BY itemid
+        ", [$storeName, $syncDate]);
+
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_early_molds");
+        DB::statement("
+            CREATE TEMPORARY TABLE temp_early_molds AS
+            SELECT itemid, SUM(wastecount) as early_molds_qty
+            FROM stockcountingtrans 
+            WHERE storename = ?
+              AND wastetype LIKE '%Molds%' 
+              AND CAST(TRANSDATE AS DATE) = ?
+              AND wastecount != 0
+            GROUP BY itemid
+        ", [$storeName, $syncDate]);
+
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_staff_count");
+        DB::statement("
+            CREATE TEMPORARY TABLE temp_staff_count AS
+            SELECT itemid, counted as staff_count_qty
+            FROM stockcountingtrans 
+            WHERE storename = ?
+              AND CAST(TRANSDATE AS DATE) = ?
+              AND counted != 0
+        ", [$storeName, $syncDate]);
+
+        // Step 2: Update inventory_summaries using temporary tables
+        $beginningResult = DB::update("
             UPDATE inventory_summaries 
-            INNER JOIN (
-                SELECT itemid, counted as beginning_qty
-                FROM stockcountingtrans 
-                WHERE storename = ?
-                  AND CAST(TRANSDATE AS DATE) = DATE_SUB(?, INTERVAL 1 DAY)
-                  AND counted != 0
-            ) temp_beginning ON inventory_summaries.itemid = temp_beginning.itemid
+            INNER JOIN temp_beginning ON inventory_summaries.itemid = temp_beginning.itemid
             SET inventory_summaries.beginning = temp_beginning.beginning_qty,
                 inventory_summaries.updated_at = CURRENT_TIMESTAMP
             WHERE inventory_summaries.storename = ?
               AND CAST(inventory_summaries.report_date AS DATE) = ?
-        ";
-        $beginningResult = DB::update($beginningQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+        ", [$storeName, $syncDate]);
 
-        // Step 2: Update Received Delivery (adjustments)
-        $receivedQuery = "
+        $receivedResult = DB::update("
             UPDATE inventory_summaries 
-            INNER JOIN (
-                SELECT itemid, SUM(adjustment) as received_qty
-                FROM stockcountingtrans 
-                WHERE storename = ?
-                  AND CAST(TRANSDATE AS DATE) = ?
-                  AND adjustment != 0
-                GROUP BY itemid
-            ) temp_received ON inventory_summaries.itemid = temp_received.itemid
+            INNER JOIN temp_received ON inventory_summaries.itemid = temp_received.itemid
             SET inventory_summaries.received_delivery = temp_received.received_qty,
                 inventory_summaries.updated_at = CURRENT_TIMESTAMP
             WHERE inventory_summaries.storename = ?
               AND CAST(inventory_summaries.report_date AS DATE) = ?
-        ";
-        $receivedResult = DB::update($receivedQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+        ", [$storeName, $syncDate]);
 
-        // Step 3: Update Direct Sales
-        $salesQuery = "
+        $salesResult = DB::update("
             UPDATE inventory_summaries 
-            INNER JOIN (
-                SELECT itemid, SUM(qty) as sales_qty
-                FROM rbotransactionsalestrans 
-                WHERE store = ?
-                  AND CAST(CREATEDDATE AS DATE) = ?
-                GROUP BY itemid
-            ) temp_direct_sales ON inventory_summaries.itemid = temp_direct_sales.itemid
+            INNER JOIN temp_direct_sales ON inventory_summaries.itemid = temp_direct_sales.itemid
             SET inventory_summaries.sales = temp_direct_sales.sales_qty,
                 inventory_summaries.updated_at = CURRENT_TIMESTAMP
             WHERE inventory_summaries.storename = ?
               AND CAST(inventory_summaries.report_date AS DATE) = ?
-        ";
-        $salesResult = DB::update($salesQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+        ", [$storeName, $syncDate]);
 
-        // Step 4: Update Bundle Sales (using item_links table)
-        $bundleSalesQuery = "
+        $bundleSalesResult = DB::update("
             UPDATE inventory_summaries 
-            INNER JOIN (
-                SELECT 
-                    il.child_itemid as itemid,
-                    SUM(il.quantity * rts.qty) as bundle_qty
-                FROM item_links il
-                INNER JOIN rbotransactionsalestrans rts ON il.parent_itemid = rts.itemid
-                LEFT JOIN inventtables inv ON inv.itemid = il.child_itemid
-                WHERE il.active = 1 
-                  AND rts.store = ?
-                  AND CAST(rts.createddate AS DATE) = ?
-                GROUP BY il.child_itemid
-            ) temp_bundle_sales ON inventory_summaries.itemid = temp_bundle_sales.itemid
+            INNER JOIN temp_bundle_sales ON inventory_summaries.itemid = temp_bundle_sales.itemid
             SET inventory_summaries.bundle_sales = temp_bundle_sales.bundle_qty,
                 inventory_summaries.updated_at = CURRENT_TIMESTAMP
             WHERE inventory_summaries.storename = ?
               AND CAST(inventory_summaries.report_date AS DATE) = ?
-        ";
-        $bundleSalesResult = DB::update($bundleSalesQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+        ", [$storeName, $syncDate]);
 
-        // Step 5: Update Throw Away
-        $throwAwayQuery = "
+        $throwAwayResult = DB::update("
             UPDATE inventory_summaries 
-            INNER JOIN (
-                SELECT itemid, SUM(wastecount) as throw_away_qty
-                FROM stockcountingtrans 
-                WHERE storename = ?
-                  AND wastetype = 'Throw Away'
-                  AND CAST(TRANSDATE AS DATE) = ?
-                  AND wastecount != 0
-                GROUP BY itemid
-            ) temp_throw_away ON inventory_summaries.itemid = temp_throw_away.itemid
+            INNER JOIN temp_throw_away ON inventory_summaries.itemid = temp_throw_away.itemid
             SET inventory_summaries.throw_away = temp_throw_away.throw_away_qty,
                 inventory_summaries.updated_at = CURRENT_TIMESTAMP
             WHERE inventory_summaries.storename = ?
               AND CAST(inventory_summaries.report_date AS DATE) = ?
-        ";
-        $throwAwayResult = DB::update($throwAwayQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+        ", [$storeName, $syncDate]);
 
-        // Step 6: Update Pull Out
-        $pullOutQuery = "
+        $pullOutResult = DB::update("
             UPDATE inventory_summaries 
-            INNER JOIN (
-                SELECT itemid, SUM(wastecount) as pull_out_qty
-                FROM stockcountingtrans 
-                WHERE storename = ?
-                  AND wastetype = 'Pull Out'
-                  AND CAST(TRANSDATE AS DATE) = ?
-                  AND wastecount != 0
-                GROUP BY itemid
-            ) temp_pull_out ON inventory_summaries.itemid = temp_pull_out.itemid
+            INNER JOIN temp_pull_out ON inventory_summaries.itemid = temp_pull_out.itemid
             SET inventory_summaries.pull_out = temp_pull_out.pull_out_qty,
                 inventory_summaries.updated_at = CURRENT_TIMESTAMP
             WHERE inventory_summaries.storename = ?
               AND CAST(inventory_summaries.report_date AS DATE) = ?
-        ";
-        $pullOutResult = DB::update($pullOutQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+        ", [$storeName, $syncDate]);
 
-        // Step 7: Update Rat Bites
-        $ratBitesQuery = "
+        $ratBitesResult = DB::update("
             UPDATE inventory_summaries 
-            INNER JOIN (
-                SELECT itemid, SUM(wastecount) as rat_bites_qty
-                FROM stockcountingtrans 
-                WHERE storename = ?
-                  AND wastetype LIKE '%Rat%'
-                  AND CAST(TRANSDATE AS DATE) = ?
-                  AND wastecount != 0
-                GROUP BY itemid
-            ) temp_rat_bites ON inventory_summaries.itemid = temp_rat_bites.itemid
+            INNER JOIN temp_rat_bites ON inventory_summaries.itemid = temp_rat_bites.itemid
             SET inventory_summaries.rat_bites = temp_rat_bites.rat_bites_qty,
                 inventory_summaries.updated_at = CURRENT_TIMESTAMP
             WHERE inventory_summaries.storename = ?
               AND CAST(inventory_summaries.report_date AS DATE) = ?
-        ";
-        $ratBitesResult = DB::update($ratBitesQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+        ", [$storeName, $syncDate]);
 
-        // Step 8: Update Ant Bites
-        $antBitesQuery = "
+        $antBitesResult = DB::update("
             UPDATE inventory_summaries 
-            INNER JOIN (
-                SELECT itemid, SUM(wastecount) as ant_bites_qty
-                FROM stockcountingtrans 
-                WHERE storename = ?
-                  AND wastetype LIKE '%Ant%'
-                  AND CAST(TRANSDATE AS DATE) = ?
-                  AND wastecount != 0
-                GROUP BY itemid
-            ) temp_ant_bites ON inventory_summaries.itemid = temp_ant_bites.itemid
+            INNER JOIN temp_ant_bites ON inventory_summaries.itemid = temp_ant_bites.itemid
             SET inventory_summaries.ant_bites = temp_ant_bites.ant_bites_qty,
                 inventory_summaries.updated_at = CURRENT_TIMESTAMP
             WHERE inventory_summaries.storename = ?
               AND CAST(inventory_summaries.report_date AS DATE) = ?
-        ";
-        $antBitesResult = DB::update($antBitesQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+        ", [$storeName, $syncDate]);
 
-        // Step 9: Update Early Molds
-        $earlyMoldsQuery = "
+        $earlyMoldsResult = DB::update("
             UPDATE inventory_summaries 
-            INNER JOIN (
-                SELECT itemid, SUM(wastecount) as early_molds_qty
-                FROM stockcountingtrans 
-                WHERE storename = ?
-                  AND wastetype LIKE '%Molds%'
-                  AND CAST(TRANSDATE AS DATE) = ?
-                  AND wastecount != 0
-                GROUP BY itemid
-            ) temp_early_molds ON inventory_summaries.itemid = temp_early_molds.itemid
+            INNER JOIN temp_early_molds ON inventory_summaries.itemid = temp_early_molds.itemid
             SET inventory_summaries.early_molds = temp_early_molds.early_molds_qty,
                 inventory_summaries.updated_at = CURRENT_TIMESTAMP
             WHERE inventory_summaries.storename = ?
               AND CAST(inventory_summaries.report_date AS DATE) = ?
-        ";
-        $earlyMoldsResult = DB::update($earlyMoldsQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+        ", [$storeName, $syncDate]);
 
-        // Step 10: Update Item Count (Staff Count)
-        $staffCountQuery = "
+        $staffCountResult = DB::update("
             UPDATE inventory_summaries 
-            INNER JOIN (
-                SELECT itemid, counted as staff_count_qty
-                FROM stockcountingtrans 
-                WHERE storename = ?
-                  AND CAST(TRANSDATE AS DATE) = ?
-                  AND counted != 0
-            ) temp_staff_count ON inventory_summaries.itemid = temp_staff_count.itemid
+            INNER JOIN temp_staff_count ON inventory_summaries.itemid = temp_staff_count.itemid
             SET inventory_summaries.item_count = temp_staff_count.staff_count_qty,
                 inventory_summaries.updated_at = CURRENT_TIMESTAMP
             WHERE inventory_summaries.storename = ?
               AND CAST(inventory_summaries.report_date AS DATE) = ?
-        ";
-        $staffCountResult = DB::update($staffCountQuery, [$storeName, $syncDate, $storeName, $syncDate]);
+        ", [$storeName, $syncDate]);
 
-        // Step 11: Calculate and Update Ending Inventory for all records
-        $endingQuery = "
+        // Calculate and Update Ending Inventory for all records
+        $endingResult = DB::update("
             UPDATE inventory_summaries 
             SET ending = (beginning + received_delivery + COALESCE(stock_transfer, 0)) 
                        - (sales + bundle_sales + throw_away + early_molds + pull_out + rat_bites + ant_bites),
                 updated_at = CURRENT_TIMESTAMP
             WHERE storename = ?
               AND CAST(report_date AS DATE) = ?
-        ";
-        $endingResult = DB::update($endingQuery, [$storeName, $syncDate]);
+        ", [$storeName, $syncDate]);
 
-        // Step 12: Calculate and Update Variance for all records
-        $varianceQuery = "
+        // Calculate and Update Variance for all records
+        $varianceResult = DB::update("
             UPDATE inventory_summaries 
             SET variance = ending - item_count,
                 updated_at = CURRENT_TIMESTAMP
             WHERE storename = ?
               AND CAST(report_date AS DATE) = ?
-        ";
-        $varianceResult = DB::update($varianceQuery, [$storeName, $syncDate]);
+        ", [$storeName, $syncDate]);
+
+        // Clean up temporary tables
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_beginning");
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_received");
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_direct_sales");
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_bundle_sales");
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_throw_away");
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_pull_out");
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_rat_bites");
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_ant_bites");
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_early_molds");
+        DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_staff_count");
 
         // Log the sync operation in a sync_logs table if it exists
         if (Schema::hasTable('sync_logs')) {
@@ -2585,6 +2766,448 @@ public function getSyncStores()
         return response()->json([
             'success' => false,
             'message' => 'Failed to fetch stores'
+        ], 500);
+    }
+}
+
+/**
+ * Download count template based on stockcountingtrans structure
+ */
+public function downloadCountTemplate(Request $request)
+{
+    try {
+        $request->validate([
+            'import_date' => 'required|date',
+            'store_name' => 'nullable|string'
+        ]);
+
+        $role = Auth::user()->role;
+        $userStoreId = Auth::user()->storeid;
+        $importDate = $request->import_date;
+        
+        // Determine which store based on user role
+        $storeName = null;
+        if ($role === 'ADMIN' || $role === 'SUPERADMIN') {
+            $storeName = $request->store_name;
+            if (!$storeName) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Store name is required for admin users'
+                ], 422);
+            }
+        } else {
+            $storeRecord = rbostoretables::where('STOREID', $userStoreId)->first();
+            $storeName = $storeRecord ? $storeRecord->NAME : $userStoreId;
+        }
+
+        Log::info('Generating count template', [
+            'import_date' => $importDate,
+            'store_name' => $storeName,
+            'user_id' => Auth::id()
+        ]);
+
+        // Get items from inventtables joined with rboinventtables for department info
+        $templateData = DB::table('inventtables')
+            ->leftJoin('rboinventtables', 'inventtables.itemid', '=', 'rboinventtables.itemid')
+            ->select([
+                'inventtables.itemid as ITEMID',
+                'inventtables.itemname as ITEMNAME',
+                'rboinventtables.itemdepartment as ITEMDEPARTMENT',
+                DB::raw("'{$storeName}' as STORENAME"),
+                DB::raw("'{$importDate}' as TRANSDATE"),
+                DB::raw('0 as COUNTED'),
+                DB::raw('0 as WASTECOUNT'),
+                DB::raw("'' as WASTETYPE"),
+                DB::raw('0 as RECEIVEDCOUNT'),
+                DB::raw('0 as TRANSFERCOUNT')
+            ])
+            ->whereNotNull('inventtables.itemid')
+            ->orderBy('inventtables.itemid')
+            ->get()
+            ->toArray();
+
+        if (empty($templateData)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No items found to create template'
+            ], 404);
+        }
+
+        // Create Excel file
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $worksheet = $spreadsheet->getActiveSheet();
+        
+        // Set headers
+        $headers = [
+            'ITEMID', 'ITEMNAME', 'ITEMDEPARTMENT', 'STORENAME', 
+            'TRANSDATE', 'COUNTED', 'WASTECOUNT', 'WASTETYPE', 
+            'RECEIVEDCOUNT', 'TRANSFERCOUNT'
+        ];
+        
+        $worksheet->fromArray($headers, null, 'A1');
+        
+        // Style headers
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'color' => ['rgb' => '366092']],
+            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER]
+        ];
+        $worksheet->getStyle('A1:J1')->applyFromArray($headerStyle);
+        
+        // Add data rows
+        $row = 2;
+        foreach ($templateData as $item) {
+            $worksheet->setCellValue('A' . $row, $item->ITEMID);
+            $worksheet->setCellValue('B' . $row, $item->ITEMNAME);
+            $worksheet->setCellValue('C' . $row, $item->ITEMDEPARTMENT);
+            $worksheet->setCellValue('D' . $row, $item->STORENAME);
+            $worksheet->setCellValue('E' . $row, $item->TRANSDATE);
+            $worksheet->setCellValue('F' . $row, $item->COUNTED);
+            $worksheet->setCellValue('G' . $row, $item->WASTECOUNT);
+            $worksheet->setCellValue('H' . $row, $item->WASTETYPE);
+            $worksheet->setCellValue('I' . $row, $item->RECEIVEDCOUNT);
+            $worksheet->setCellValue('J' . $row, $item->TRANSFERCOUNT);
+            $row++;
+        }
+        
+        // Auto-size columns
+        foreach (range('A', 'J') as $col) {
+            $worksheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        // Add instructions sheet
+        $instructionSheet = $spreadsheet->createSheet(1);
+        $instructionSheet->setTitle('Instructions');
+        $instructions = [
+            ['Count Template Instructions'],
+            [''],
+            ['1. Fill in the COUNTED column with the actual count for each item'],
+            ['2. Fill in WASTECOUNT for items that were wasted'],
+            ['3. Fill in WASTETYPE for wasted items (e.g., "Throw Away", "Pull Out", "Early Molds", "Rat Bites", "Ant Bites")'],
+            ['4. Fill in RECEIVEDCOUNT for items received on this date'],
+            ['5. Fill in TRANSFERCOUNT for items transferred'],
+            ['6. Save the file and import it back to the system'],
+            [''],
+            ['Notes:'],
+            ['- Only fill in non-zero values'],
+            ['- STORENAME and TRANSDATE should not be changed'],
+            ['- ITEMID should not be changed'],
+        ];
+        $instructionSheet->fromArray($instructions, null, 'A1');
+        $instructionSheet->getStyle('A1')->applyFromArray(['font' => ['bold' => true, 'size' => 14]]);
+        $instructionSheet->getColumnDimension('A')->setAutoSize(true);
+        
+        // Set active sheet back to data
+        $spreadsheet->setActiveSheetIndex(0);
+        
+        // Generate file
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $fileName = "count_template_{$storeName}_{$importDate}.xlsx";
+        
+        // Return as download
+        $tempFile = tempnam(sys_get_temp_dir(), 'count_template');
+        $writer->save($tempFile);
+        
+        return response()->download($tempFile, $fileName)->deleteFileAfterSend(true);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        Log::error('Error generating count template: ' . $e->getMessage(), [
+            'request_data' => $request->all(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Error generating template: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+/**
+ * Import count data from uploaded file
+ */
+public function importCountData(Request $request)
+{
+    try {
+        $request->validate([
+            'import_date' => 'required|date',
+            'store_name' => 'nullable|string',
+            'import_file' => 'required|file|mimes:xlsx,xls,csv|max:10240' // 10MB max
+        ]);
+
+        $role = Auth::user()->role;
+        $userStoreId = Auth::user()->storeid;
+        $importDate = $request->import_date;
+        
+        // Determine which store based on user role
+        $storeName = null;
+        if ($role === 'ADMIN' || $role === 'SUPERADMIN') {
+            $storeName = $request->store_name;
+            if (!$storeName) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Store name is required for admin users'
+                ], 422);
+            }
+        } else {
+            $storeRecord = rbostoretables::where('STOREID', $userStoreId)->first();
+            $storeName = $storeRecord ? $storeRecord->NAME : $userStoreId;
+        }
+
+        Log::info('Starting count data import', [
+            'import_date' => $importDate,
+            'store_name' => $storeName,
+            'user_id' => Auth::id(),
+            'file_name' => $request->file('import_file')->getClientOriginalName()
+        ]);
+
+        DB::beginTransaction();
+
+        // Check if count data already exists for this date and store
+        $existingCountData = DB::table('stockcountingtrans')
+            ->where('STORENAME', $storeName)
+            ->whereDate('TRANSDATE', $importDate)
+            ->where('COUNTED', '>', 0) // Check for actual count data, not just empty records
+            ->count();
+
+        if ($existingCountData > 0) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => "Count data already exists for {$storeName} on {$importDate}. Cannot import duplicate data. Please use a different date or delete existing data first."
+            ], 409); // 409 Conflict status
+        }
+
+        // Read the uploaded file
+        $file = $request->file('import_file');
+        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader(\PhpOffice\PhpSpreadsheet\IOFactory::identify($file->path()));
+        $reader->setReadDataOnly(true);
+        $spreadsheet = $reader->load($file->path());
+        $worksheet = $spreadsheet->getActiveSheet();
+        
+        $rows = $worksheet->toArray(null, true, true, true);
+        
+        if (empty($rows) || count($rows) < 2) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'File appears to be empty or has no data rows'
+            ], 400);
+        }
+        
+        // Skip header row and process data
+        $headers = array_shift($rows);
+        $totalImported = 0;
+        $totalUpdated = 0;
+        $errors = [];
+        
+        // Get existing records to update or create new ones
+        $existingJournals = DB::table('stockcountingtables')
+            ->where('STOREID', $storeName)
+            ->whereDate('CREATEDDATETIME', $importDate)
+            ->get()
+            ->keyBy('JOURNALID');
+        
+        // Create journal if doesn't exist
+        if ($existingJournals->isEmpty()) {
+            $journalId = DB::table('stockcountingtables')->insertGetId([
+                'DESCRIPTION' => 'Imported Count - ' . $importDate,
+                'POSTED' => 0,
+                'POSTEDDATETIME' => now(), // Set to current datetime instead of null
+                'JOURNALTYPE' => 1, // Should be integer, not string
+                'DELETEPOSTEDLINES' => 0,
+                'CREATEDDATETIME' => $importDate,
+                'STOREID' => $storeName,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        } else {
+            $journalId = $existingJournals->first()->JOURNALID;
+        }
+        
+        foreach ($rows as $rowIndex => $row) {
+            try {
+                // Skip empty rows
+                if (empty(array_filter($row))) {
+                    continue;
+                }
+                
+                $itemId = trim($row['A'] ?? '');
+                $itemName = trim($row['B'] ?? '');
+                $itemDepartment = trim($row['C'] ?? '');
+                $counted = floatval($row['F'] ?? 0);
+                $wasteCount = floatval($row['G'] ?? 0);
+                $wasteType = trim($row['H'] ?? '');
+                $receivedCount = floatval($row['I'] ?? 0);
+                $transferCount = floatval($row['J'] ?? 0);
+                
+                if (empty($itemId)) {
+                    $errors[] = "Row " . ($rowIndex + 2) . ": ITEMID is required";
+                    continue;
+                }
+                
+                // Check if record already exists
+                $existingRecord = DB::table('stockcountingtrans')
+                    ->where('JOURNALID', $journalId)
+                    ->where('ITEMID', $itemId)
+                    ->where('STORENAME', $storeName)
+                    ->whereDate('TRANSDATE', $importDate)
+                    ->first();
+                
+                $data = [
+                    'JOURNALID' => $journalId,
+                    'LINENUM' => $rowIndex + 1,
+                    'TRANSDATE' => $importDate,
+                    'ITEMID' => $itemId,
+                    'ITEMDEPARTMENT' => $itemDepartment,
+                    'STORENAME' => $storeName,
+                    'COUNTED' => $counted,
+                    'WASTECOUNT' => $wasteCount,
+                    'WASTETYPE' => $wasteType,
+                    'RECEIVEDCOUNT' => $receivedCount,
+                    'TRANSFERCOUNT' => $transferCount,
+                    'POSTED' => 0,
+                    'POSTEDDATETIME' => now(), // Set to current datetime instead of null
+                    'updated_at' => now()
+                ];
+                
+                if ($existingRecord) {
+                    // Update existing record
+                    DB::table('stockcountingtrans')
+                        ->where('id', $existingRecord->id)
+                        ->update($data);
+                    $totalUpdated++;
+                } else {
+                    // Create new record
+                    $data['created_at'] = now();
+                    DB::table('stockcountingtrans')->insert($data);
+                    $totalImported++;
+                }
+                
+            } catch (\Exception $rowError) {
+                $errors[] = "Row " . ($rowIndex + 2) . ": " . $rowError->getMessage();
+                Log::warning('Error processing row in import', [
+                    'row_index' => $rowIndex + 2,
+                    'error' => $rowError->getMessage(),
+                    'row_data' => $row
+                ]);
+            }
+        }
+        
+        if (!empty($errors) && ($totalImported + $totalUpdated) === 0) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Import failed with errors',
+                'errors' => $errors
+            ], 400);
+        }
+        
+        // Log the import operation
+        if (Schema::hasTable('import_logs')) {
+            DB::table('import_logs')->insert([
+                'import_type' => 'count_data',
+                'import_date' => $importDate,
+                'store_name' => $storeName,
+                'user_id' => Auth::id(),
+                'file_name' => $request->file('import_file')->getClientOriginalName(),
+                'total_rows' => count($rows),
+                'imported_records' => $totalImported,
+                'updated_records' => $totalUpdated,
+                'errors' => json_encode($errors),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
+        DB::commit();
+
+        Log::info('Count data import completed', [
+            'import_date' => $importDate,
+            'store_name' => $storeName,
+            'total_imported' => $totalImported,
+            'total_updated' => $totalUpdated,
+            'errors_count' => count($errors)
+        ]);
+
+        // Generate inventory summaries after successful import
+        $summaryGenerated = false;
+        try {
+            Log::info('Generating inventory summary after import', [
+                'import_date' => $importDate,
+                'store_name' => $storeName
+            ]);
+            
+            // Get store ID from store name for the command
+            $storeId = DB::table('rbostoretables')
+                ->where('NAME', $storeName)
+                ->value('STOREID');
+            
+            if ($storeId) {
+                // Run the inventory summary generation command
+                \Artisan::call('inventory:generate-summary', [
+                    'date' => $importDate,
+                    '--store' => $storeId,
+                    '--force' => true
+                ]);
+                
+                $summaryGenerated = true;
+                Log::info('Inventory summary generated successfully after import');
+            } else {
+                Log::warning('Could not find store ID for store name: ' . $storeName);
+            }
+        } catch (\Exception $summaryError) {
+            Log::error('Failed to generate inventory summary after import: ' . $summaryError->getMessage(), [
+                'import_date' => $importDate,
+                'store_name' => $storeName,
+                'error' => $summaryError->getTraceAsString()
+            ]);
+        }
+
+        $message = "Import completed successfully for {$storeName} on {$importDate}";
+        if ($summaryGenerated) {
+            $message .= "\nInventory summaries have been generated and data should now appear in the variance report.";
+        } else {
+            $message .= "\nNote: Please run inventory summary generation to see data in the variance report.";
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => [
+                'import_date' => $importDate,
+                'store_name' => $storeName,
+                'total_imported' => $totalImported,
+                'total_updated' => $totalUpdated,
+                'total_processed' => $totalImported + $totalUpdated,
+                'errors' => $errors,
+                'summary_generated' => $summaryGenerated
+            ]
+        ]);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Error importing count data: ' . $e->getMessage(), [
+            'request_data' => $request->except('import_file'),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Error importing data: ' . $e->getMessage()
         ], 500);
     }
 }

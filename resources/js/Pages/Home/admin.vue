@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { Chart, registerables } from 'chart.js';
 import axios from 'axios';
 import AdminPanel from "@/Layouts/AdminPanel.vue";
@@ -12,6 +12,7 @@ import { CubeIcon } from '@heroicons/vue/24/outline';
 import MultiSelectDropdown from "@/Components/MultiSelect/MultiSelectDropdown.vue";
 import WasteAnalysis from '../Home/wasteanalysis.vue';
 import ProductAnalysis from '../Home/ProductAnalysis.vue';
+import FloatingChatBot from '@/Components/ChatBot/FloatingChatBot.vue';
 
 // Register Chart.js components
 Chart.register(...registerables);
@@ -50,7 +51,7 @@ const props = defineProps({
     }
 });
 
-const localMetrics = ref(props.initialMetrics);
+const localMetrics = ref(props.metrics);
 const dateRangeError = ref('');
 
 const monthlySalesRef = ref(null);
@@ -64,8 +65,41 @@ const bottomProductsRef = ref(null);
 let topProductsChart = null;
 let bottomProductsChart = null;
 
+// New chart refs
+const transactionSalesRef = ref(null);
+let transactionSalesChart = null;
+
+const salesByHourRef = ref(null);
+let salesByHourChart = null;
+
+const topStoresRef = ref(null);
+let topStoresChart = null;
+
+const advancedAnalysisRef = ref(null);
+let advancedAnalysisChart = null;
+
+const receivedDeliveryVsSalesRef = ref(null);
+let receivedDeliveryVsSalesChart = null;
+
+const salesByCategoryRef = ref(null);
+let salesByCategoryChart = null;
+
+const topVarianceStoresRef = ref(null);
+let topVarianceStoresChart = null;
+
 const stores = ref([]);
 const selectedStores = ref([]);
+const products = ref([]);
+const selectedProducts = ref([]);
+const categories = ref([]);
+const selectedCategories = ref([]);
+const categoryDropdownOpen = ref(false);
+const categoryDropdownRef = ref(null);
+
+// Transaction product dropdown state
+const transactionProductDropdownOpen = ref(false);
+const transactionProductDropdownRef = ref(null);
+const productSearchTerm = ref('');
 
 const fetchStores = async () => {
   try {
@@ -77,6 +111,124 @@ const fetchStores = async () => {
   }
 };
 
+const fetchProducts = async (searchTerm = '') => {
+  try {
+    console.log('Fetching products with search term:', searchTerm);
+    const response = await axios.get(route('get.products'), {
+      params: { search: searchTerm }
+    });
+    console.log('Products loaded:', response.data.length);
+    products.value = response.data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    if (error.response) {
+      console.error('Products error response:', error.response.data);
+    }
+  }
+};
+
+const fetchCategories = async (searchTerm = '') => {
+  try {
+    console.log('Fetching categories...');
+    const response = await axios.get(route('get.categories'), {
+      params: { search: searchTerm }
+    });
+    console.log('Categories response:', response.data);
+    categories.value = response.data;
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    if (error.response) {
+      console.error('Categories error response:', error.response.data);
+    }
+  }
+};
+
+// Category dropdown functions
+const toggleCategory = (categoryValue) => {
+  const index = selectedCategories.value.indexOf(categoryValue);
+  if (index === -1) {
+    selectedCategories.value.push(categoryValue);
+  } else {
+    selectedCategories.value.splice(index, 1);
+  }
+};
+
+const toggleAllCategories = () => {
+  if (selectedCategories.value.length === categories.value.length) {
+    selectedCategories.value = [];
+  } else {
+    selectedCategories.value = categories.value.map(cat => cat.value);
+  }
+};
+
+const getCategoryLabel = (categoryValue) => {
+  const category = categories.value.find(cat => cat.value === categoryValue);
+  return category ? category.label : categoryValue;
+};
+
+// Close dropdown when clicking outside
+const handleCategoryDropdownClickOutside = (event) => {
+  if (categoryDropdownRef.value && !categoryDropdownRef.value.contains(event.target)) {
+    categoryDropdownOpen.value = false;
+  }
+};
+
+// Transaction product dropdown functions
+const toggleProduct = (productId) => {
+  const index = selectedProducts.value.indexOf(productId);
+  if (index === -1) {
+    selectedProducts.value.push(productId);
+  } else {
+    selectedProducts.value.splice(index, 1);
+  }
+};
+
+const toggleAllProducts = () => {
+  if (selectedProducts.value.length === filteredProducts.value.length && filteredProducts.value.length > 0) {
+    selectedProducts.value = [];
+  } else {
+    selectedProducts.value = filteredProducts.value.map(product => product.itemid);
+  }
+};
+
+const getProductLabel = (productId) => {
+  const product = products.value.find(p => p.itemid === productId);
+  return product ? product.itemname : productId;
+};
+
+// Filtered products based on search term
+const filteredProducts = computed(() => {
+  if (!productSearchTerm.value) {
+    return products.value;
+  }
+  return products.value.filter(product => 
+    product.itemname.toLowerCase().includes(productSearchTerm.value.toLowerCase()) ||
+    product.itemid.toLowerCase().includes(productSearchTerm.value.toLowerCase())
+  );
+});
+
+// Debounced search function
+const debouncedProductSearch = debounce(() => {
+  // Search is handled by computed filteredProducts
+}, 300);
+
+// Simple debounce function
+function debounce(func, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
+// Close transaction product dropdown when clicking outside
+const handleTransactionProductDropdownClickOutside = (event) => {
+  if (transactionProductDropdownRef.value && !transactionProductDropdownRef.value.contains(event.target)) {
+    transactionProductDropdownOpen.value = false;
+    productSearchTerm.value = ''; // Reset search when closing
+  }
+};
+
 // State variables
 const hoveredCard = ref(null);
 const isVisible = ref(false);
@@ -85,10 +237,26 @@ const topBottomProductsRef = ref(null);
 let paymentChart = null;
 let topBottomProductsChart = null;
 
-const selectedDateRange = ref({
-    start_date: new Date().toISOString().split('T')[0],  // Default start date
-    end_date: new Date().toISOString().split('T')[0]  // Today's date
-});
+// Set default date range to last 30 days to ensure we have data
+const getDefaultDateRange = () => {
+  const today = new Date();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+  
+  return {
+    start_date: thirtyDaysAgo.toISOString().split('T')[0],
+    end_date: today.toISOString().split('T')[0]
+  };
+};
+
+const selectedDateRange = ref(getDefaultDateRange());
+
+// Product type filter for Popular Products & Products Under Monitoring
+const selectedProductType = ref('all');
+
+// Filter states for new charts
+const transactionSalesFilter = ref('gross');
+const topStoresFilter = ref('grossamount');
 
 // New: Date Range Validation Computed Property
 const isValidDateRange = computed(() => {
@@ -282,17 +450,25 @@ const initializePaymentChart = () => {
 
 const fetchTopBottomProducts = async () => {
   try {
-    const startDate = selectedDateRange.value.start_date || '2000-01-01';
-    
     const payload = {
-      start_date: startDate,
+      start_date: selectedDateRange.value.start_date,
       end_date: selectedDateRange.value.end_date,
       stores: selectedStores.value.map(store => 
           store.NAME || (typeof store === 'object' ? store.NAME : store)
-      )
+      ),
+      product_type: selectedProductType.value
     };
 
+    console.log('Top/Bottom Products Payload:', payload);
+
     const response = await axios.post(route('get.top.bottom.products'), payload);
+
+    console.log('Top/Bottom Products Response:', response.data);
+    console.log('Response Status:', response.status);
+
+    if (response.status !== 200) {
+      throw new Error(`API returned status: ${response.status}`);
+    }
 
     const topProducts = Array.isArray(response?.data?.topProducts) 
       ? response.data.topProducts 
@@ -300,16 +476,23 @@ const fetchTopBottomProducts = async () => {
     const bottomProducts = Array.isArray(response?.data?.bottomProducts) 
       ? response.data.bottomProducts 
       : [];
+    const summary = response?.data?.summary || {};
 
-    initializeTopBottomProductsChart(topProducts, bottomProducts);
+    console.log('Processed Data:', {
+      topProductsCount: topProducts.length,
+      bottomProductsCount: bottomProducts.length,
+      summaryData: summary
+    });
+
+    initializeTopBottomProductsChart(topProducts, bottomProducts, summary);
   } catch (error) {
     console.error('Error fetching top/bottom products:', error);
-    initializeTopBottomProductsChart([], []);
+    initializeTopBottomProductsChart([], [], {});
   }
 };
 
 // Initialize top and bottom products chart
-const initializeTopBottomProductsChart = (topProducts, bottomProducts) => {
+const initializeTopBottomProductsChart = (topProducts, bottomProducts, summary = {}) => {
     if (!topBottomProductsRef.value) return;
     
     const ctx = topBottomProductsRef.value.getContext('2d');
@@ -318,59 +501,151 @@ const initializeTopBottomProductsChart = (topProducts, bottomProducts) => {
         topBottomProductsChart.destroy();
     }
 
-    // Prepare data for chart
-    const topProductNames = topProducts.slice(0, 10).map(p => p.itemname);
-    const bottomProductNames = bottomProducts.slice(0, 10).map(p => p.itemname);
-    const topProductQuantities = topProducts.slice(0, 10).map(p => p.total_quantity);
-    const bottomProductQuantities = bottomProducts.slice(0, 10).map(p => p.total_quantity);
+    // Handle empty data case
+    if ((!topProducts || topProducts.length === 0) && (!bottomProducts || bottomProducts.length === 0)) {
+        topBottomProductsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['No Data Available'],
+                datasets: [{
+                    label: 'No products data available',
+                    data: [0],
+                    backgroundColor: 'rgba(128, 128, 128, 0.3)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'Popular Products & Products Under Monitoring (No Data)',
+                        font: { size: 14, weight: 'bold' }
+                    }
+                }
+            }
+        });
+        return;
+    }
+
+    console.log('Top Products Data:', topProducts);
+    console.log('Bottom Products Data:', bottomProducts);
+
+    // Prepare data for chart - take top 10 and bottom 10 for better visibility
+    const topProductsSlice = (topProducts || []).slice(0, 10);
+    const bottomProductsSlice = (bottomProducts || []).slice(0, 10);
+    
+    const topProductNames = topProductsSlice.map(p => p.itemname || 'Unknown');
+    const bottomProductNames = bottomProductsSlice.map(p => p.itemname || 'Unknown');
+    const topProductSales = topProductsSlice.map(p => Number(p.total_sales || 0));
+    const bottomProductSales = bottomProductsSlice.map(p => Number(p.total_sales || 0));
+
+    // Combine data for a single chart
+    const allLabels = [...topProductNames.map(name => `🔥 ${name}`), ...bottomProductNames.map(name => `⚠️ ${name}`)];
+    const allData = [...topProductSales, ...bottomProductSales];
+    const backgroundColors = [
+        // Top products - green shades
+        ...Array(topProductsSlice.length).fill('rgba(34, 197, 94, 0.6)'),
+        // Bottom products - red shades  
+        ...Array(bottomProductsSlice.length).fill('rgba(239, 68, 68, 0.6)')
+    ];
+    const borderColors = [
+        ...Array(topProductsSlice.length).fill('rgba(34, 197, 94, 1)'),
+        ...Array(bottomProductsSlice.length).fill('rgba(239, 68, 68, 1)')
+    ];
 
     topBottomProductsChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: [...topProductNames, ...bottomProductNames],
-            datasets: [
-                {
-                    label: 'Top 10 Products (Quantity)',
-                    data: topProductQuantities,
-                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                },
-                {
-                    label: 'Bottom 10 Products (Quantity)',
-                    data: [
-                        ...Array(10).fill(0),
-                        ...bottomProductQuantities
-                    ],
-                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }
-            ]
+            labels: allLabels,
+            datasets: [{
+                label: 'Sales Amount (₱)',
+                data: allData,
+                backgroundColor: backgroundColors,
+                borderColor: borderColors,
+                borderWidth: 2
+            }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
+                title: {
+                    display: true,
+                    text: (() => {
+                        const filterText = (() => {
+                            switch(selectedProductType.value) {
+                                case 'regular': return '(Regular Products Only)';
+                                case 'non_product': return '(Non Products Only)';
+                                default: return '(All Products)';
+                            }
+                        })();
+                        return `Popular Products & Products Under Monitoring ${filterText}`;
+                    })(),
+                    font: {
+                        size: 14,
+                        weight: 'bold'
+                    }
+                },
                 legend: {
-                    position: 'top',
+                    display: false // Hide legend since we use different colors for different categories
                 },
                 tooltip: {
                     callbacks: {
+                        title: function(context) {
+                            // Remove emoji from tooltip title for cleaner display
+                            return context[0].label.replace(/🔥|⚠️/g, '').trim();
+                        },
                         label: function(context) {
                             const value = context.parsed.y;
-                            const datasetLabel = context.dataset.label;
-                            return `${datasetLabel}: ${value.toFixed(2)}`;
+                            const index = context.dataIndex;
+                            
+                            let label = `Sales: ₱${value.toLocaleString()}`;
+                            
+                            // Determine if this is a top or bottom product
+                            const isTopProduct = index < topProductsSlice.length;
+                            const productData = isTopProduct ? 
+                                topProductsSlice[index] : 
+                                bottomProductsSlice[index - topProductsSlice.length];
+                            
+                            if (productData) {
+                                const productCategory = productData.product_category || 'unknown';
+                                const retailDepartment = productData.retail_department || 'Unknown';
+                                const storeCount = productData.store_count || 0;
+                                
+                                label += `\nQuantity: ${(productData.total_quantity || 0).toLocaleString()}`;
+                                label += `\nCategory: ${productCategory === 'non_product' ? 'Non Product' : 'Regular Product'}`;
+                                label += `\nDepartment: ${retailDepartment}`;
+                                label += `\nStores: ${storeCount}`;
+                                label += `\nType: ${isTopProduct ? 'Top Performer' : 'Under Monitoring'}`;
+                            }
+                            
+                            return label;
                         }
                     }
                 }
             },
             scales: {
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45,
+                        font: {
+                            size: 10
+                        }
+                    }
+                },
                 y: {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Quantity Sold'
+                        text: 'Sales Amount (₱)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return '₱' + value.toLocaleString();
+                        }
                     }
                 }
             }
@@ -383,7 +658,7 @@ const fetchMetrics = async () => {
     console.log('Selected Stores:', selectedStores.value);
     
     const payload = {
-      start_date: selectedDateRange.value.start_date || '2000-01-01',
+      start_date: selectedDateRange.value.start_date,
       end_date: selectedDateRange.value.end_date,
       stores: selectedStores.value.map(store => 
         typeof store === 'object' ? store.NAME : store
@@ -396,17 +671,20 @@ const fetchMetrics = async () => {
     
     console.log('Metrics response:', response.data);
     
-    localMetrics.value = response.data || props.initialMetrics;
+    localMetrics.value = response.data || props.metrics;
     initializePaymentChart();
   } catch (error) {
     console.error('Error fetching metrics:', error);
+    // Fallback to props.metrics if request fails
+    localMetrics.value = props.metrics;
+    initializePaymentChart();
   }
 };
 
 const fetchMonthlySales = async () => {
   try {
     const payload = {
-      start_date: selectedDateRange.value.start_date || '2000-01-01',
+      start_date: selectedDateRange.value.start_date,
       end_date: selectedDateRange.value.end_date,
       stores: selectedStores.value.map(store => 
         typeof store === 'object' ? store.NAME : store
@@ -414,9 +692,10 @@ const fetchMonthlySales = async () => {
     };
 
     const response = await axios.post(route('get.monthly.sales'), payload);
-    initializeMonthlySalesChart(response.data);
+    initializeMonthlySalesChart(response.data || []);
   } catch (error) {
     console.error('Error fetching monthly sales:', error);
+    initializeMonthlySalesChart([]);
   }
 };
 
@@ -429,8 +708,10 @@ const initializeMonthlySalesChart = (monthlySalesData) => {
     monthlySalesChart.destroy();
   }
 
-  const labels = monthlySalesData.map(item => item.label);
-  const salesData = monthlySalesData.map(item => item.total_sales);
+  // Handle empty data
+  const data = Array.isArray(monthlySalesData) ? monthlySalesData : [];
+  const labels = data.length > 0 ? data.map(item => item.label) : ['No Data'];
+  const salesData = data.length > 0 ? data.map(item => item.total_sales) : [0];
 
   monthlySalesChart = new Chart(ctx, {
     type: 'line',
@@ -481,7 +762,7 @@ const initializeMonthlySalesChart = (monthlySalesData) => {
 const fetchTopWastes = async () => {
   try {
     const payload = {
-      start_date: selectedDateRange.value.start_date || '2000-01-01',
+      start_date: selectedDateRange.value.start_date,
       end_date: selectedDateRange.value.end_date,
       stores: selectedStores.value.map(store => 
         typeof store === 'object' ? store.NAME : store
@@ -489,19 +770,25 @@ const fetchTopWastes = async () => {
     };
 
     const response = await axios.post(route('get.top.wastes'), payload);
+    
+    console.log('Waste Analysis Response:', response.data);
 
-    const topWastes = Array.isArray(response?.data) 
-      ? response.data 
+    const topWastesOverall = Array.isArray(response?.data?.topWastesOverall) 
+      ? response.data.topWastesOverall 
+      : [];
+      
+    const wasteSummaryByType = Array.isArray(response?.data?.wasteSummaryByType) 
+      ? response.data.wasteSummaryByType 
       : [];
 
-    initializeTopWasteChart(topWastes);
+    initializeTopWasteChart(topWastesOverall, wasteSummaryByType);
   } catch (error) {
     console.error('Error fetching top wastes:', error);
-    initializeTopWasteChart([]);
+    initializeTopWasteChart([], []);
   }
 };
 
-const initializeTopWasteChart = (topWastes) => {
+const initializeTopWasteChart = (topWastes, wasteSummaryByType = []) => {
     if (!topWasteRef.value) return;
     
     const ctx = topWasteRef.value.getContext('2d');
@@ -510,10 +797,38 @@ const initializeTopWasteChart = (topWastes) => {
         topWasteChart.destroy();
     }
 
+    // Handle empty data
+    if (!topWastes || topWastes.length === 0) {
+        topWasteChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['No Data'],
+                datasets: [{
+                    label: 'No waste data available',
+                    data: [0],
+                    backgroundColor: 'rgba(128, 128, 128, 0.3)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+        return;
+    }
+
     // Prepare data for chart
-    const wasteItemNames = topWastes.slice(0, 10).map(w => w.itemname || w.ITEMID);
-    const wasteQuantities = topWastes.slice(0, 10).map(w => Math.abs(Number(w.ADJUSTMENT || 0)));
-    const wasteCosts = topWastes.slice(0, 10).map(w => Math.abs(Number(w.SALESAMOUNT || 0)));
+    const wasteItemNames = topWastes.slice(0, 10).map(w => {
+        const itemName = w.itemname || w.ITEMID;
+        // Truncate long names for better display
+        return itemName.length > 20 ? itemName.substring(0, 20) + '...' : itemName;
+    });
+    const wasteQuantities = topWastes.slice(0, 10).map(w => Math.abs(Number(w.total_waste_quantity || 0)));
+    const wasteCosts = topWastes.slice(0, 10).map(w => Math.abs(Number(w.total_waste_cost || 0)));
+    const wasteTypes = topWastes.slice(0, 10).map(w => w.waste_types || 'Various');
 
     topWasteChart = new Chart(ctx, {
         type: 'bar',
@@ -525,50 +840,724 @@ const initializeTopWasteChart = (topWastes) => {
                     data: wasteQuantities,
                     backgroundColor: 'rgba(255, 99, 132, 0.6)',
                     borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
+                    borderWidth: 1,
+                    yAxisID: 'y'
                 },
                 {
-                    label: 'Waste Cost',
+                    label: 'Waste Cost (₱)',
                     data: wasteCosts,
                     backgroundColor: 'rgba(54, 162, 235, 0.6)',
                     borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
+                    borderWidth: 1,
+                    type: 'line',
+                    yAxisID: 'y1',
+                    fill: false,
+                    tension: 0.1
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
             plugins: {
+                title: {
+                    display: true,
+                    text: 'Top Waste Items (Stock Counting Analysis)',
+                    font: {
+                        size: 14,
+                        weight: 'bold'
+                    }
+                },
                 legend: {
                     position: 'top',
                 },
                 tooltip: {
                     callbacks: {
+                        title: function(context) {
+                            const index = context[0].dataIndex;
+                            const fullName = topWastes[index]?.itemname || topWastes[index]?.ITEMID || 'Unknown';
+                            return fullName;
+                        },
                         label: function(context) {
                             const value = context.parsed.y;
                             const datasetLabel = context.dataset.label;
-                            return `${datasetLabel}: ${context.dataset.label === 'Waste Cost' ? formatCurrency(value) : value.toFixed(2)}`;
+                            const index = context.dataIndex;
+                            const wasteTypesForItem = wasteTypes[index];
+                            
+                            let label = `${datasetLabel}: `;
+                            if (context.dataset.label === 'Waste Cost (₱)') {
+                                label += formatCurrency(value);
+                            } else {
+                                label += value.toFixed(2) + ' units';
+                            }
+                            
+                            return label;
+                        },
+                        afterLabel: function(context) {
+                            const index = context.dataIndex;
+                            const wasteTypesForItem = wasteTypes[index];
+                            return `Waste Types: ${wasteTypesForItem}`;
                         }
                     }
                 }
             },
             scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Items'
+                    },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                },
                 y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Waste Quantity / Cost'
+                        text: 'Waste Quantity (units)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Waste Cost (₱)'
+                    },
+                    grid: {
+                        drawOnChartArea: true,
                     },
                     ticks: {
-                        callback: function(value, index, ticks) {
-                            return this.getLabelForValue(value);
+                        callback: function(value) {
+                            return '₱' + value.toLocaleString();
                         }
                     }
                 }
             }
         }
     });
+};
+
+const fetchTransactionSales = async () => {
+  try {
+    const payload = {
+      start_date: selectedDateRange.value.start_date,
+      end_date: selectedDateRange.value.end_date,
+      filter_by: transactionSalesFilter.value,
+      products: selectedProducts.value
+    };
+
+    console.log('Fetching transaction sales with payload:', payload);
+    const response = await axios.post(route('get.transaction.sales'), payload);
+    console.log('Transaction sales response:', response.data);
+    initializeTransactionSalesChart(response.data || { data: [], summary: {} });
+  } catch (error) {
+    console.error('Error fetching transaction sales:', error);
+    if (error.response) {
+      console.error('Transaction sales error response:', error.response.data);
+    }
+    initializeTransactionSalesChart({ data: [], summary: {} });
+  }
+};
+
+const initializeTransactionSalesChart = (data) => {
+  if (!transactionSalesRef.value) return;
+  
+  const ctx = transactionSalesRef.value.getContext('2d');
+  
+  if (transactionSalesChart) {
+    transactionSalesChart.destroy();
+  }
+
+  const chartData = data.data || [];
+  const labels = chartData.map(item => item.label);
+  const values = chartData.map(item => item.total_value);
+
+  transactionSalesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: transactionSalesFilter.value === 'qty' ? 'Total Quantity' : 'Total Sales (₱)',
+        data: values,
+        borderColor: 'rgba(59, 130, 246, 1)',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: `Transaction ${transactionSalesFilter.value === 'qty' ? 'Quantity' : 'Sales'} Trend`,
+          font: { size: 14, weight: 'bold' }
+        },
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return transactionSalesFilter.value === 'qty' 
+                ? value.toLocaleString() + ' items'
+                : '₱' + value.toLocaleString();
+            }
+          }
+        }
+      }
+    }
+  });
+};
+
+const fetchSalesByHour = async () => {
+  try {
+    const payload = {
+      start_date: selectedDateRange.value.start_date,
+      end_date: selectedDateRange.value.end_date,
+      stores: selectedStores.value.map(store => 
+        typeof store === 'object' ? store.NAME : store
+      )
+    };
+
+    const response = await axios.post(route('get.sales.by.hour'), payload);
+    initializeSalesByHourChart(response.data || { data: [], summary: {} });
+  } catch (error) {
+    console.error('Error fetching sales by hour:', error);
+    initializeSalesByHourChart({ data: [], summary: {} });
+  }
+};
+
+const initializeSalesByHourChart = (data) => {
+  if (!salesByHourRef.value) return;
+  
+  const ctx = salesByHourRef.value.getContext('2d');
+  
+  if (salesByHourChart) {
+    salesByHourChart.destroy();
+  }
+
+  const chartData = data.data || [];
+  const labels = chartData.map(item => item.label);
+  const sales = chartData.map(item => item.total_sales);
+
+  salesByHourChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Sales (₱)',
+        data: sales,
+        backgroundColor: 'rgba(16, 185, 129, 0.6)',
+        borderColor: 'rgba(16, 185, 129, 1)',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Sales by Hour',
+          font: { size: 14, weight: 'bold' }
+        },
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return '₱' + value.toLocaleString();
+            }
+          }
+        }
+      }
+    }
+  });
+};
+
+const fetchTopStores = async () => {
+  try {
+    const payload = {
+      start_date: selectedDateRange.value.start_date,
+      end_date: selectedDateRange.value.end_date,
+      stores: selectedStores.value.map(store => 
+        typeof store === 'object' ? store.NAME : store
+      ),
+      filter_by: topStoresFilter.value
+    };
+
+    const response = await axios.post(route('get.top.stores'), payload);
+    initializeTopStoresChart(response.data || { data: [], summary: {} });
+  } catch (error) {
+    console.error('Error fetching top stores:', error);
+    initializeTopStoresChart({ data: [], summary: {} });
+  }
+};
+
+const initializeTopStoresChart = (data) => {
+  if (!topStoresRef.value) return;
+  
+  const ctx = topStoresRef.value.getContext('2d');
+  
+  if (topStoresChart) {
+    topStoresChart.destroy();
+  }
+
+  const chartData = data.data || [];
+  const storeNames = chartData.map(item => item.store);
+  const values = chartData.map(item => item.total_value);
+
+  topStoresChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: storeNames,
+      datasets: [{
+        label: getFilterLabel(topStoresFilter.value),
+        data: values,
+        backgroundColor: 'rgba(139, 92, 246, 0.6)',
+        borderColor: 'rgba(139, 92, 246, 1)',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: `Top Stores by ${getFilterLabel(topStoresFilter.value)}`,
+          font: { size: 14, weight: 'bold' }
+        },
+        legend: { display: false }
+      },
+      scales: {
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return topStoresFilter.value === 'qty' 
+                ? value.toLocaleString() + ' items'
+                : '₱' + value.toLocaleString();
+            }
+          }
+        }
+      }
+    }
+  });
+};
+
+const getFilterLabel = (filter) => {
+  const labels = {
+    grossamount: 'Gross Amount',
+    discamount: 'Discount Amount',
+    netamount: 'Net Amount',
+    qty: 'Quantity'
+  };
+  return labels[filter] || 'Gross Amount';
+};
+
+const fetchAdvancedAnalysis = async () => {
+  try {
+    const payload = {
+      start_date: selectedDateRange.value.start_date,
+      end_date: selectedDateRange.value.end_date,
+      stores: selectedStores.value.map(store => 
+        typeof store === 'object' ? store.NAME : store
+      )
+    };
+
+    const response = await axios.post(route('get.advanced.analysis'), payload);
+    initializeAdvancedAnalysisChart(response.data || { salesTrend: [], storeComparison: [], categoryPerformance: [] });
+  } catch (error) {
+    console.error('Error fetching advanced analysis:', error);
+    initializeAdvancedAnalysisChart({ salesTrend: [], storeComparison: [], categoryPerformance: [] });
+  }
+};
+
+const initializeAdvancedAnalysisChart = (data) => {
+  if (!advancedAnalysisRef.value) return;
+  
+  const ctx = advancedAnalysisRef.value.getContext('2d');
+  
+  if (advancedAnalysisChart) {
+    advancedAnalysisChart.destroy();
+  }
+
+  const salesTrend = data.salesTrend || [];
+  const labels = salesTrend.map(item => item.label);
+  const grossSales = salesTrend.map(item => item.gross_sales);
+  const netSales = salesTrend.map(item => item.net_sales);
+  const discounts = salesTrend.map(item => item.discount_amount);
+
+  advancedAnalysisChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Gross Sales',
+          data: grossSales,
+          borderColor: 'rgba(59, 130, 246, 1)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4
+        },
+        {
+          label: 'Net Sales',
+          data: netSales,
+          borderColor: 'rgba(16, 185, 129, 1)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          tension: 0.4
+        },
+        {
+          label: 'Discounts',
+          data: discounts,
+          borderColor: 'rgba(239, 68, 68, 1)',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          tension: 0.4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Advanced Sales Analysis',
+          font: { size: 14, weight: 'bold' }
+        },
+        legend: {
+          position: 'top'
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return '₱' + value.toLocaleString();
+            }
+          }
+        }
+      }
+    }
+  });
+};
+
+const fetchReceivedDeliveryVsSales = async () => {
+  try {
+    const payload = {
+      start_date: selectedDateRange.value.start_date,
+      end_date: selectedDateRange.value.end_date,
+      stores: selectedStores.value.map(store => 
+        typeof store === 'object' ? store.NAME : store
+      )
+    };
+
+    const response = await axios.post(route('get.received.delivery.vs.sales'), payload);
+    initializeReceivedDeliveryVsSalesChart(response.data || { data: [], summary: {} });
+  } catch (error) {
+    console.error('Error fetching received delivery vs sales:', error);
+    initializeReceivedDeliveryVsSalesChart({ data: [], summary: {} });
+  }
+};
+
+const initializeReceivedDeliveryVsSalesChart = (data) => {
+  if (!receivedDeliveryVsSalesRef.value) return;
+  
+  const ctx = receivedDeliveryVsSalesRef.value.getContext('2d');
+  
+  if (receivedDeliveryVsSalesChart) {
+    receivedDeliveryVsSalesChart.destroy();
+  }
+
+  const chartData = data.data || [];
+  const labels = chartData.map(item => item.label);
+  const receivedDelivery = chartData.map(item => item.received_delivery);
+  const totalSales = chartData.map(item => item.total_sales);
+
+  receivedDeliveryVsSalesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Received Delivery',
+          data: receivedDelivery,
+          borderColor: 'rgba(59, 130, 246, 1)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4,
+          fill: false
+        },
+        {
+          label: 'Total Sales',
+          data: totalSales,
+          borderColor: 'rgba(16, 185, 129, 1)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          tension: 0.4,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Received Delivery vs Sales',
+          font: { size: 14, weight: 'bold' }
+        },
+        legend: {
+          position: 'top'
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return value.toLocaleString() + ' units';
+            }
+          }
+        }
+      }
+    }
+  });
+};
+
+const fetchSalesByCategory = async () => {
+  try {
+    const payload = {
+      start_date: selectedDateRange.value.start_date,
+      end_date: selectedDateRange.value.end_date,
+      stores: selectedStores.value.map(store => 
+        typeof store === 'object' ? store.NAME : store
+      ),
+      categories: selectedCategories.value
+    };
+
+    console.log('Fetching sales by category with payload:', payload);
+    const response = await axios.post(route('get.sales.by.category'), payload);
+    console.log('Sales by category response:', response.data);
+    initializeSalesByCategoryChart(response.data || { data: [], summary: {} });
+  } catch (error) {
+    console.error('Error fetching sales by category:', error);
+    if (error.response) {
+      console.error('Error response:', error.response.data);
+    }
+    initializeSalesByCategoryChart({ data: [], summary: {} });
+  }
+};
+
+const initializeSalesByCategoryChart = (data) => {
+  if (!salesByCategoryRef.value) return;
+  
+  const ctx = salesByCategoryRef.value.getContext('2d');
+  
+  if (salesByCategoryChart) {
+    salesByCategoryChart.destroy();
+  }
+
+  const chartData = data.data || [];
+  
+  if (!chartData || chartData.length === 0) {
+    salesByCategoryChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['No Data Available'],
+        datasets: [{
+          data: [1],
+          backgroundColor: ['rgba(128, 128, 128, 0.3)']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Sales by Category (No Data)',
+            font: { size: 14, weight: 'bold' }
+          },
+          legend: { display: false }
+        }
+      }
+    });
+    return;
+  }
+
+  // Take top 10 categories and group the rest as "Others"
+  const topCategories = chartData.slice(0, 10);
+  const otherCategories = chartData.slice(10);
+  
+  let categories = topCategories.map(item => item.category);
+  let sales = topCategories.map(item => item.total_sales);
+  
+  if (otherCategories.length > 0) {
+    const otherTotalSales = otherCategories.reduce((sum, item) => sum + item.total_sales, 0);
+    categories.push(`Others (${otherCategories.length} categories)`);
+    sales.push(otherTotalSales);
+  }
+
+  const backgroundColors = [
+    'rgba(59, 130, 246, 0.8)',
+    'rgba(16, 185, 129, 0.8)', 
+    'rgba(239, 68, 68, 0.8)',
+    'rgba(245, 158, 11, 0.8)',
+    'rgba(139, 92, 246, 0.8)',
+    'rgba(236, 72, 153, 0.8)',
+    'rgba(34, 197, 94, 0.8)',
+    'rgba(168, 85, 247, 0.8)',
+    'rgba(251, 146, 60, 0.8)',
+    'rgba(14, 165, 233, 0.8)',
+    'rgba(156, 163, 175, 0.8)' // Gray for "Others"
+  ];
+
+  salesByCategoryChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: categories,
+      datasets: [{
+        data: sales,
+        backgroundColor: backgroundColors.slice(0, categories.length),
+        borderColor: backgroundColors.slice(0, categories.length).map(color => color.replace('0.8', '1')),
+        borderWidth: 2,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Sales by Category',
+          font: { size: 14, weight: 'bold' }
+        },
+        legend: {
+          position: 'right',
+          labels: {
+            padding: 15,
+            usePointStyle: true,
+            font: {
+              size: 11
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const value = context.parsed;
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${context.label}: ₱${value.toLocaleString()} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+};
+
+const fetchTopVarianceStores = async () => {
+  try {
+    const payload = {
+      start_date: selectedDateRange.value.start_date,
+      end_date: selectedDateRange.value.end_date,
+      stores: selectedStores.value.map(store => 
+        typeof store === 'object' ? store.NAME : store
+      )
+    };
+
+    const response = await axios.post(route('get.top.variance.stores'), payload);
+    initializeTopVarianceStoresChart(response.data || { data: [], summary: {} });
+  } catch (error) {
+    console.error('Error fetching top variance stores:', error);
+    initializeTopVarianceStoresChart({ data: [], summary: {} });
+  }
+};
+
+const initializeTopVarianceStoresChart = (data) => {
+  if (!topVarianceStoresRef.value) return;
+  
+  const ctx = topVarianceStoresRef.value.getContext('2d');
+  
+  if (topVarianceStoresChart) {
+    topVarianceStoresChart.destroy();
+  }
+
+  const chartData = data.data || [];
+  const stores = chartData.map(item => item.store);
+  const variances = chartData.map(item => item.total_variance);
+
+  topVarianceStoresChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: stores,
+      datasets: [{
+        label: 'Total Variance',
+        data: variances,
+        backgroundColor: 'rgba(239, 68, 68, 0.6)',
+        borderColor: 'rgba(239, 68, 68, 1)',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Top 10 Stores Under Monitoring (Highest Variances)',
+          font: { size: 14, weight: 'bold' }
+        },
+        legend: { display: false }
+      },
+      scales: {
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return value.toLocaleString() + ' units';
+            }
+          }
+        }
+      }
+    }
+  });
 };
 
 watch([
@@ -582,17 +1571,82 @@ watch([
     fetchTopBottomProducts();
     fetchMonthlySales();
     fetchTopWastes();
+    fetchTransactionSales();
+    fetchSalesByHour();
+    fetchTopStores();
+    fetchAdvancedAnalysis();
+    fetchReceivedDeliveryVsSales();
+    fetchSalesByCategory();
+    fetchTopVarianceStores();
   } else {
     dateRangeError.value = 'Invalid date range. Please check your selections.';
   }
 });
 
+// Watch for product type changes
+watch(() => selectedProductType.value, () => {
+  if (isValidDateRange.value) {
+    fetchTopBottomProducts();
+  }
+});
+
+// Watch for transaction sales filter changes
+watch(() => transactionSalesFilter.value, () => {
+  if (isValidDateRange.value) {
+    fetchTransactionSales();
+  }
+});
+
+// Watch for top stores filter changes
+watch(() => topStoresFilter.value, () => {
+  if (isValidDateRange.value) {
+    fetchTopStores();
+  }
+});
+
+// Watch for selected products changes
+watch(() => JSON.stringify(selectedProducts.value), () => {
+  if (isValidDateRange.value) {
+    fetchTransactionSales();
+  }
+});
+
+// Watch for selected categories changes
+watch(() => JSON.stringify(selectedCategories.value), () => {
+  if (isValidDateRange.value) {
+    fetchSalesByCategory();
+  }
+});
+
 onMounted(() => {
+  // Initialize payment chart with server-side data first
+  initializePaymentChart();
+  
+  // Then fetch store data and update charts
   fetchStores();
+  fetchProducts();
+  fetchCategories();
   fetchMetrics();
   fetchTopBottomProducts();
   fetchMonthlySales();
   fetchTopWastes();
+  fetchTransactionSales();
+  fetchSalesByHour();
+  fetchTopStores();
+  fetchAdvancedAnalysis();
+  fetchReceivedDeliveryVsSales();
+  fetchSalesByCategory();
+  fetchTopVarianceStores();
+  
+  // Add click outside listeners for dropdowns
+  document.addEventListener('click', handleCategoryDropdownClickOutside);
+  document.addEventListener('click', handleTransactionProductDropdownClickOutside);
+});
+
+onUnmounted(() => {
+  // Remove click outside listeners
+  document.removeEventListener('click', handleCategoryDropdownClickOutside);
+  document.removeEventListener('click', handleTransactionProductDropdownClickOutside);
 });
 </script>
 
@@ -745,12 +1799,28 @@ onMounted(() => {
                 <!-- Top/Bottom Products Section -->
                 <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.01] transition-all duration-300">
                     <div class="absolute inset-0 opacity-10 bg-purple-100"></div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center relative z-10">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                        </svg>
-                        Popular Products & Products Under Monitoring
-                    </h3>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 relative z-10">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center mb-3 sm:mb-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                            </svg>
+                            Popular Products & Products Under Monitoring
+                        </h3>
+                        
+                        <!-- Product Type Filter -->
+                        <div class="flex items-center space-x-3">
+                            <label for="productTypeFilter" class="text-sm font-medium text-gray-700">Filter by:</label>
+                            <select 
+                                id="productTypeFilter"
+                                v-model="selectedProductType" 
+                                class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
+                            >
+                                <option value="all">All Products</option>
+                                <option value="regular">Regular Products Only</option>
+                                <option value="non_product">Non Products Only</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="h-[500px] relative z-10">
                         <canvas ref="topBottomProductsRef" class="w-full h-full"></canvas>
                     </div>
@@ -768,14 +1838,317 @@ onMounted(() => {
                         </div>
                     </div>
                     
-                    <WasteAnalysis
-                    :selectedDateRange="selectedDateRange"
-                    :selectedStores="selectedStores"
-                    />
+                    <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.02] transition-all duration-300">
+                        <div class="absolute inset-0 opacity-10 bg-red-100"></div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center relative z-10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Top Waste Items (Stock Counting Analysis)
+                        </h3>
+                        <div class="h-[400px] relative z-10">
+                            <canvas ref="topWasteRef" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- New Charts Section -->
+                <!-- Transaction Sales Chart -->
+                <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.01] transition-all duration-300">
+                    <div class="absolute inset-0 opacity-10 bg-blue-100"></div>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 relative z-10">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center mb-3 sm:mb-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                            Transaction Sales Trend
+                        </h3>
+                        <div class="flex items-center space-x-3">
+                            <label for="transactionSalesFilter" class="text-sm font-medium text-gray-700">Filter by:</label>
+                            <select 
+                                id="transactionSalesFilter"
+                                v-model="transactionSalesFilter" 
+                                class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                            >
+                                <option value="gross">Gross Amount</option>
+                                <option value="qty">Quantity</option>
+                            </select>
+                            
+                            <!-- Product Multi-Select with Search -->
+                            <div class="w-80">
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Products (Optional)</label>
+                                <div class="relative" ref="transactionProductDropdownRef">
+                                    <button
+                                        @click="transactionProductDropdownOpen = !transactionProductDropdownOpen"
+                                        type="button"
+                                        class="relative w-full bg-white border border-gray-300 rounded-lg shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
+                                    >
+                                        <span class="block truncate text-gray-700">
+                                            <span v-if="selectedProducts.length === 0" class="text-gray-500">Search and select products...</span>
+                                            <span v-else-if="selectedProducts.length === 1">{{ getProductLabel(selectedProducts[0]) }}</span>
+                                            <span v-else>{{ selectedProducts.length }} products selected</span>
+                                        </span>
+                                        <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                            <svg class="h-4 w-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': transactionProductDropdownOpen }" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                    </button>
+
+                                    <div v-if="transactionProductDropdownOpen" class="absolute z-30 mt-1 w-full bg-white shadow-xl border border-gray-200 rounded-lg overflow-hidden">
+                                        <!-- Search Input - Fixed at top -->
+                                        <div class="p-3 border-b border-gray-200 bg-gray-50">
+                                            <input
+                                                v-model="productSearchTerm"
+                                                @input="debouncedProductSearch"
+                                                @click.stop
+                                                type="text"
+                                                placeholder="Search products by name or ID..."
+                                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                            />
+                                        </div>
+                                        
+                                        <!-- Scrollable content area -->
+                                        <div class="max-h-80 overflow-y-auto">
+                                            <!-- Select All Option -->
+                                            <div class="border-b border-gray-100 bg-gray-50">
+                                                <div
+                                                    class="px-4 py-3 cursor-pointer hover:bg-blue-100 flex items-center select-none"
+                                                    @click.stop="toggleAllProducts"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded pointer-events-none"
+                                                        :checked="selectedProducts.length === filteredProducts.length && filteredProducts.length > 0"
+                                                        :indeterminate="selectedProducts.length > 0 && selectedProducts.length < filteredProducts.length"
+                                                        tabindex="-1"
+                                                    >
+                                                    <span class="ml-3 font-medium text-gray-900">
+                                                        Select All ({{ filteredProducts.length }} items)
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Product Options -->
+                                            <div 
+                                                v-for="product in filteredProducts" 
+                                                :key="product.itemid" 
+                                                class="px-4 py-2 cursor-pointer hover:bg-blue-50 flex items-center border-b border-gray-50 select-none"
+                                                @click.stop="toggleProduct(product.itemid)"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded pointer-events-none"
+                                                    :checked="selectedProducts.includes(product.itemid)"
+                                                    tabindex="-1"
+                                                >
+                                                <div class="ml-3 flex-1">
+                                                    <div class="text-sm font-medium text-gray-900">{{ product.itemname }}</div>
+                                                    <div class="text-xs text-gray-500">ID: {{ product.itemid }}</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- No results message -->
+                                            <div v-if="filteredProducts.length === 0" class="px-4 py-8 text-center text-gray-500">
+                                                <div class="text-sm">No products found</div>
+                                                <div class="text-xs mt-1">Try different search terms</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1" v-if="products.length === 0">Loading products...</div>
+                                <div class="text-xs text-gray-500 mt-1" v-else>
+                                    {{ filteredProducts.length }} products available
+                                    <span v-if="selectedProducts.length > 0" class="text-blue-600">
+                                        ({{ selectedProducts.length }} selected)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-[400px] relative z-10">
+                        <canvas ref="transactionSalesRef" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+
+                <!-- Sales by Hour and Top Stores Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Sales by Hour Chart -->
+                    <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.02] transition-all duration-300">
+                        <div class="absolute inset-0 opacity-10 bg-green-100"></div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center relative z-10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Sales by Hour
+                        </h3>
+                        <div class="h-[400px] relative z-10">
+                            <canvas ref="salesByHourRef" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Top Stores Chart -->
+                    <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.02] transition-all duration-300">
+                        <div class="absolute inset-0 opacity-10 bg-purple-100"></div>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 relative z-10">
+                            <h3 class="text-xl font-bold text-gray-800 flex items-center mb-3 sm:mb-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                                Top Stores Performance
+                            </h3>
+                            <div class="flex items-center space-x-3">
+                                <label for="topStoresFilter" class="text-sm font-medium text-gray-700">Filter by:</label>
+                                <select 
+                                    id="topStoresFilter"
+                                    v-model="topStoresFilter" 
+                                    class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
+                                >
+                                    <option value="grossamount">Gross Amount</option>
+                                    <option value="discamount">Discount Amount</option>
+                                    <option value="netamount">Net Amount</option>
+                                    <option value="qty">Quantity</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="h-[400px] relative z-10">
+                            <canvas ref="topStoresRef" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Analysis Chart -->
+                <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.01] transition-all duration-300">
+                    <div class="absolute inset-0 opacity-10 bg-indigo-100"></div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center relative z-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Advanced Data Analysis
+                    </h3>
+                    <div class="h-[500px] relative z-10">
+                        <canvas ref="advancedAnalysisRef" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+
+                <!-- New Reports Section -->
+                <!-- Received Delivery vs Sales and Sales by Category Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Received Delivery vs Sales Chart -->
+                    <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.02] transition-all duration-300">
+                        <div class="absolute inset-0 opacity-10 bg-cyan-100"></div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center relative z-10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                            </svg>
+                            Received Delivery vs Sales
+                        </h3>
+                        <div class="h-[400px] relative z-10">
+                            <canvas ref="receivedDeliveryVsSalesRef" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Sales by Category Chart -->
+                    <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.02] transition-all duration-300">
+                        <div class="absolute inset-0 opacity-10 bg-orange-100"></div>
+                        <div class="flex justify-between items-start mb-6 relative z-10">
+                            <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                                </svg>
+                                Sales by Category
+                            </h3>
+                            
+                            <!-- Category Multi-Select Filter -->
+                            <div class="w-80">
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Filter Categories (Optional)</label>
+                                <div class="relative" ref="categoryDropdownRef">
+                                    <button
+                                        @click="categoryDropdownOpen = !categoryDropdownOpen"
+                                        type="button"
+                                        class="relative w-full bg-white border border-gray-300 rounded-lg shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 sm:text-sm transition-colors duration-200"
+                                    >
+                                        <span class="block truncate text-gray-700">
+                                            <span v-if="selectedCategories.length === 0" class="text-gray-500">Select categories...</span>
+                                            <span v-else-if="selectedCategories.length === 1">{{ getCategoryLabel(selectedCategories[0]) }}</span>
+                                            <span v-else>{{ selectedCategories.length }} categories selected</span>
+                                        </span>
+                                        <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                            <svg class="h-4 w-4 text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': categoryDropdownOpen }" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                    </button>
+
+                                    <div v-if="categoryDropdownOpen" class="absolute z-20 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                                        <!-- Select All Option -->
+                                        <div class="border-b border-gray-200">
+                                            <div
+                                                class="px-3 py-2 cursor-pointer hover:bg-orange-50 flex items-center transition-colors duration-150"
+                                                @click="toggleAllCategories"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                                                    :checked="selectedCategories.length === categories.length"
+                                                    :indeterminate="selectedCategories.length > 0 && selectedCategories.length < categories.length"
+                                                    readonly
+                                                >
+                                                <span class="ml-2 font-medium text-gray-900">Select All</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Category Options -->
+                                        <div 
+                                            v-for="category in categories" 
+                                            :key="category.value" 
+                                            class="px-3 py-2 cursor-pointer hover:bg-orange-50 flex items-center transition-colors duration-150"
+                                            @click="toggleCategory(category.value)"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                                                :checked="selectedCategories.includes(category.value)"
+                                                readonly
+                                            >
+                                            <span class="ml-2 text-gray-900">{{ category.label }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1" v-if="categories.length === 0">Loading categories...</div>
+                                <div class="text-xs text-gray-500 mt-1" v-else>
+                                    {{ categories.length }} categories available
+                                    <span v-if="selectedCategories.length > 0" class="text-orange-600">
+                                        ({{ selectedCategories.length }} selected)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="h-[400px] relative z-10">
+                            <canvas ref="salesByCategoryRef" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Variance Stores Chart -->
+                <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.01] transition-all duration-300">
+                    <div class="absolute inset-0 opacity-10 bg-red-100"></div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center relative z-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Top 10 Stores Under Monitoring (Highest Variances)
+                    </h3>
+                    <div class="h-[400px] relative z-10">
+                        <canvas ref="topVarianceStoresRef" class="w-full h-full"></canvas>
+                    </div>
                 </div>
             </div>
         </template>
     </AdminPanel>
+    
+    <!-- Floating ChatBot -->
+    <FloatingChatBot />
 </template>
 
 <style scoped>

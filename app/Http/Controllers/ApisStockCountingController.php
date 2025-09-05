@@ -118,6 +118,9 @@ class ApisStockCountingController extends Controller
                         );
                 }
 
+                // Execute inventory summaries update script after inserting
+                $this->updateInventorySummaries($storeids, $currentDate);
+
                 DB::commit();
 
                 // Re-run the query to get the newly created record
@@ -455,6 +458,295 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                 'status' => 'error',
                 'message' => 'An error occurred while updating the record'
             ], 500);
+        }
+    }
+
+    /**
+     * Update inventory summaries using optimized temporary table approach
+     */
+    private function updateInventorySummaries($storeName, $syncDate)
+    {
+        try {
+            Log::info('Starting inventory summaries update', [
+                'store_name' => $storeName,
+                'sync_date' => $syncDate
+            ]);
+
+            // Step 1: Create temporary tables for calculations
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_beginning");
+            DB::statement("
+                CREATE TEMPORARY TABLE temp_beginning AS
+                SELECT itemid, counted as beginning_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND CAST(TRANSDATE AS DATE) = DATE_SUB(?, INTERVAL 1 DAY)  
+                  AND counted != 0
+            ", [$storeName, $syncDate]);
+
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_received");
+            DB::statement("
+                CREATE TEMPORARY TABLE temp_received AS
+                SELECT itemid, SUM(receivedcount) as received_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND receivedcount != 0
+                GROUP BY itemid
+            ", [$storeName, $syncDate]);
+
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_direct_sales");
+            DB::statement("
+                CREATE TEMPORARY TABLE temp_direct_sales AS
+                SELECT itemid, SUM(qty) as sales_qty
+                FROM rbotransactionsalestrans 
+                WHERE store = ?
+                  AND CAST(CREATEDDATE AS DATE) = ?
+                GROUP BY itemid
+            ", [$storeName, $syncDate]);
+
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_bundle_sales");
+            DB::statement("
+                CREATE TEMPORARY TABLE temp_bundle_sales AS
+                SELECT 
+                    il.child_itemid as itemid,
+                    SUM(il.quantity * rts.qty) as bundle_qty
+                FROM item_links il
+                INNER JOIN rbotransactionsalestrans rts ON il.parent_itemid = rts.itemid
+                LEFT JOIN inventtables inv ON inv.itemid = il.child_itemid
+                WHERE il.active = 1 
+                  AND rts.store = ?
+                  AND CAST(rts.createddate AS DATE) = ?
+                GROUP BY il.child_itemid
+            ", [$storeName, $syncDate]);
+
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_throw_away");
+            DB::statement("
+                CREATE TEMPORARY TABLE temp_throw_away AS
+                SELECT itemid, SUM(wastecount) as throw_away_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND wastetype = 'Throw Away' 
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND wastecount != 0
+                GROUP BY itemid
+            ", [$storeName, $syncDate]);
+
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_pull_out");
+            DB::statement("
+                CREATE TEMPORARY TABLE temp_pull_out AS
+                SELECT itemid, SUM(wastecount) as pull_out_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND wastetype = 'Pull Out' 
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND wastecount != 0
+                GROUP BY itemid
+            ", [$storeName, $syncDate]);
+
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_rat_bites");
+            DB::statement("
+                CREATE TEMPORARY TABLE temp_rat_bites AS
+                SELECT itemid, SUM(wastecount) as rat_bites_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND wastetype LIKE '%Rat%' 
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND wastecount != 0
+                GROUP BY itemid
+            ", [$storeName, $syncDate]);
+
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_ant_bites");
+            DB::statement("
+                CREATE TEMPORARY TABLE temp_ant_bites AS
+                SELECT itemid, SUM(wastecount) as ant_bites_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND wastetype LIKE '%Ant%' 
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND wastecount != 0
+                GROUP BY itemid
+            ", [$storeName, $syncDate]);
+
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_early_molds");
+            DB::statement("
+                CREATE TEMPORARY TABLE temp_early_molds AS
+                SELECT itemid, SUM(wastecount) as early_molds_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND wastetype LIKE '%Molds%' 
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND wastecount != 0
+                GROUP BY itemid
+            ", [$storeName, $syncDate]);
+
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_staff_count");
+            DB::statement("
+                CREATE TEMPORARY TABLE temp_staff_count AS
+                SELECT itemid, counted as staff_count_qty
+                FROM stockcountingtrans 
+                WHERE storename = ?
+                  AND CAST(TRANSDATE AS DATE) = ?
+                  AND counted != 0
+            ", [$storeName, $syncDate]);
+
+            // Step 2: Update inventory_summaries using temporary tables
+            $beginningResult = DB::update("
+                UPDATE inventory_summaries 
+                INNER JOIN temp_beginning ON inventory_summaries.itemid = temp_beginning.itemid
+                SET inventory_summaries.beginning = temp_beginning.beginning_qty,
+                    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+                WHERE inventory_summaries.storename = ?
+                  AND CAST(inventory_summaries.report_date AS DATE) = ?
+            ", [$storeName, $syncDate]);
+
+            $receivedResult = DB::update("
+                UPDATE inventory_summaries 
+                INNER JOIN temp_received ON inventory_summaries.itemid = temp_received.itemid
+                SET inventory_summaries.received_delivery = temp_received.received_qty,
+                    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+                WHERE inventory_summaries.storename = ?
+                  AND CAST(inventory_summaries.report_date AS DATE) = ?
+            ", [$storeName, $syncDate]);
+
+            $salesResult = DB::update("
+                UPDATE inventory_summaries 
+                INNER JOIN temp_direct_sales ON inventory_summaries.itemid = temp_direct_sales.itemid
+                SET inventory_summaries.sales = temp_direct_sales.sales_qty,
+                    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+                WHERE inventory_summaries.storename = ?
+                  AND CAST(inventory_summaries.report_date AS DATE) = ?
+            ", [$storeName, $syncDate]);
+
+            $bundleSalesResult = DB::update("
+                UPDATE inventory_summaries 
+                INNER JOIN temp_bundle_sales ON inventory_summaries.itemid = temp_bundle_sales.itemid
+                SET inventory_summaries.bundle_sales = temp_bundle_sales.bundle_qty,
+                    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+                WHERE inventory_summaries.storename = ?
+                  AND CAST(inventory_summaries.report_date AS DATE) = ?
+            ", [$storeName, $syncDate]);
+
+            $throwAwayResult = DB::update("
+                UPDATE inventory_summaries 
+                INNER JOIN temp_throw_away ON inventory_summaries.itemid = temp_throw_away.itemid
+                SET inventory_summaries.throw_away = temp_throw_away.throw_away_qty,
+                    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+                WHERE inventory_summaries.storename = ?
+                  AND CAST(inventory_summaries.report_date AS DATE) = ?
+            ", [$storeName, $syncDate]);
+
+            $pullOutResult = DB::update("
+                UPDATE inventory_summaries 
+                INNER JOIN temp_pull_out ON inventory_summaries.itemid = temp_pull_out.itemid
+                SET inventory_summaries.pull_out = temp_pull_out.pull_out_qty,
+                    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+                WHERE inventory_summaries.storename = ?
+                  AND CAST(inventory_summaries.report_date AS DATE) = ?
+            ", [$storeName, $syncDate]);
+
+            $ratBitesResult = DB::update("
+                UPDATE inventory_summaries 
+                INNER JOIN temp_rat_bites ON inventory_summaries.itemid = temp_rat_bites.itemid
+                SET inventory_summaries.rat_bites = temp_rat_bites.rat_bites_qty,
+                    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+                WHERE inventory_summaries.storename = ?
+                  AND CAST(inventory_summaries.report_date AS DATE) = ?
+            ", [$storeName, $syncDate]);
+
+            $antBitesResult = DB::update("
+                UPDATE inventory_summaries 
+                INNER JOIN temp_ant_bites ON inventory_summaries.itemid = temp_ant_bites.itemid
+                SET inventory_summaries.ant_bites = temp_ant_bites.ant_bites_qty,
+                    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+                WHERE inventory_summaries.storename = ?
+                  AND CAST(inventory_summaries.report_date AS DATE) = ?
+            ", [$storeName, $syncDate]);
+
+            $earlyMoldsResult = DB::update("
+                UPDATE inventory_summaries 
+                INNER JOIN temp_early_molds ON inventory_summaries.itemid = temp_early_molds.itemid
+                SET inventory_summaries.early_molds = temp_early_molds.early_molds_qty,
+                    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+                WHERE inventory_summaries.storename = ?
+                  AND CAST(inventory_summaries.report_date AS DATE) = ?
+            ", [$storeName, $syncDate]);
+
+            $staffCountResult = DB::update("
+                UPDATE inventory_summaries 
+                INNER JOIN temp_staff_count ON inventory_summaries.itemid = temp_staff_count.itemid
+                SET inventory_summaries.item_count = temp_staff_count.staff_count_qty,
+                    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+                WHERE inventory_summaries.storename = ?
+                  AND CAST(inventory_summaries.report_date AS DATE) = ?
+            ", [$storeName, $syncDate]);
+
+            // Calculate and Update Ending Inventory for all records
+            $endingResult = DB::update("
+                UPDATE inventory_summaries 
+                SET ending = (beginning + received_delivery + COALESCE(stock_transfer, 0)) 
+                           - (sales + bundle_sales + throw_away + early_molds + pull_out + rat_bites + ant_bites),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE storename = ?
+                  AND CAST(report_date AS DATE) = ?
+            ", [$storeName, $syncDate]);
+
+            // Calculate and Update Variance for all records
+            $varianceResult = DB::update("
+                UPDATE inventory_summaries 
+                SET variance = ending - item_count,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE storename = ?
+                  AND CAST(report_date AS DATE) = ?
+            ", [$storeName, $syncDate]);
+
+            // Step 3: Clean up temporary tables
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_beginning");
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_received");
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_direct_sales");
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_bundle_sales");
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_throw_away");
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_pull_out");
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_rat_bites");
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_ant_bites");
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_early_molds");
+            DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_staff_count");
+
+            $totalAffectedRows = $beginningResult + $receivedResult + $salesResult + $bundleSalesResult + 
+                               $throwAwayResult + $pullOutResult + $ratBitesResult + $antBitesResult + 
+                               $earlyMoldsResult + $staffCountResult + $endingResult + $varianceResult;
+
+            Log::info('Inventory summaries update completed', [
+                'store_name' => $storeName,
+                'sync_date' => $syncDate,
+                'total_affected_rows' => $totalAffectedRows,
+                'details' => [
+                    'beginning' => $beginningResult,
+                    'received' => $receivedResult,
+                    'sales' => $salesResult,
+                    'bundle_sales' => $bundleSalesResult,
+                    'waste_types' => [
+                        'throw_away' => $throwAwayResult,
+                        'pull_out' => $pullOutResult,
+                        'rat_bites' => $ratBitesResult,
+                        'ant_bites' => $antBitesResult,
+                        'early_molds' => $earlyMoldsResult
+                    ],
+                    'staff_count' => $staffCountResult,
+                    'ending' => $endingResult,
+                    'variance' => $varianceResult
+                ]
+            ]);
+
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error('Error updating inventory summaries in ApisStockCountingController', [
+                'store_name' => $storeName,
+                'sync_date' => $syncDate,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
         }
     }   
 }

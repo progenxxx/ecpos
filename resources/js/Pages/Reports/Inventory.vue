@@ -95,6 +95,16 @@ const syncLoading = ref(false);
 const syncStatus = ref(null);
 const syncStatusLoading = ref(false);
 
+// Import count functionality state
+const showImportModal = ref(false);
+const importForm = ref({
+    import_date: '',
+    store_name: '',
+    import_file: null
+});
+const importLoading = ref(false);
+const downloadingTemplate = ref(false);
+
 // Filtered stores based on search - handle both string and object formats
 const filteredStores = computed(() => {
     let stores = [];
@@ -587,6 +597,165 @@ const performSync = async () => {
     }
 };
 
+// Open import modal
+const openImportModal = () => {
+    importForm.value = {
+        import_date: endDate.value || startDate.value || new Date().toISOString().split('T')[0],
+        store_name: selectedStores.value.length === 1 ? selectedStores.value[0] : '',
+        import_file: null
+    };
+    showImportModal.value = true;
+    closeFloatingMenu();
+};
+
+// Close import modal
+const closeImportModal = () => {
+    showImportModal.value = false;
+    importForm.value = {
+        import_date: '',
+        store_name: '',
+        import_file: null
+    };
+};
+
+// Download template
+const downloadTemplate = async () => {
+    if (!importForm.value.import_date) {
+        alert('Please select a date first');
+        return;
+    }
+
+    if ((props.userRole.toUpperCase() === 'ADMIN' || props.userRole.toUpperCase() === 'SUPERADMIN') && !importForm.value.store_name) {
+        alert('Please select a store first');
+        return;
+    }
+
+    downloadingTemplate.value = true;
+
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        const response = await fetch('/inventory/download-count-template', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                import_date: importForm.value.import_date,
+                store_name: importForm.value.store_name
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        
+        const fileName = `count_template_${importForm.value.store_name || 'store'}_${importForm.value.import_date.replace(/-/g, '')}.xlsx`;
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fileName;
+        
+        document.body.appendChild(a);
+        a.click();
+        
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        alert('Template downloaded successfully!');
+    } catch (error) {
+        console.error('Error downloading template:', error);
+        alert('Error downloading template: ' + error.message);
+    } finally {
+        downloadingTemplate.value = false;
+    }
+};
+
+// Handle file selection
+const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        // Validate file type
+        const allowedTypes = [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+            'application/vnd.ms-excel', // .xls
+            'text/csv' // .csv
+        ];
+        
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please select a valid Excel (.xlsx, .xls) or CSV file');
+            event.target.value = '';
+            return;
+        }
+        
+        importForm.value.import_file = file;
+    }
+};
+
+// Import count data
+const importCountData = async () => {
+    if (!importForm.value.import_date) {
+        alert('Please select an import date');
+        return;
+    }
+
+    if ((props.userRole.toUpperCase() === 'ADMIN' || props.userRole.toUpperCase() === 'SUPERADMIN') && !importForm.value.store_name) {
+        alert('Please select a store');
+        return;
+    }
+
+    if (!importForm.value.import_file) {
+        alert('Please select a file to import');
+        return;
+    }
+
+    importLoading.value = true;
+
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        const formData = new FormData();
+        formData.append('import_date', importForm.value.import_date);
+        formData.append('store_name', importForm.value.store_name);
+        formData.append('import_file', importForm.value.import_file);
+
+        const response = await fetch('/inventory/import-count-data', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`Import completed successfully!\n\nStore: ${data.data.store_name}\nDate: ${data.data.import_date}\nRecords Imported: ${data.data.total_imported}\nRecords Updated: ${data.data.total_updated || 0}`);
+            
+            closeImportModal();
+            
+            // Refresh the page to show updated data
+            window.location.reload();
+        } else {
+            alert('Import failed: ' + data.message);
+            if (data.errors) {
+                console.error('Import errors:', data.errors);
+            }
+        }
+    } catch (error) {
+        console.error('Error importing count data:', error);
+        alert('An error occurred during import: ' + error.message);
+    } finally {
+        importLoading.value = false;
+    }
+};
+
 // DataTable columns for desktop - with enhanced interactions
 const columns = [
     { 
@@ -1052,7 +1221,18 @@ onMounted(() => {
         Clear Filters
     </button>
     
-    <!-- ADD THIS SYNC BUTTON -->
+    <!-- Import Count Button -->
+    <button
+        @click="openImportModal"
+        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2 mr-2"
+    >
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+        </svg>
+        Import Count
+    </button>
+    
+    <!-- Sync Button -->
     <button
         @click="openSyncModal"
         class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
@@ -1325,6 +1505,17 @@ onMounted(() => {
                     </button>
 
                     <div class="border-t border-gray-200 my-2"></div>
+
+                    <!-- Import Count Options -->
+                    <button
+                        @click="openImportModal"
+                        class="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    >
+                        <svg class="h-4 w-4 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                        </svg>
+                        Import Count Data
+                    </button>
 
                     <!-- Sync Options -->
                     <button
@@ -1656,6 +1847,126 @@ onMounted(() => {
                             >
                                 <span v-if="syncLoading">Syncing...</span>
                                 <span v-else>Start Sync</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Import Count Modal -->
+            <div v-if="showImportModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                    <div class="mt-3">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">
+                            Import Count Data
+                        </h3>
+                        
+                        <div class="mb-4 p-3 bg-green-50 rounded">
+                            <p class="text-sm text-green-700">
+                                Import count data from Excel/CSV file. This is an alternative way to input count data when stores haven't inputted counts for the day.
+                            </p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Import Date *</label>
+                                <input 
+                                    type="date" 
+                                    v-model="importForm.import_date"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                                    required
+                                >
+                            </div>
+
+                            <div v-if="userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'">
+                                <label class="block text-sm font-medium text-gray-700">Store *</label>
+                                <select 
+                                    v-model="importForm.store_name"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                                    required
+                                >
+                                    <option value="">Select a store...</option>
+                                    <option v-for="store in filteredStores" :key="store" :value="store">
+                                        {{ store }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Download Template Section -->
+                            <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <h4 class="text-sm font-medium text-blue-900 mb-2">Step 1: Download Template</h4>
+                                <p class="text-xs text-blue-700 mb-3">
+                                    Download the Excel template with current inventory items for the selected date and store.
+                                </p>
+                                <button
+                                    @click="downloadTemplate"
+                                    :disabled="downloadingTemplate || !importForm.import_date || (importForm.store_name === '' && (userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'))"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:bg-blue-300 flex items-center justify-center gap-2"
+                                >
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span v-if="downloadingTemplate">Downloading...</span>
+                                    <span v-else>Download Template</span>
+                                </button>
+                            </div>
+
+                            <!-- File Upload Section -->
+                            <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <h4 class="text-sm font-medium text-yellow-900 mb-2">Step 2: Upload Completed File</h4>
+                                <p class="text-xs text-yellow-700 mb-3">
+                                    Fill in the count data in the template and upload the completed file.
+                                </p>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Select File *</label>
+                                    <input 
+                                        type="file" 
+                                        @change="handleFileSelect"
+                                        accept=".xlsx,.xls,.csv"
+                                        class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                                        required
+                                    >
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        Accepted formats: .xlsx, .xls, .csv
+                                    </p>
+                                </div>
+                                
+                                <div v-if="importForm.import_file" class="mt-2 text-sm text-green-600">
+                                    ✓ Selected: {{ importForm.import_file.name }}
+                                </div>
+                            </div>
+
+                            <!-- Warning message -->
+                            <div class="p-3 bg-red-50 border border-red-200 rounded">
+                                <div class="flex">
+                                    <svg class="h-5 w-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <p class="text-red-800 text-sm">
+                                            <strong>Warning:</strong> This will update existing count data for the selected date and store. 
+                                            Make sure your data is accurate before importing.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-3 mt-6">
+                            <button 
+                                @click="closeImportModal"
+                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                                :disabled="importLoading"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                @click="importCountData"
+                                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-green-300"
+                                :disabled="importLoading || !importForm.import_date || !importForm.import_file || (importForm.store_name === '' && (userRole.toUpperCase() === 'ADMIN' || userRole.toUpperCase() === 'SUPERADMIN'))"
+                            >
+                                <span v-if="importLoading">Importing...</span>
+                                <span v-else>Import Data</span>
                             </button>
                         </div>
                     </div>

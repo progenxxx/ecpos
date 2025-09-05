@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan tinker:*)",
+      "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\app\\Services/**)",
+      "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\app\\Http\\Controllers/**)",
+      "Read(/D:\\MARK ADS\\fs-branch2\\ecpos/**)",
+      "Bash(php artisan config:clear:*)",
+      "Bash(php:*)",
+      "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\routes/**)",
+      "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\routes/**)",
+      "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\routes/**)",
+      "Bash(del test_chatbot.php debug_chatbot.php test_direct_api.php test_anthropic_fixed.php test_fallback.php)",
+      "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\app\\Http\\Controllers/**)",
+      "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\routes/**)",
+      "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\resources\\js\\Pages\\Home/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

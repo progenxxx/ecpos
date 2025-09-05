@@ -96,9 +96,9 @@ const logout = () => {
                 <List :active-tab="activeTab" tabName="DISCOUNT" url="/discountsv2"><Tag class="h-6 lg:h-8"/> </List>
             </div>
 
-            <div class="tooltip tooltip-right tooltip-primary" data-tip="BatchCount">
-                <List :active-tab="activeTab" tabName="Batch Count" url="/batchcount"><BatchCount class="h-6 lg:h-8"/> </List>
-            </div>
+            <!-- <div class="tooltip tooltip-right tooltip-primary" data-tip="BatchCount">
+                <List :active-tab="activeTab" tabName="Batch Count" url="/StockCounting"><BatchCount class="h-6 lg:h-8"/> </List>
+            </div> -->
 
             <li v-if="$page.props.auth.user.role != 'DISPATCH'" class="tooltip tooltip-right tooltip-primary" data-tip="REPORTS">
                 <List :active-tab="activeTab" tabName="REPORTS" url="/reports">
