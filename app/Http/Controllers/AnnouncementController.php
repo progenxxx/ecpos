@@ -19,20 +19,6 @@ class AnnouncementController extends Controller
         $announcements = Announcements::select('*')->get();
 
         return Inertia::render('Announcement/Index', ['announcements' => $announcements]);
-        /* $announcements = Announcement::select('id', 'subject', 'description', 'file_path')->get();
-
-        $announcements->transform(function ($announcement) {
-            if ($announcement->file_path) {
-                $announcement->file_url = Storage::url('announcements/' . $announcement->file_path);
-                $announcement->file_exists = Storage::disk('public')->exists('announcements/' . $announcement->file_path);
-                $announcement->full_path = Storage::disk('public')->path('announcements/' . $announcement->file_path);
-            }
-            return $announcement;
-        });
-
-        return Inertia::render('Announcements/Index', [
-            'announcements' => $announcements
-        ]); */
     }
 
     /**

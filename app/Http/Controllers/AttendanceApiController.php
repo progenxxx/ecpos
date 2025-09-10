@@ -20,7 +20,6 @@ class AttendanceApiController extends Controller
         try {
             $query = AttendanceRecord::query();
 
-            // Apply filters if provided
             if ($request->has('staffId')) {
                 $query->where('staffId', $request->input('staffId'));
             }
@@ -37,7 +36,6 @@ class AttendanceApiController extends Controller
                 $query->where('status', $request->input('status'));
             }
 
-            // Apply date range filter
             if ($request->has('start_date') && $request->has('end_date')) {
                 $query->whereBetween('date', [
                     $request->input('start_date'),
@@ -45,21 +43,17 @@ class AttendanceApiController extends Controller
                 ]);
             }
 
-            // Sorting
             $sortBy = $request->input('sort_by', 'date');
             $sortOrder = $request->input('sort_order', 'desc');
             $query->orderBy($sortBy, $sortOrder);
 
-            // Add secondary sorting for consistency
             if ($sortBy !== 'timeIn') {
                 $query->orderBy('timeIn', 'desc');
             }
 
-            // Pagination
             $perPage = $request->input('per_page', 15);
             $attendances = $query->paginate($perPage);
 
-            // Transform data to include full image URLs
             $attendances->getCollection()->transform(function ($attendance) {
                 return [
                     ...$attendance->toArray(),
@@ -213,7 +207,6 @@ class AttendanceApiController extends Controller
                 $validated['end_date']
             ]);
 
-            // Apply optional filters
             if (!empty($validated['staffId'])) {
                 $query->where('staffId', $validated['staffId']);
             }
@@ -276,12 +269,10 @@ class AttendanceApiController extends Controller
         try {
             $query = AttendanceRecord::where('staffId', $staffId);
 
-            // Optional date filter
             if ($request->has('date')) {
                 $query->where('date', $request->input('date'));
             }
 
-            // Optional month filter
             if ($request->has('month') && $request->has('year')) {
                 $query->whereYear('date', $request->input('year'))
                       ->whereMonth('date', $request->input('month'));
@@ -334,12 +325,10 @@ class AttendanceApiController extends Controller
         try {
             $query = AttendanceRecord::where('storeId', $storeId);
 
-            // Optional date filter
             if ($request->has('date')) {
                 $query->where('date', $request->input('date'));
             }
 
-            // Optional date range filter
             if ($request->has('start_date') && $request->has('end_date')) {
                 $query->whereBetween('date', [
                     $request->input('start_date'),
@@ -393,7 +382,6 @@ class AttendanceApiController extends Controller
         try {
             $query = AttendanceRecord::query();
 
-            // Apply filters
             if ($request->has('staffId')) {
                 $query->where('staffId', $request->input('staffId'));
             }
@@ -452,17 +440,14 @@ class AttendanceApiController extends Controller
             return null;
         }
 
-        // If it's already a full URL (starts with http), return as is
         if (str_starts_with($imagePath, 'http')) {
             return $imagePath;
         }
 
-        // Check if file exists in storage
         if (Storage::disk('public')->exists($imagePath)) {
             return Storage::disk('public')->url($imagePath);
         }
 
-        // Try with attendance_photos prefix if not already present
         if (!str_starts_with($imagePath, 'attendance_photos/')) {
             $prefixedPath = 'attendance_photos/' . $imagePath;
             if (Storage::disk('public')->exists($prefixedPath)) {
@@ -470,7 +455,6 @@ class AttendanceApiController extends Controller
             }
         }
 
-        // Fallback: return the asset URL even if file doesn't exist
         return asset('storage/' . $imagePath);
     }
 }

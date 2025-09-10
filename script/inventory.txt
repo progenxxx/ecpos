@@ -1,0 +1,260 @@
+-- =====================================================
+-- Inventory Summaries Update Script
+-- =====================================================
+
+-- Set Store and Date variables
+SET @storeName = 'CAMILING'; 
+SET @syncDate = '2025-08-28'; 
+
+-- =====================================================
+-- Step 1: Create temporary tables for calculations
+-- =====================================================
+
+-- Temporary table for beginning inventory (from previous day)
+DROP TEMPORARY TABLE IF EXISTS temp_beginning;
+CREATE TEMPORARY TABLE temp_beginning AS
+SELECT itemid, counted as beginning_qty
+FROM stockcountingtrans 
+WHERE storename = @storeName 
+  AND CAST(TRANSDATE AS DATE) = DATE_SUB(@syncDate, INTERVAL 1 DAY)  
+  AND counted != 0;
+
+-- Temporary table for received deliveries/adjustments
+DROP TEMPORARY TABLE IF EXISTS temp_received;
+CREATE TEMPORARY TABLE temp_received AS
+SELECT itemid, SUM(receivedcount) as received_qty
+FROM stockcountingtrans 
+WHERE storename = @storeName 
+  AND CAST(TRANSDATE AS DATE) = @syncDate 
+  AND receivedcount != 0
+GROUP BY itemid;
+
+-- Temporary table for direct sales
+DROP TEMPORARY TABLE IF EXISTS temp_direct_sales;
+CREATE TEMPORARY TABLE temp_direct_sales AS
+SELECT itemid, SUM(qty) as sales_qty
+FROM rbotransactionsalestrans 
+WHERE store = @storeName 
+  AND CAST(CREATEDDATE AS DATE) = @syncDate
+GROUP BY itemid;
+
+-- Temporary table for bundle sales
+DROP TEMPORARY TABLE IF EXISTS temp_bundle_sales;
+CREATE TEMPORARY TABLE temp_bundle_sales AS
+SELECT 
+    il.child_itemid as itemid,
+    SUM(il.quantity * rts.qty) as bundle_qty
+FROM item_links il
+INNER JOIN rbotransactionsalestrans rts ON il.parent_itemid = rts.itemid
+LEFT JOIN inventtables inv ON inv.itemid = il.child_itemid
+WHERE il.active = 1 
+  AND rts.store = @storeName
+  AND CAST(rts.createddate AS DATE) = @syncDate
+GROUP BY il.child_itemid;
+
+-- Temporary table for throw away
+DROP TEMPORARY TABLE IF EXISTS temp_throw_away;
+CREATE TEMPORARY TABLE temp_throw_away AS
+SELECT itemid, SUM(wastecount) as throw_away_qty
+FROM stockcountingtrans 
+WHERE storename = @storeName 
+  AND wastetype = 'Throw Away' 
+  AND CAST(TRANSDATE AS DATE) = @syncDate 
+  AND wastecount != 0
+GROUP BY itemid;
+
+-- Temporary table for pull out
+DROP TEMPORARY TABLE IF EXISTS temp_pull_out;
+CREATE TEMPORARY TABLE temp_pull_out AS
+SELECT itemid, SUM(wastecount) as pull_out_qty
+FROM stockcountingtrans 
+WHERE storename = @storeName 
+  AND wastetype = 'Pull Out' 
+  AND CAST(TRANSDATE AS DATE) = @syncDate 
+  AND wastecount != 0
+GROUP BY itemid;
+
+-- Temporary table for rat bites
+DROP TEMPORARY TABLE IF EXISTS temp_rat_bites;
+CREATE TEMPORARY TABLE temp_rat_bites AS
+SELECT itemid, SUM(wastecount) as rat_bites_qty
+FROM stockcountingtrans 
+WHERE storename = @storeName 
+  AND wastetype LIKE '%Rat%' 
+  AND CAST(TRANSDATE AS DATE) = @syncDate 
+  AND wastecount != 0
+GROUP BY itemid;
+
+-- Temporary table for ant bites
+DROP TEMPORARY TABLE IF EXISTS temp_ant_bites;
+CREATE TEMPORARY TABLE temp_ant_bites AS
+SELECT itemid, SUM(wastecount) as ant_bites_qty
+FROM stockcountingtrans 
+WHERE storename = @storeName 
+  AND wastetype LIKE '%Ant%' 
+  AND CAST(TRANSDATE AS DATE) = @syncDate 
+  AND wastecount != 0
+GROUP BY itemid;
+
+-- Temporary table for early molds
+DROP TEMPORARY TABLE IF EXISTS temp_early_molds;
+CREATE TEMPORARY TABLE temp_early_molds AS
+SELECT itemid, SUM(wastecount) as early_molds_qty
+FROM stockcountingtrans 
+WHERE storename = @storeName 
+  AND wastetype LIKE '%Molds%' 
+  AND CAST(TRANSDATE AS DATE) = @syncDate 
+  AND wastecount != 0
+GROUP BY itemid;
+
+-- Temporary table for staff count
+DROP TEMPORARY TABLE IF EXISTS temp_staff_count;
+CREATE TEMPORARY TABLE temp_staff_count AS
+SELECT itemid, counted as staff_count_qty
+FROM stockcountingtrans 
+WHERE storename = @storeName 
+  AND CAST(TRANSDATE AS DATE) = @syncDate 
+  AND counted != 0;
+
+-- =====================================================
+-- Step 2: Update existing inventory_summaries records
+-- =====================================================
+
+-- Update Beginning Inventory
+UPDATE inventory_summaries 
+INNER JOIN temp_beginning ON inventory_summaries.itemid = temp_beginning.itemid
+SET inventory_summaries.beginning = temp_beginning.beginning_qty,
+    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+WHERE inventory_summaries.storename = @storeName 
+  AND CAST(inventory_summaries.report_date AS DATE) = @syncDate;
+
+-- Update Received Delivery
+UPDATE inventory_summaries 
+INNER JOIN temp_received ON inventory_summaries.itemid = temp_received.itemid
+SET inventory_summaries.received_delivery = temp_received.received_qty,
+    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+WHERE inventory_summaries.storename = @storeName 
+  AND CAST(inventory_summaries.report_date AS DATE) = @syncDate;
+
+-- Update Direct Sales
+UPDATE inventory_summaries 
+INNER JOIN temp_direct_sales ON inventory_summaries.itemid = temp_direct_sales.itemid
+SET inventory_summaries.sales = temp_direct_sales.sales_qty,
+    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+WHERE inventory_summaries.storename = @storeName 
+  AND CAST(inventory_summaries.report_date AS DATE) = @syncDate;
+
+-- Update Bundle Sales
+UPDATE inventory_summaries 
+INNER JOIN temp_bundle_sales ON inventory_summaries.itemid = temp_bundle_sales.itemid
+SET inventory_summaries.bundle_sales = temp_bundle_sales.bundle_qty,
+    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+WHERE inventory_summaries.storename = @storeName 
+  AND CAST(inventory_summaries.report_date AS DATE) = @syncDate;
+
+-- Update Throw Away
+UPDATE inventory_summaries 
+INNER JOIN temp_throw_away ON inventory_summaries.itemid = temp_throw_away.itemid
+SET inventory_summaries.throw_away = temp_throw_away.throw_away_qty,
+    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+WHERE inventory_summaries.storename = @storeName 
+  AND CAST(inventory_summaries.report_date AS DATE) = @syncDate;
+
+-- Update Pull Out
+UPDATE inventory_summaries 
+INNER JOIN temp_pull_out ON inventory_summaries.itemid = temp_pull_out.itemid
+SET inventory_summaries.pull_out = temp_pull_out.pull_out_qty,
+    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+WHERE inventory_summaries.storename = @storeName 
+  AND CAST(inventory_summaries.report_date AS DATE) = @syncDate;
+
+-- Update Rat Bites
+UPDATE inventory_summaries 
+INNER JOIN temp_rat_bites ON inventory_summaries.itemid = temp_rat_bites.itemid
+SET inventory_summaries.rat_bites = temp_rat_bites.rat_bites_qty,
+    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+WHERE inventory_summaries.storename = @storeName 
+  AND CAST(inventory_summaries.report_date AS DATE) = @syncDate;
+
+-- Update Ant Bites
+UPDATE inventory_summaries 
+INNER JOIN temp_ant_bites ON inventory_summaries.itemid = temp_ant_bites.itemid
+SET inventory_summaries.ant_bites = temp_ant_bites.ant_bites_qty,
+    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+WHERE inventory_summaries.storename = @storeName 
+  AND CAST(inventory_summaries.report_date AS DATE) = @syncDate;
+
+-- Update Early Molds
+UPDATE inventory_summaries 
+INNER JOIN temp_early_molds ON inventory_summaries.itemid = temp_early_molds.itemid
+SET inventory_summaries.early_molds = temp_early_molds.early_molds_qty,
+    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+WHERE inventory_summaries.storename = @storeName 
+  AND CAST(inventory_summaries.report_date AS DATE) = @syncDate;
+
+-- Update Item Count (Staff Count)
+UPDATE inventory_summaries 
+INNER JOIN temp_staff_count ON inventory_summaries.itemid = temp_staff_count.itemid
+SET inventory_summaries.item_count = temp_staff_count.staff_count_qty,
+    inventory_summaries.updated_at = CURRENT_TIMESTAMP
+WHERE inventory_summaries.storename = @storeName 
+  AND CAST(inventory_summaries.report_date AS DATE) = @syncDate;
+
+-- Calculate and Update Ending Inventory for all records
+UPDATE inventory_summaries 
+SET ending = (beginning + received_delivery + stock_transfer) 
+           - (sales + bundle_sales + throw_away + early_molds + pull_out + rat_bites + ant_bites),
+    updated_at = CURRENT_TIMESTAMP
+WHERE storename = @storeName 
+  AND CAST(report_date AS DATE) = @syncDate;
+
+-- Calculate and Update Variance for all records
+UPDATE inventory_summaries 
+SET variance = item_count - ending,
+    updated_at = CURRENT_TIMESTAMP
+WHERE storename = @storeName 
+  AND CAST(report_date AS DATE) = @syncDate;
+
+-- =====================================================
+-- Step 3: Clean up temporary tables
+-- =====================================================
+DROP TEMPORARY TABLE IF EXISTS temp_beginning;
+DROP TEMPORARY TABLE IF EXISTS temp_received;
+DROP TEMPORARY TABLE IF EXISTS temp_direct_sales;
+DROP TEMPORARY TABLE IF EXISTS temp_bundle_sales;
+DROP TEMPORARY TABLE IF EXISTS temp_throw_away;
+DROP TEMPORARY TABLE IF EXISTS temp_pull_out;
+DROP TEMPORARY TABLE IF EXISTS temp_rat_bites;
+DROP TEMPORARY TABLE IF EXISTS temp_ant_bites;
+DROP TEMPORARY TABLE IF EXISTS temp_early_molds;
+DROP TEMPORARY TABLE IF EXISTS temp_staff_count;
+
+-- =====================================================
+-- Step 4: Display summary results
+-- =====================================================
+SELECT 
+    'Inventory Summary Update Complete' as Status,
+    COUNT(*) as Records_Updated,
+    @storeName as Store,
+    @syncDate as Date
+FROM inventory_summaries 
+WHERE storename = @storeName 
+  AND CAST(report_date AS DATE) = @syncDate;
+
+-- Show updated records
+SELECT 
+    itemid,
+    itemname,
+    beginning,
+    received_delivery,
+    sales,
+    bundle_sales,
+    throw_away + early_molds + pull_out + rat_bites + ant_bites as total_waste,
+    item_count,
+    ending,
+    variance,
+    updated_at
+FROM inventory_summaries 
+WHERE storename = @storeName 
+  AND CAST(report_date AS DATE) = @syncDate
+ORDER BY itemid;

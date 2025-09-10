@@ -13,7 +13,8 @@
       "Bash(del test_chatbot.php debug_chatbot.php test_direct_api.php test_anthropic_fixed.php test_fallback.php)",
       "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\app\\Http\\Controllers/**)",
       "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\routes/**)",
-      "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\resources\\js\\Pages\\Home/**)"
+      "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\resources\\js\\Pages\\Home/**)",
+      "Read(//d/MARK ADS/xavier/original/spitfire-pilot-resume/**)"
     ],
     "deny": [],
     "ask": []

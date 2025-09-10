@@ -44,7 +44,7 @@ class ChatBotController extends Controller
     {
         return response()->json([
             'success' => true,
-            'message' => "👋 Hello! I'm your AI Sales Assistant. I can help you with:\n\n• Sales performance analysis\n• Business insights and trends\n• Strategic recommendations\n• Inventory optimization\n• Store performance evaluation\n\nWhat would you like to know about your business today?"
+            'message' => "Hello! I'm your AI Sales Assistant. I can help you with:\n\n• Sales performance analysis\n• Business insights and trends\n• Strategic recommendations\n• Inventory optimization\n• Store performance evaluation\n\nWhat would you like to know about your business today?"
         ]);
     }
 }

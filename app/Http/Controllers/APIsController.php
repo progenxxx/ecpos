@@ -25,7 +25,6 @@ class APIsController extends Controller
         ])
         ->get();
     
-        /* return Inertia::render('RboInventItemretailGroups/index', ['rboinventitemretailgroups' => $rboinventitemretailgroups]); */
         return response()->json([
             'rboinventitemretailgroups' => $rboinventitemretailgroups
         ]);
@@ -40,7 +39,6 @@ class APIsController extends Controller
         ])
         ->get();
     
-        /* return Inertia::render('RboInventItemretailGroups/index', ['rboinventitemretailgroups' => $rboinventitemretailgroups]); */
         return response()->json([
             'windowtables' => $windowtables
         ]);
@@ -65,7 +63,6 @@ class APIsController extends Controller
         ])
         ->get();
     
-        /* return Inertia::render('RboInventItemretailGroups/index', ['rboinventitemretailgroups' => $rboinventitemretailgroups]); */
         return response()->json([
             'ars' => $ars
         ]);
@@ -81,7 +78,6 @@ class APIsController extends Controller
         ])
         ->get();
     
-        /* return Inertia::render('RboInventItemretailGroups/index', ['rboinventitemretailgroups' => $rboinventitemretailgroups]); */
         return response()->json([
             'windowtrans' => $windowtrans
         ]);
@@ -96,7 +92,6 @@ class APIsController extends Controller
         ])
         ->get();
     
-        /* return Inertia::render('RboInventItemretailGroups/index', ['rboinventitemretailgroups' => $rboinventitemretailgroups]); */
         return response()->json([
             'cashfunds' => $cashfunds
         ]);
@@ -208,7 +203,6 @@ class APIsController extends Controller
             return response()->json(['message' => 'Record not found.'], 404);
         }
 
-        // Update the record
         $numbersequence->update([
             'CARTNEXTREC' => $nextrec,
             'updated_at' => now(), 
@@ -377,7 +371,7 @@ class APIsController extends Controller
     public function zread(Request $request, $store, $zreadid)
     {
         $rbotransactiontables = rbotransactiontables::where('store', $store)
-            /*->whereDate('createddate', now()->toDateString()) */
+            ->whereDate('createddate', now()->toDateString())
             ->whereNotNull('zreportid')
             ->get();
     
@@ -455,7 +449,6 @@ class APIsController extends Controller
     public function transactionrefund(Request $request, $storeid, $count)
     {
         try {
-            // Validate request
             $validated = $request->validate([
                 'transactionid' => 'required|string',
                 'returnedby' => 'required|string',
@@ -497,7 +490,6 @@ class APIsController extends Controller
                 'items.*.taxexempt' => 'nullable|numeric',
                 'items.*.wintransid' => 'nullable|string',
                 
-                // Transaction table fields
                 'type' => 'nullable|string',
                 'custaccount' => 'nullable|string',
                 'cashamount' => 'nullable|numeric',
@@ -531,15 +523,12 @@ class APIsController extends Controller
 
             DB::beginTransaction();
 
-            // Get original transaction
             $transaction = rbotransactiontables::where('transactionid', $validated['transactionid'])
                                              ->where('store', $storeid)
                                              ->firstOrFail();
 
-            // Generate refund receipt ID
             $refundReceiptId = 'RF' . $count . '-' . $storeid . '-' . date('Ymd');
 
-            // Calculate total refund amounts
             $totalRefundAmount = 0;
             $totalRefundCost = 0;
             $totalRefundTax = 0;
@@ -552,7 +541,6 @@ class APIsController extends Controller
                 $totalRefundDisc += $item['discamount'] ?? 0;
             }
 
-            // Update transaction table
             $transactionUpdate = [
                 'refundreceiptid' => $refundReceiptId,
                 'refunddate' => Carbon::now(),
@@ -564,7 +552,6 @@ class APIsController extends Controller
                 'transactionstatus' => $validated['transactionstatus'] ?? $transaction->transactionstatus,
             ];
 
-            // Add optional transaction fields if provided
             $optionalTransactionFields = [
                 'type', 'custaccount', 'cashamount', 'partialpayment', 
                 'custdiscamount', 'totaldiscamount', 'numberofitems', 
@@ -584,13 +571,11 @@ class APIsController extends Controller
 
             $transaction->update($transactionUpdate);
 
-            // Update sales transaction lines
             foreach ($validated['items'] as $item) {
                 $salesTrans = rbotransactionsalestrans::where('transactionid', $validated['transactionid'])
                     ->where('linenum', $item['linenum'])
                     ->firstOrFail();
 
-                // Calculate proportional amounts based on return quantity
                 $refundRatio = $item['returnqty'] / $salesTrans->qty;
 
                 $salesTransUpdate = [
@@ -606,7 +591,6 @@ class APIsController extends Controller
                     'taxamount' => DB::raw("taxamount - " . ($salesTrans->taxamount * $refundRatio)),
                 ];
 
-                // Add optional line item fields if provided
                 $optionalLineFields = [
                     'itemid', 'itemname', 'itemgroup', 'price', 'netprice',
                     'custaccount', 'store', 'priceoverride', 'paymentmethod',

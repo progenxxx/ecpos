@@ -19,7 +19,6 @@ class AttendanceController extends Controller
             ->map(function ($attendance) {
                 return [
                     ...$attendance->toArray(),
-                    // Generate full URLs for images
                     'timeInPhoto' => $this->getImageUrl($attendance->timeInPhoto),
                     'breakInPhoto' => $this->getImageUrl($attendance->breakInPhoto),
                     'breakOutPhoto' => $this->getImageUrl($attendance->breakOutPhoto),
@@ -34,31 +33,26 @@ class AttendanceController extends Controller
 
     private function getImageUrl($imagePath)
     {
-        // Return null for empty, null, or "Image not found" values
         if (!$imagePath || $imagePath === 'Image not found' || trim($imagePath) === '') {
             return null;
         }
 
-        // If it's already a full URL, return as is
         if (str_starts_with($imagePath, 'http')) {
             return $imagePath;
         }
 
-        // Clean the path - remove leading slashes and 'storage/' prefix
         $cleanPath = ltrim($imagePath, '/');
         $cleanPath = str_replace('storage/', '', $cleanPath);
         
-        // List of possible paths to check
         $possiblePaths = [
-            $cleanPath, // Original path as-is
-            'attendance_photos/' . $cleanPath, // With attendance_photos prefix
-            'attendance_photos/' . basename($cleanPath), // Just filename with prefix
-            basename($cleanPath), // Just the filename
-            'attendance-photos/' . $cleanPath, // Alternative directory name
-            'attendance-photos/' . basename($cleanPath), // Alternative directory with filename
+            $cleanPath, 
+            'attendance_photos/' . $cleanPath, 
+            'attendance_photos/' . basename($cleanPath), 
+            basename($cleanPath), 
+            'attendance-photos/' . $cleanPath, 
+            'attendance-photos/' . basename($cleanPath), 
         ];
         
-        // Check each possible path
         foreach ($possiblePaths as $testPath) {
             if (Storage::disk('public')->exists($testPath)) {
                 $url = Storage::disk('public')->url($testPath);
@@ -74,8 +68,7 @@ class AttendanceController extends Controller
             }
         }
 
-        // If file not found in any location, log the issue and return null
-        Log::warning('❌ Image file not found in any expected location', [
+        Log::warning('Image file not found in any expected location', [
             'original_path' => $imagePath,
             'tried_paths' => $possiblePaths,
             'storage_root' => storage_path('app/public/'),
@@ -104,20 +97,18 @@ class AttendanceController extends Controller
             'photo' => 'required|image|max:2048'
         ]);
 
-        // Handle photo upload with consistent directory
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoFile = $request->file('photo');
-            Log::info('🖼️ Photo received', [
+            Log::info('Photo received', [
                 'original_name' => $photoFile->getClientOriginalName(),
                 'mime_type' => $photoFile->getMimeType(),
                 'size_kb' => round($photoFile->getSize() / 1024, 2)
             ]);
 
-            // Use consistent directory name
             $photoPath = $photoFile->store('attendance_photos', 'public');
             
-            Log::info('📂 Photo stored at', [
+            Log::info('Photo stored at', [
                 'path' => $photoPath,
                 'full_path' => Storage::disk('public')->path($photoPath),
                 'exists' => Storage::disk('public')->exists($photoPath),
@@ -125,7 +116,6 @@ class AttendanceController extends Controller
             ]);
         }
 
-        // Check if record exists
         $existingRecord = AttendanceRecord::where('staffId', $validated['staffId'])
             ->where('date', $validated['date'])
             ->first();
@@ -137,7 +127,7 @@ class AttendanceController extends Controller
                 if ($existingRecord) {
                     $existingRecord->update([
                         'timeIn' => $validated['time'],
-                        'timeInPhoto' => $photoPath, // Store the actual file path
+                        'timeInPhoto' => $photoPath, 
                         'status' => 'ACTIVE'
                     ]);
                     $attendanceRecord = $existingRecord->fresh();
@@ -147,12 +137,11 @@ class AttendanceController extends Controller
                         'storeId' => $validated['storeId'],
                         'date' => $validated['date'],
                         'timeIn' => $validated['time'],
-                        'timeInPhoto' => $photoPath, // Store the actual file path
+                        'timeInPhoto' => $photoPath, 
                         'status' => 'ACTIVE'
                     ]);
                 }
             } else {
-                // Handle other attendance types
                 if (!$existingRecord) {
                     return response()->json([
                         'success' => false,
@@ -181,7 +170,6 @@ class AttendanceController extends Controller
                 $attendanceRecord = $existingRecord->fresh();
             }
 
-            // Prepare response data with proper URLs
             $responseData = [
                 'id' => $attendanceRecord->id,
                 'staffId' => $attendanceRecord->staffId,
@@ -194,14 +182,14 @@ class AttendanceController extends Controller
                 'status' => $attendanceRecord->status,
                 'type' => $validated['type'],
                 'recorded_time' => $validated['time'],
-                // Include proper image URLs
+
                 'timeInPhoto' => $this->getImageUrl($attendanceRecord->timeInPhoto),
                 'breakInPhoto' => $this->getImageUrl($attendanceRecord->breakInPhoto),
                 'breakOutPhoto' => $this->getImageUrl($attendanceRecord->breakOutPhoto),
                 'timeOutPhoto' => $this->getImageUrl($attendanceRecord->timeOutPhoto),
             ];
 
-            Log::info('🖼️ Generated image URLs', [
+            Log::info('Generated image URLs', [
                 'timeInPhoto' => $this->getImageUrl($attendanceRecord->timeInPhoto),
                 'breakInPhoto' => $this->getImageUrl($attendanceRecord->breakInPhoto),
                 'breakOutPhoto' => $this->getImageUrl($attendanceRecord->breakOutPhoto),
@@ -215,7 +203,7 @@ class AttendanceController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('❌ Exception while saving attendance', [
+            Log::error('Exception while saving attendance', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -230,12 +218,10 @@ class AttendanceController extends Controller
 
     public function store(Request $request)
     {
-        // Check if this is an API request with generic fields
         if ($request->has('type') && $request->has('time') && $request->has('photo')) {
             return $this->storeFromApi($request);
         }
 
-        // Original store method for web forms
         $validated = $request->validate([
             'staffId' => 'required|string|max:255',
             'storeId' => 'required|string|max:255',
@@ -251,7 +237,6 @@ class AttendanceController extends Controller
             'status' => 'required|string|max:255'
         ]);
 
-        // Handle file uploads - use consistent directory naming
         $photoFields = ['timeInPhoto', 'breakInPhoto', 'breakOutPhoto', 'timeOutPhoto'];
         foreach ($photoFields as $field) {
             if ($request->hasFile($field)) {
@@ -259,7 +244,6 @@ class AttendanceController extends Controller
             }
         }
 
-        // Create the attendance record
         $attendanceRecord = AttendanceRecord::create($validated);
 
         Log::info('Attendance record created for staff: ' . $validated['staffId'] . ' on ' . $validated['date']);
@@ -284,18 +268,14 @@ class AttendanceController extends Controller
             'status' => 'required|string|max:255'
         ]);
 
-        // Handle file uploads with consistent directory naming
         $photoFields = ['timeInPhoto', 'breakInPhoto', 'breakOutPhoto', 'timeOutPhoto'];
         foreach ($photoFields as $field) {
             if ($request->hasFile($field)) {
-                // Delete old photo if exists
                 if ($attendance->$field) {
                     Storage::disk('public')->delete($attendance->$field);
                 }
-                // Use consistent directory naming
                 $validated[$field] = $request->file($field)->store('attendance_photos', 'public');
             } else {
-                // Keep existing photo if no new one uploaded
                 unset($validated[$field]);
             }
         }
@@ -319,7 +299,6 @@ class AttendanceController extends Controller
             'date' => $attendance->date
         ]);
 
-        // Delete associated photos
         $photoFields = ['timeInPhoto', 'breakInPhoto', 'breakOutPhoto', 'timeOutPhoto'];
         foreach ($photoFields as $field) {
             if ($attendance->$field) {
@@ -431,9 +410,6 @@ class AttendanceController extends Controller
         ]);
     }
 
-    /**
-     * Debug method to check file storage issues
-     */
     public function debugStorage()
     {
         $info = [
@@ -446,7 +422,7 @@ class AttendanceController extends Controller
             'all_files' => Storage::disk('public')->allFiles(),
         ];
         
-        Log::info('🔍 Storage Debug Info', $info);
+        Log::info('Storage Debug Info', $info);
         
         return response()->json($info);
     }

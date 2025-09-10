@@ -72,7 +72,6 @@ class CashFundController extends Controller
         $connector = new WindowsPrintConnector("POS-80C");
         $printer = new Printer($connector);
 
-        // Print the receipt details
         $printer->setJustification(Printer::JUSTIFY_CENTER);
         $printer->text("Cash Fund Receipt\n");
         $printer->text("------------------------------------------------\n");

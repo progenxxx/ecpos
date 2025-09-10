@@ -87,7 +87,6 @@ class Discountv2Controller extends Controller
 
             $request->validate($rules, $messages);
 
-            // Additional validation for percentage
             $parametersToCheck = [
                 'PARAMETER' => $request->PARAMETER,
                 'GRABFOOD_PARAMETER' => $request->GRABFOOD_PARAMETER,
@@ -120,7 +119,6 @@ class Discountv2Controller extends Controller
                 'DISCOUNTTYPE' => $request->DISCOUNTTYPE
             ];
 
-            // Add platform-specific parameters if provided
             foreach (['GRABFOOD_PARAMETER', 'FOODPANDA_PARAMETER', 'FOODPANDAMALL_PARAMETER', 
                      'GRABFOODMALL_PARAMETER', 'MANILAPRICE_PARAMETER', 'MALLPRICE_PARAMETER'] as $param) {
                 if ($request->has($param) && $request->$param !== null && $request->$param !== '') {
@@ -234,7 +232,6 @@ class Discountv2Controller extends Controller
 
             $request->validate($rules, $messages);
 
-            // Additional validation for percentage
             $parametersToCheck = [
                 'PARAMETER' => $request->PARAMETER,
                 'GRABFOOD_PARAMETER' => $request->GRABFOOD_PARAMETER,
@@ -267,7 +264,6 @@ class Discountv2Controller extends Controller
                 'DISCOUNTTYPE' => $request->DISCOUNTTYPE
             ];
 
-            // Update platform-specific parameters
             foreach (['GRABFOOD_PARAMETER', 'FOODPANDA_PARAMETER', 'FOODPANDAMALL_PARAMETER', 
                      'GRABFOODMALL_PARAMETER', 'MANILAPRICE_PARAMETER', 'MALLPRICE_PARAMETER'] as $param) {
                 if ($request->has($param)) {

@@ -26,7 +26,6 @@ class HomeController extends Controller
     {
         $role = Auth::user()->role;
 
-        // Replace direct DB statements with a safer, recent-only batched approach
         $this->cleanupRecentDuplicates();
 
         $announcements = announcements::select('*')->get();
@@ -48,20 +47,13 @@ class HomeController extends Controller
         }
     }
 
-    /**
-     * Clean up only recent duplicate records in very small batches
-     * This is the safest approach to avoid timeouts while still maintaining data integrity
-     */
     private function cleanupRecentDuplicates()
     {
         try {
-            // Use a much smaller batch size for safety
             $batchSize = 100;
             
-            // Only process records from the last 24 hours
             $recentDate = now()->subHours(24)->format('Y-m-d H:i:s');
             
-            // Process sales transactions
             $affected = DB::affectingStatement("
                 DELETE t1 FROM rbotransactionsalestrans t1
                 JOIN rbotransactionsalestrans t2 
@@ -74,7 +66,6 @@ class HomeController extends Controller
             
             \Log::info("Removed {$affected} recent duplicate sales transaction records");
             
-            // Process transaction tables
             $affected = DB::affectingStatement("
                 DELETE t1 FROM rbotransactiontables t1
                 JOIN rbotransactiontables t2 
@@ -98,14 +89,13 @@ class HomeController extends Controller
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
                 'stores' => 'nullable|array',
-                'stores.*' => 'string'  // Changed from strict validation to allow store names
+                'stores.*' => 'string'  
             ]);
 
             $query = rbotransactiontables::whereDate('createddate', '>=', $validated['start_date'])
                 ->whereDate('createddate', '<=', $validated['end_date']);
 
             if (!empty($validated['stores'])) {
-                // Handle both object and string store names
                 $storeNames = collect($validated['stores'])->map(function ($store) {
                     return is_array($store) ? $store['NAME'] : $store;
                 })->toArray();
@@ -142,7 +132,6 @@ class HomeController extends Controller
 
     private function calculateMetrics($query = null)
     {
-        // If no query provided, use last 30 days as default to ensure we have data
         if (!$query) {
             $query = rbotransactiontables::whereDate('createddate', '>=', now()->subDays(30))
                 ->whereDate('createddate', '<=', now());
@@ -167,7 +156,6 @@ class HomeController extends Controller
 
         $totalSales = $baseMetrics->totalNetsales ?: 1;
 
-        // Extract date constraints from query or use last 30 days as default
         $startDate = now()->subDays(30);
         $endDate = now();
         
@@ -231,7 +219,6 @@ class HomeController extends Controller
 
         $productType = $validated['product_type'] ?? 'all';
 
-        // Basic sales count
         $basicSalesCount = DB::table('rbotransactionsalestrans as r')
             ->whereDate('r.createddate', '>=', $validated['start_date'])
             ->whereDate('r.createddate', '<=', $validated['end_date'])
@@ -242,7 +229,6 @@ class HomeController extends Controller
             'date_range' => [$validated['start_date'], $validated['end_date']]
         ]);
 
-        // Query sales + department
         $query = DB::table('rbotransactionsalestrans as r')
             ->leftJoin('rboinventtables as ri', 'r.itemid', '=', 'ri.itemid')
             ->select(
@@ -252,7 +238,6 @@ class HomeController extends Controller
                 DB::raw('ABS(SUM(r.netamount)) as total_sales'),
                 DB::raw('COUNT(DISTINCT r.store) as store_count'),
                 DB::raw('COALESCE(ri.itemdepartment, "UNKNOWN") as retail_department'),
-                // Map product category based on itemdepartment
                 DB::raw('CASE 
                             WHEN ri.itemdepartment = "NON PRODUCT" THEN "NON PRODUCT"
                             ELSE "REGULAR PRODUCT"
@@ -269,7 +254,6 @@ class HomeController extends Controller
             $query->whereIn('r.store', $validated['stores']);
         }
 
-        // Apply product type filter
         if ($productType === 'regular') {
             $query->where('ri.itemdepartment', '<>', 'NON PRODUCT')
                   ->orWhereNull('ri.itemdepartment');
@@ -289,7 +273,6 @@ class HomeController extends Controller
             'sample_products' => $products->take(3)->toArray()
         ]);
 
-        // Convert to array
         $productsArray = $products->map(function($item) {
             return [
                 'itemname' => $item->itemname,
@@ -301,21 +284,18 @@ class HomeController extends Controller
             ];
         })->toArray();
 
-        // Top 20
         $topProducts = collect($productsArray)
             ->sortByDesc('total_sales')
             ->take(20)
             ->values()
             ->all();
 
-        // Bottom 20
         $bottomProducts = collect($productsArray)
             ->sortBy('total_sales')
             ->take(20)
             ->values()
             ->all();
 
-        // Category breakdown
         $categoryBreakdown = collect($productsArray)->countBy('product_category');
         
         return response()->json([
@@ -432,7 +412,6 @@ class HomeController extends Controller
                 'stores.*' => 'string'
             ]);
 
-            // Base query using stockcountingtrans table for more accurate waste data
             $query = DB::table('stockcountingtrans as s')
                 ->join('inventtables as i', 's.ITEMID', '=', 'i.ITEMID')
                 ->leftJoin('inventtablemodules as m', 's.ITEMID', '=', 'm.ITEMID')
@@ -455,14 +434,12 @@ class HomeController extends Controller
                 $query->whereIn('s.STORENAME', $validated['stores']);
             }
 
-            // Get top waste items grouped by item and waste type
             $topWastesByType = $query
                 ->groupBy('s.ITEMID', 'i.itemname', 's.WASTETYPE')
                 ->orderByDesc('total_waste_quantity')
                 ->limit(20)
                 ->get();
 
-            // Get overall top waste items (aggregated across all waste types)
             $topWastesOverall = DB::table('stockcountingtrans as s')
                 ->join('inventtables as i', 's.ITEMID', '=', 'i.ITEMID')
                 ->leftJoin('inventtablemodules as m', 's.ITEMID', '=', 'm.ITEMID')
@@ -491,7 +468,6 @@ class HomeController extends Controller
                 ->limit(10)
                 ->get();
 
-            // Get waste summary by type
             $wasteSummaryByType = DB::table('stockcountingtrans as s')
                 ->select(
                     's.WASTETYPE as waste_type',
@@ -613,30 +589,52 @@ class HomeController extends Controller
         try {
             $searchTerm = $request->input('search', '');
             
-            $query = DB::table('rbotransactionsalestrans as r')
-                ->leftJoin('rboinventtables as ri', 'r.itemid', '=', 'ri.itemid')
+            \Log::info('=== GET PRODUCTS REQUEST ===', [
+                'search_term' => $searchTerm,
+                'timestamp' => now()->toDateTimeString()
+            ]);
+            
+            // Use inventtables as the primary source with rboinventtables for additional fields
+            $query = DB::table('inventtables as i')
+                ->leftJoin('rboinventtables as ri', 'i.itemid', '=', 'ri.itemid')
                 ->select(
-                    'r.itemid',
-                    'r.itemname',
+                    'i.itemid',
+                    'i.itemname',
                     DB::raw('COALESCE(ri.itemdepartment, "UNKNOWN") as itemdepartment'),
                     DB::raw('COALESCE(ri.category, "regular") as category')
                 )
-                ->groupBy('r.itemid', 'r.itemname', 'ri.itemdepartment', 'ri.category');
+                ->whereNotNull('i.itemid')
+                ->where('i.itemid', '!=', '');
 
             if (!empty($searchTerm)) {
                 $query->where(function($q) use ($searchTerm) {
-                    $q->where('r.itemname', 'LIKE', '%' . $searchTerm . '%')
-                      ->orWhere('r.itemid', 'LIKE', '%' . $searchTerm . '%');
+                    $q->where('i.itemname', 'LIKE', '%' . $searchTerm . '%')
+                      ->orWhere('i.itemid', 'LIKE', '%' . $searchTerm . '%');
                 });
+                \Log::info('GET PRODUCTS - Search filter applied', [
+                    'search_term' => $searchTerm
+                ]);
             }
 
-            $products = $query->get();
+            $products = $query->orderBy('i.itemname')->get();
+
+            \Log::info('GET PRODUCTS - Results from inventtables:', [
+                'total_products' => $products->count(),
+                'sample_products' => $products->take(5)->map(function($product) {
+                    return [
+                        'itemid' => $product->itemid,
+                        'itemname' => $product->itemname,
+                        'itemdepartment' => $product->itemdepartment
+                    ];
+                })->toArray()
+            ]);
 
             return response()->json($products);
         } catch (\Exception $e) {
-            \Log::error('Products fetch error', [
+            \Log::error('=== GET PRODUCTS REQUEST FAILED ===', [
                 'message' => $e->getMessage(),
-                'input' => $request->all()
+                'input' => $request->all(),
+                'trace' => $e->getTraceAsString()
             ]);
             return response()->json(['error' => 'Unable to fetch products'], 500);
         }
@@ -678,6 +676,11 @@ class HomeController extends Controller
     public function getTransactionSales(Request $request)
     {
         try {
+            \Log::info('=== TRANSACTION SALES REQUEST STARTED ===', [
+                'timestamp' => now()->toDateTimeString(),
+                'request_data' => $request->all()
+            ]);
+
             $validated = $request->validate([
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
@@ -686,6 +689,16 @@ class HomeController extends Controller
                 'filter_by' => 'sometimes|string|in:qty,gross',
                 'products' => 'sometimes|array',
                 'products.*' => 'string'
+            ]);
+
+            \Log::info('TRANSACTION SALES - Validated Input:', [
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'],
+                'filter_by' => $validated['filter_by'] ?? 'gross',
+                'stores_count' => !empty($validated['stores']) ? count($validated['stores']) : 0,
+                'stores' => $validated['stores'] ?? [],
+                'products_count' => !empty($validated['products']) ? count($validated['products']) : 0,
+                'products' => $validated['products'] ?? []
             ]);
 
             $filterBy = $validated['filter_by'] ?? 'gross';
@@ -702,12 +715,71 @@ class HomeController extends Controller
                 ->whereDate('r.createddate', '>=', $validated['start_date'])
                 ->whereDate('r.createddate', '<=', $validated['end_date']);
 
+            \Log::info('TRANSACTION SALES - Base query created with date filters');
+
             if (!empty($validated['stores'])) {
                 $query->whereIn('r.store', $validated['stores']);
+                \Log::info('TRANSACTION SALES - Store filter applied', [
+                    'stores' => $validated['stores']
+                ]);
             }
 
             if (!empty($validated['products'])) {
                 $query->whereIn('r.itemid', $validated['products']);
+                \Log::info('TRANSACTION SALES - Product filter applied', [
+                    'products' => $validated['products']
+                ]);
+            }
+
+            // Log the actual SQL query
+            $sql = $query->toSql();
+            $bindings = $query->getBindings();
+            \Log::info('TRANSACTION SALES - SQL Query:', [
+                'sql' => $sql,
+                'bindings' => $bindings
+            ]);
+
+            // Check if there's any data in the base table for this date range
+            $totalRecordsInDateRange = DB::table('rbotransactionsalestrans as r')
+                ->whereDate('r.createddate', '>=', $validated['start_date'])
+                ->whereDate('r.createddate', '<=', $validated['end_date'])
+                ->count();
+
+            \Log::info('TRANSACTION SALES - Base table record count for date range:', [
+                'total_records' => $totalRecordsInDateRange
+            ]);
+
+            if (!empty($validated['products'])) {
+                // Check if selected products exist in the table
+                $productExistsCount = DB::table('rbotransactionsalestrans as r')
+                    ->whereIn('r.itemid', $validated['products'])
+                    ->whereDate('r.createddate', '>=', $validated['start_date'])
+                    ->whereDate('r.createddate', '<=', $validated['end_date'])
+                    ->count();
+
+                // Also check what products actually exist in the sales table for this date range
+                $existingProductsInSales = DB::table('rbotransactionsalestrans as r')
+                    ->select('r.itemid', 'r.itemname', DB::raw('COUNT(*) as transaction_count'))
+                    ->whereDate('r.createddate', '>=', $validated['start_date'])
+                    ->whereDate('r.createddate', '<=', $validated['end_date'])
+                    ->groupBy('r.itemid', 'r.itemname')
+                    ->orderByDesc('transaction_count')
+                    ->limit(10)
+                    ->get();
+
+                // Check if selected products exist in inventtables
+                $productsInInventtables = DB::table('inventtables')
+                    ->whereIn('itemid', $validated['products'])
+                    ->select('itemid', 'itemname')
+                    ->get();
+
+                \Log::info('TRANSACTION SALES - Product existence check:', [
+                    'selected_products' => $validated['products'],
+                    'records_found_for_products' => $productExistsCount,
+                    'products_exist_in_inventtables' => $productsInInventtables->count(),
+                    'inventtables_matches' => $productsInInventtables->toArray(),
+                    'top_products_in_sales_table' => $existingProductsInSales->take(5)->toArray()
+                ]);
             }
 
             $salesData = $query
@@ -725,7 +797,13 @@ class HomeController extends Controller
                     ];
                 });
 
-            return response()->json([
+            \Log::info('TRANSACTION SALES - Query Results:', [
+                'result_count' => $salesData->count(),
+                'total_value' => $salesData->sum('total_value'),
+                'sample_data' => $salesData->take(3)->toArray()
+            ]);
+
+            $response = [
                 'data' => $salesData,
                 'summary' => [
                     'total_days' => $salesData->count(),
@@ -737,12 +815,23 @@ class HomeController extends Controller
                         'end' => $validated['end_date']
                     ]
                 ]
+            ];
+
+            \Log::info('=== TRANSACTION SALES REQUEST COMPLETED SUCCESSFULLY ===', [
+                'response_summary' => [
+                    'data_points' => count($response['data']),
+                    'total_value' => $response['summary']['total_value']
+                ]
             ]);
+
+            return response()->json($response);
         } catch (\Exception $e) {
-            \Log::error('Transaction Sales Error', [
+            \Log::error('=== TRANSACTION SALES REQUEST FAILED ===', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'input' => $request->all()
+                'input' => $request->all(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
             return response()->json(['error' => 'Unable to retrieve transaction sales data'], 500);
         }
@@ -793,7 +882,6 @@ class HomeController extends Controller
                     ];
                 });
 
-            // Fill missing hours with 0 values
             $allHours = collect(range(0, 23))->map(function($hour) use ($hourlyData) {
                 $existing = $hourlyData->firstWhere('hour', $hour);
                 if ($existing) {
@@ -922,7 +1010,6 @@ class HomeController extends Controller
                 'stores.*' => 'string'
             ]);
 
-            // Sales Trend Analysis
             $salesTrend = DB::table('rbotransactionsalestrans as r')
                 ->select(
                     DB::raw('DATE(r.createddate) as date'),
@@ -943,7 +1030,6 @@ class HomeController extends Controller
                 ->orderBy('date')
                 ->get();
 
-            // Store Performance Comparison
             $storeComparison = DB::table('rbotransactionsalestrans as r')
                 ->select(
                     'r.store',
@@ -964,7 +1050,6 @@ class HomeController extends Controller
                 ->orderByDesc('total_sales')
                 ->get();
 
-            // Category Performance (simplified since we don't have retail department)
             $categoryQuery = DB::table('rbotransactionsalestrans as r')
                 ->select(
                     'r.itemname',
@@ -983,7 +1068,6 @@ class HomeController extends Controller
                 ->groupBy('r.itemname', 'r.itemid')
                 ->get();
 
-            // Process category data in PHP to avoid MySQL GROUP BY issues
             $categoryTotals = [
                 'Bakery' => ['total_sales' => 0, 'total_quantity' => 0, 'unique_items' => 0],
                 'Beverages' => ['total_sales' => 0, 'total_quantity' => 0, 'unique_items' => 0],
@@ -1008,7 +1092,6 @@ class HomeController extends Controller
                 $categoryTotals[$category]['unique_items']++;
             }
 
-            // Convert to collection format expected by the response
             $categoryData = collect($categoryTotals)->map(function($data, $category) {
                 return (object) [
                     'category' => $category,

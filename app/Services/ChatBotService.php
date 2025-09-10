@@ -39,11 +39,14 @@ class ChatBotService
             ];
         }
 
-        // Get sales context for the chatbot
-        $salesContext = $this->getSalesContext();
+        // Detect if user is asking about a specific store
+        $specificStore = $this->detectSpecificStore($message);
+        
+        // Get sales context for the chatbot (with store filtering if needed)
+        $salesContext = $this->getSalesContext($specificStore);
         
         // Build the system message with current sales data
-        $systemMessage = $this->buildSystemMessage($salesContext);
+        $systemMessage = $this->buildSystemMessage($salesContext, $specificStore);
 
         // Try Anthropic API first
         if ($this->anthropicApiKey) {
@@ -211,7 +214,7 @@ class ChatBotService
         }
     }
 
-    protected function getSalesContext()
+    protected function getSalesContext($specificStore = null)
     {
         try {
             $startDate = Carbon::now()->subDays(30);
@@ -220,28 +223,28 @@ class ChatBotService
             $yesterday = Carbon::yesterday();
 
             // Use HomeController's calculateMetrics method logic for accurate dashboard data
-            $dashboardMetrics = $this->getDashboardMetrics($startDate, $endDate);
+            $dashboardMetrics = $this->getDashboardMetrics($startDate, $endDate, $specificStore);
             
             // Get today's specific data
-            $todayData = $this->getTodayMetrics();
+            $todayData = $this->getTodayMetrics($specificStore);
             
             // Get yesterday's data for comparison
-            $yesterdayData = $this->getYesterdayMetrics();
+            $yesterdayData = $this->getYesterdayMetrics($specificStore);
             
             // Get top products data matching dashboard
-            $topProductsData = $this->getTopProductsData($startDate, $endDate);
+            $topProductsData = $this->getTopProductsData($startDate, $endDate, $specificStore);
             
-            // Get top stores data matching dashboard
-            $topStoresData = $this->getTopStoresData($startDate, $endDate);
+            // Get top stores data matching dashboard (don't filter if asking about specific store)
+            $topStoresData = $this->getTopStoresData($startDate, $endDate, $specificStore ? null : $specificStore);
             
             // Get hourly sales pattern
-            $hourlySalesData = $this->getHourlySalesData($startDate, $endDate);
+            $hourlySalesData = $this->getHourlySalesData($startDate, $endDate, $specificStore);
             
             // Get waste analysis data
-            $wasteData = $this->getWasteAnalysisData($startDate, $endDate);
+            $wasteData = $this->getWasteAnalysisData($startDate, $endDate, $specificStore);
             
             // Get advanced analytics
-            $advancedAnalytics = $this->getAdvancedAnalytics($startDate, $endDate);
+            $advancedAnalytics = $this->getAdvancedAnalytics($startDate, $endDate, $specificStore);
 
             return [
                 'dashboard_metrics' => $dashboardMetrics,
@@ -285,13 +288,34 @@ class ChatBotService
         }
     }
 
-    protected function getDashboardMetrics($startDate, $endDate)
+    protected function detectSpecificStore($message)
+    {
+        $message = strtoupper(trim($message));
+        
+        // List of known stores - these should match your database values
+        $knownStores = ['CAMILING', 'COMMUNITY', 'DAU', 'DUMMY', 'FLORIDA', 'GYRIES', 'LAPAZ', 'VICTORIA'];
+        
+        foreach ($knownStores as $store) {
+            if (str_contains($message, $store)) {
+                return $store;
+            }
+        }
+        
+        return null;
+    }
+
+    protected function getDashboardMetrics($startDate, $endDate, $specificStore = null)
     {
         // Mirror HomeController's calculateMetrics method
-        $baseMetrics = DB::table('rbotransactiontables')
+        $query = DB::table('rbotransactiontables')
             ->whereDate('createddate', '>=', $startDate)
-            ->whereDate('createddate', '<=', $endDate)
-            ->selectRaw('
+            ->whereDate('createddate', '<=', $endDate);
+            
+        if ($specificStore) {
+            $query->where('store', $specificStore);
+        }
+        
+        $baseMetrics = $query->selectRaw('
                 COALESCE(SUM(grossamount), 0) as totalGross,
                 COALESCE(SUM(netamount), 0) as totalNetsales,
                 COALESCE(SUM(totaldiscamount), 0) as totalDiscount,
@@ -309,24 +333,36 @@ class ChatBotService
             ')
             ->first();
 
-        $totalTransactions = DB::table('rbotransactionsalestrans')
+        $transactionsQuery = DB::table('rbotransactionsalestrans')
             ->whereDate('createddate', '>=', $startDate)
-            ->whereDate('createddate', '<=', $endDate)
-            ->count();
+            ->whereDate('createddate', '<=', $endDate);
+        if ($specificStore) {
+            $transactionsQuery->where('store', $specificStore);
+        }
+        $totalTransactions = $transactionsQuery->count();
 
-        $totalReceivedDeliveries = DB::table('receivedordertrans')
+        $deliveriesQuery = DB::table('receivedordertrans')
             ->whereDate('TRANSDATE', '>=', $startDate)
-            ->whereDate('TRANSDATE', '<=', $endDate)
-            ->count();
+            ->whereDate('TRANSDATE', '<=', $endDate);
+        if ($specificStore) {
+            $deliveriesQuery->where('STORENAME', $specificStore);
+        }
+        $totalReceivedDeliveries = $deliveriesQuery->count();
 
-        $totalWaste = DB::table('wastedeclarationtrans')
+        $wasteQuery = DB::table('wastedeclarationtrans')
             ->whereDate('TRANSDATE', '>=', $startDate)
-            ->whereDate('TRANSDATE', '<=', $endDate)
-            ->count();
+            ->whereDate('TRANSDATE', '<=', $endDate);
+        if ($specificStore) {
+            $wasteQuery->where('STORENAME', $specificStore);
+        }
+        $totalWaste = $wasteQuery->count();
 
-        $todayTransactions = DB::table('rbotransactiontables')
-            ->whereDate('createddate', Carbon::today())
-            ->count();
+        $todayTransactionsQuery = DB::table('rbotransactiontables')
+            ->whereDate('createddate', Carbon::today());
+        if ($specificStore) {
+            $todayTransactionsQuery->where('store', $specificStore);
+        }
+        $todayTransactions = $todayTransactionsQuery->count();
 
         return [
             'totalGross' => (float) ($baseMetrics->totalGross ?? 0),
@@ -352,13 +388,18 @@ class ChatBotService
         ];
     }
 
-    protected function getTodayMetrics()
+    protected function getTodayMetrics($specificStore = null)
     {
         $today = Carbon::today();
         
-        return DB::table('rbotransactiontables')
-            ->whereDate('createddate', $today)
-            ->selectRaw('
+        $query = DB::table('rbotransactiontables')
+            ->whereDate('createddate', $today);
+            
+        if ($specificStore) {
+            $query->where('store', $specificStore);
+        }
+        
+        return $query->selectRaw('
                 COALESCE(SUM(grossamount), 0) as gross_sales,
                 COALESCE(SUM(netamount), 0) as net_sales,
                 COALESCE(SUM(totaldiscamount), 0) as total_discount,
@@ -369,13 +410,18 @@ class ChatBotService
             ->first();
     }
 
-    protected function getYesterdayMetrics()
+    protected function getYesterdayMetrics($specificStore = null)
     {
         $yesterday = Carbon::yesterday();
         
-        return DB::table('rbotransactiontables')
-            ->whereDate('createddate', $yesterday)
-            ->selectRaw('
+        $query = DB::table('rbotransactiontables')
+            ->whereDate('createddate', $yesterday);
+            
+        if ($specificStore) {
+            $query->where('store', $specificStore);
+        }
+        
+        return $query->selectRaw('
                 COALESCE(SUM(grossamount), 0) as gross_sales,
                 COALESCE(SUM(netamount), 0) as net_sales,
                 COALESCE(SUM(totaldiscamount), 0) as total_discount,
@@ -384,10 +430,10 @@ class ChatBotService
             ->first();
     }
 
-    protected function getTopProductsData($startDate, $endDate)
+    protected function getTopProductsData($startDate, $endDate, $specificStore = null)
     {
         // Mirror HomeController's getTopBottomProducts logic
-        return DB::table('rbotransactionsalestrans as r')
+        $query = DB::table('rbotransactionsalestrans as r')
             ->select(
                 'r.itemname',
                 'r.itemid',
@@ -397,8 +443,13 @@ class ChatBotService
                 DB::raw('COUNT(DISTINCT r.transactionid) as transaction_frequency')
             )
             ->whereDate('r.createddate', '>=', $startDate)
-            ->whereDate('r.createddate', '<=', $endDate)
-            ->where(function($q) {
+            ->whereDate('r.createddate', '<=', $endDate);
+            
+        if ($specificStore) {
+            $query->where('r.store', $specificStore);
+        }
+        
+        return $query->where(function($q) {
                 $q->where('r.qty', '>', 0)
                   ->orWhere('r.netamount', '>', 0);
             })
@@ -409,9 +460,9 @@ class ChatBotService
             ->get();
     }
 
-    protected function getTopStoresData($startDate, $endDate)
+    protected function getTopStoresData($startDate, $endDate, $specificStore = null)
     {
-        return DB::table('rbotransactionsalestrans as r')
+        $query = DB::table('rbotransactionsalestrans as r')
             ->select(
                 'r.store',
                 DB::raw('SUM(ABS(r.grossamount)) as total_sales'),
@@ -420,16 +471,21 @@ class ChatBotService
                 DB::raw('SUM(ABS(r.qty)) as total_quantity')
             )
             ->whereDate('r.createddate', '>=', $startDate)
-            ->whereDate('r.createddate', '<=', $endDate)
-            ->groupBy('r.store')
+            ->whereDate('r.createddate', '<=', $endDate);
+            
+        if ($specificStore) {
+            $query->where('r.store', $specificStore);
+        }
+        
+        return $query->groupBy('r.store')
             ->orderByDesc('total_sales')
             ->limit(10)
             ->get();
     }
 
-    protected function getHourlySalesData($startDate, $endDate)
+    protected function getHourlySalesData($startDate, $endDate, $specificStore = null)
     {
-        return DB::table('rbotransactionsalestrans as r')
+        $query = DB::table('rbotransactionsalestrans as r')
             ->select(
                 DB::raw('HOUR(r.createddate) as hour'),
                 DB::raw('SUM(ABS(r.grossamount)) as total_sales'),
@@ -437,16 +493,21 @@ class ChatBotService
                 DB::raw('COUNT(DISTINCT r.transactionid) as transaction_count')
             )
             ->whereDate('r.createddate', '>=', $startDate)
-            ->whereDate('r.createddate', '<=', $endDate)
-            ->groupBy(DB::raw('HOUR(r.createddate)'))
+            ->whereDate('r.createddate', '<=', $endDate);
+            
+        if ($specificStore) {
+            $query->where('r.store', $specificStore);
+        }
+        
+        return $query->groupBy(DB::raw('HOUR(r.createddate)'))
             ->orderBy('hour')
             ->get();
     }
 
-    protected function getWasteAnalysisData($startDate, $endDate)
+    protected function getWasteAnalysisData($startDate, $endDate, $specificStore = null)
     {
         try {
-            return DB::table('stockcountingtrans as s')
+            $query = DB::table('stockcountingtrans as s')
                 ->join('inventtables as i', 's.ITEMID', '=', 'i.ITEMID')
                 ->select(
                     's.ITEMID',
@@ -460,8 +521,13 @@ class ChatBotService
                     $endDate->format('Y-m-d') . ' 23:59:59'
                 ])
                 ->where('s.WASTECOUNT', '>', 0)
-                ->whereNotNull('s.WASTETYPE')
-                ->groupBy('s.ITEMID', 'i.itemname', 's.WASTETYPE')
+                ->whereNotNull('s.WASTETYPE');
+                
+            if ($specificStore) {
+                $query->where('s.STORENAME', $specificStore);
+            }
+            
+            return $query->groupBy('s.ITEMID', 'i.itemname', 's.WASTETYPE')
                 ->orderByDesc('total_waste_quantity')
                 ->limit(10)
                 ->get();
@@ -471,11 +537,11 @@ class ChatBotService
         }
     }
 
-    protected function getAdvancedAnalytics($startDate, $endDate)
+    protected function getAdvancedAnalytics($startDate, $endDate, $specificStore = null)
     {
         try {
             // Sales trend analysis
-            $salesTrend = DB::table('rbotransactionsalestrans as r')
+            $query = DB::table('rbotransactionsalestrans as r')
                 ->select(
                     DB::raw('DATE(r.createddate) as date'),
                     DB::raw('SUM(ABS(r.grossamount)) as gross_sales'),
@@ -483,8 +549,13 @@ class ChatBotService
                     DB::raw('COUNT(DISTINCT r.transactionid) as transactions')
                 )
                 ->whereDate('r.createddate', '>=', $startDate)
-                ->whereDate('r.createddate', '<=', $endDate)
-                ->groupBy(DB::raw('DATE(r.createddate)'))
+                ->whereDate('r.createddate', '<=', $endDate);
+                
+            if ($specificStore) {
+                $query->where('r.store', $specificStore);
+            }
+            
+            $salesTrend = $query->groupBy(DB::raw('DATE(r.createddate)'))
                 ->orderBy('date')
                 ->get();
 
@@ -517,7 +588,7 @@ class ChatBotService
         ];
     }
 
-    protected function buildSystemMessage($salesContext)
+    protected function buildSystemMessage($salesContext, $specificStore = null)
     {
         $dashboardMetrics = $salesContext['dashboard_metrics'];
         $todayData = $salesContext['today_data'];
@@ -555,9 +626,12 @@ class ChatBotService
         $trendDirection = $advancedAnalytics['trend_analysis']['trend_direction'] ?? 'stable';
         $growthRate = $advancedAnalytics['trend_analysis']['growth_rate'] ?? 0;
 
+        $storeFilterText = $specificStore ? " (FILTERED FOR STORE: {$specificStore})" : "";
+        $storeContext = $specificStore ? "\n\n🏪 **IMPORTANT**: All data below is specifically filtered for {$specificStore} store only. When asked about specific stores, provide accurate data for that store." : "";
+
         return "You are a professional sales analyst and business advisor for an ECPOS (Electronic Cash Point of Sale) system. You have access to comprehensive real-time dashboard data and provide accurate, data-driven insights.
 
-=== CURRENT DASHBOARD DATA (Period: {$periodInfo['start_date']} to {$periodInfo['end_date']}) ===
+=== CURRENT DASHBOARD DATA (Period: {$periodInfo['start_date']} to {$periodInfo['end_date']}){$storeFilterText} ==={$storeContext}
 
 📊 **KEY METRICS:**
 - Period Total Sales: ₱" . number_format($periodGross, 2) . "
@@ -618,7 +692,9 @@ You can analyze and provide insights on:
 
     protected function getFallbackResponse($message, $salesContext)
     {
+        $originalMessage = $message;
         $message = strtolower(trim($message));
+        $specificStore = $this->detectSpecificStore($originalMessage);
         $dashboardMetrics = $salesContext['dashboard_metrics'];
         $todayData = $salesContext['today_data'];
         $yesterdayData = $salesContext['yesterday_data'];
@@ -631,6 +707,34 @@ You can analyze and provide insights on:
         
         $dailyChange = $yesterdayGross > 0 ? (($todayGross - $yesterdayGross) / $yesterdayGross) * 100 : 0;
         $avgTransactionValue = $todayData->avg_transaction_value ?? 0;
+        
+        // SPECIFIC STORE SALES ANALYSIS
+        if ($specificStore && (str_contains($message, 'sales') || str_contains($message, 'today') || str_contains($message, 'how much'))) {
+            $storeContext = $specificStore ? " for {$specificStore} store" : "";
+            $response = "📊 **{$specificStore} Store Sales Performance**\n\n";
+            $response .= "💰 **Today's Sales{$storeContext}:**\n";
+            $response .= "• Gross Sales: ₱" . number_format($todayGross, 2) . "\n";
+            $response .= "• Net Sales: ₱" . number_format($todayData->net_sales ?? 0, 2) . "\n";
+            $response .= "• Total Discounts: ₱" . number_format($todayData->total_discount ?? 0, 2) . "\n";
+            $response .= "• Transactions: " . number_format($todayData->transaction_count ?? 0) . "\n";
+            $response .= "• Avg Transaction: ₱" . number_format($avgTransactionValue, 2) . "\n\n";
+            
+            $response .= "📈 **Daily Comparison{$storeContext}:**\n";
+            $response .= "• Yesterday: ₱" . number_format($yesterdayGross, 2) . "\n";
+            $response .= "• Today: ₱" . number_format($todayGross, 2) . "\n";
+            $response .= "• Change: " . ($dailyChange >= 0 ? '+' : '') . number_format($dailyChange, 1) . "%\n\n";
+            
+            $periodGross = $dashboardMetrics['totalGross'] ?? 0;
+            $response .= "📊 **Period Performance (Last 30 Days){$storeContext}:**\n";
+            $response .= "• Total Sales: ₱" . number_format($periodGross, 2) . "\n";
+            $response .= "• Total Transactions: " . number_format($dashboardMetrics['totalTransactions'] ?? 0) . "\n\n";
+            
+            $response .= "💡 **{$specificStore} Store Insight**: " . ($dailyChange > 5 ? "Strong performance today!" : 
+                        ($dailyChange > 0 ? "Positive trend for the store." : 
+                         ($dailyChange > -10 ? "Normal variation for the store." : "Consider reviewing store operations.")));
+            
+            return $response;
+        }
         
         // TODAY'S PERFORMANCE ANALYSIS - Based on Dashboard Data
         if (str_contains($message, 'today') || str_contains($message, 'performance') || str_contains($message, 'status') || str_contains($message, 'dashboard')) {

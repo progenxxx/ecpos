@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    // Register a new user
     function Register(Request $R)
     {
         try {
@@ -39,19 +38,15 @@ class AuthController extends Controller
         }
     }
 
-    // Login user
     function Login(Request $R)
     {
-        // Validate the incoming request
         $R->validate([
             'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
-        // Find the user by email
         $user = User::where('email', $R->email)->first();
 
-        // Check if user exists and verify password
         if ($user && Hash::check($R->password, $user->password)) {
             $token = $user->createToken('Personal Access Token')->plainTextToken;
             $response = [
@@ -62,14 +57,12 @@ class AuthController extends Controller
             ];
             return response()->json($response);
         } elseif (!$user) {
-            // No account found
             $response = [
                 'status' => 404,
                 'message' => 'No account found with this email.'
             ];
             return response()->json($response, 404);
         } else {
-            // Incorrect password
             $response = [
                 'status' => 401,
                 'message' => 'Wrong email or password! Please try again.'

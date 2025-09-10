@@ -49,7 +49,6 @@ class ApisStockCountingController extends Controller
         if ($stockCounting->isEmpty()) {
             Log::info('No unposted stock counting records found, checking for posted records', ['storeids' => $storeids]);
 
-            // Check if there are any posted records for the current date
             $postedRecordsQuery = DB::table('stockcountingtables')
                 ->where('posted', '=', '1')
                 ->whereDate('createddatetime', '=', $currentDate);
@@ -73,7 +72,6 @@ class ApisStockCountingController extends Controller
                 ]);
             }
 
-            // If no posted records exist, create new record
             DB::beginTransaction();
             try {
                 $currentDateTime = Carbon::now('Asia/Manila');
@@ -102,13 +100,11 @@ class ApisStockCountingController extends Controller
                     'CREATEDDATETIME' => $currentDateTime->format('Y-m-d H:i:s')
                 ]);
 
-                // Check if inventory summaries exist for this store and date
                 $existingSummaries = DB::table('inventory_summaries')
                     ->where('storename', $storeids)
                     ->whereDate('report_date', $currentDate)
                     ->exists();
 
-                // If no existing summaries, insert new ones
                 if (!$existingSummaries) {
                     DB::table('inventory_summaries')
                         ->insertUsing(
@@ -118,12 +114,10 @@ class ApisStockCountingController extends Controller
                         );
                 }
 
-                // Execute inventory summaries update script after inserting
                 $this->updateInventorySummaries($storeids, $currentDate);
 
                 DB::commit();
 
-                // Re-run the query to get the newly created record
                 $stockCounting = $query
                     ->groupBy('a.journalid', 'a.storeid', 'a.description', 'a.posted', 
                              'a.updated_at', 'a.journaltype', 'a.createddatetime')
@@ -142,7 +136,6 @@ class ApisStockCountingController extends Controller
                 throw $e;
             }
         } else {
-            // Check and insert missing items for both stockcountingtrans and inventory_summaries
             Log::info('Stock counting records found, checking for missing items', ['storeids' => $storeids]);
             
             foreach ($stockCounting as $stockCountRecord) {
@@ -187,7 +180,6 @@ private function insertMissingItemsToStockCountingTrans($journalId, $storeId, $c
             'date' => $currentDate
         ]);
 
-        // Check if stockcountingtrans has any records for this journal
         $existingRecordsCount = DB::table('stockcountingtrans')
             ->where('JOURNALID', $journalId)
             ->where('STORENAME', $storeId)
@@ -201,9 +193,7 @@ private function insertMissingItemsToStockCountingTrans($journalId, $storeId, $c
 
         Log::info('Existing stockcountingtrans records found', ['count' => $existingRecordsCount]);
 
-        // Get items that should be in stockcountingtrans but are missing
         if ($storeId == 'COMMUNITY') {
-            // For COMMUNITY store, get items where activeondelivery = 1
             $missingItems = DB::table('inventtables as a')
                 ->leftJoin('rboinventtables as b', 'a.itemid', '=', 'b.itemid')
                 ->leftJoin('stockcountingtrans as st', function($join) use ($journalId, $storeId, $currentDate) {
@@ -212,12 +202,11 @@ private function insertMissingItemsToStockCountingTrans($journalId, $storeId, $c
                          ->where('st.STORENAME', '=', $storeId)
                          ->whereDate('st.TRANSDATE', '=', $currentDate);
                 })
-                ->whereNull('st.ITEMID') // Items not in stockcountingtrans
+                ->whereNull('st.ITEMID') 
                 ->where('b.activeondelivery', '1')
                 ->select('a.itemid', 'b.itemdepartment')
                 ->get();
         } else {
-            // For other stores, get items where itemname not like '%CLASS B%'
             $missingItems = DB::table('inventtables as a')
                 ->leftJoin('rboinventtables as b', 'a.itemid', '=', 'b.itemid')
                 ->leftJoin('stockcountingtrans as st', function($join) use ($journalId, $storeId, $currentDate) {
@@ -226,7 +215,7 @@ private function insertMissingItemsToStockCountingTrans($journalId, $storeId, $c
                          ->where('st.STORENAME', '=', $storeId)
                          ->whereDate('st.TRANSDATE', '=', $currentDate);
                 })
-                ->whereNull('st.ITEMID') // Items not in stockcountingtrans
+                ->whereNull('st.ITEMID') 
                 ->where('a.itemname', 'not like', '%CLASS B%')
                 ->select('a.itemid', 'b.itemdepartment')
                 ->get();
@@ -239,7 +228,6 @@ private function insertMissingItemsToStockCountingTrans($journalId, $storeId, $c
                 'storeId' => $storeId
             ]);
 
-            // Prepare data for bulk insert
             $insertData = [];
             foreach ($missingItems as $item) {
                 $insertData[] = [
@@ -257,7 +245,6 @@ private function insertMissingItemsToStockCountingTrans($journalId, $storeId, $c
                 ];
             }
 
-            // Insert missing items in chunks to avoid memory issues
             $chunks = array_chunk($insertData, 100);
             foreach ($chunks as $chunk) {
                 DB::table('stockcountingtrans')->insert($chunk);
@@ -282,7 +269,6 @@ private function insertMissingItemsToStockCountingTrans($journalId, $storeId, $c
             'journalId' => $journalId,
             'storeId' => $storeId
         ]);
-        // Don't throw the exception to avoid breaking the main flow
     }
 }
 
@@ -301,7 +287,6 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
             'date' => $currentDate
         ]);
 
-        // Check if inventory_summaries has any records for this store and date
         $existingRecordsCount = DB::table('inventory_summaries')
             ->where('storename', $storeId)
             ->whereDate('report_date', $currentDate)
@@ -314,9 +299,7 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
 
         Log::info('Existing inventory_summaries records found', ['count' => $existingRecordsCount]);
 
-        // Get items that should be in inventory_summaries but are missing
         if ($storeId == 'COMMUNITY') {
-            // For COMMUNITY store, get items where activeondelivery = 1
             $missingItems = DB::table('inventtables as a')
                 ->leftJoin('rboinventtables as b', 'a.itemid', '=', 'b.itemid')
                 ->leftJoin('inventory_summaries as inv', function($join) use ($storeId, $currentDate) {
@@ -324,12 +307,11 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                          ->where('inv.storename', '=', $storeId)
                          ->whereDate('inv.report_date', '=', $currentDate);
                 })
-                ->whereNull('inv.itemid') // Items not in inventory_summaries
+                ->whereNull('inv.itemid') 
                 ->where('b.activeondelivery', '1')
                 ->select('a.itemid', 'a.itemname')
                 ->get();
         } else {
-            // For other stores, get items where itemname not like '%CLASS B%'
             $missingItems = DB::table('inventtables as a')
                 ->leftJoin('rboinventtables as b', 'a.itemid', '=', 'b.itemid')
                 ->leftJoin('inventory_summaries as inv', function($join) use ($storeId, $currentDate) {
@@ -337,7 +319,7 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                          ->where('inv.storename', '=', $storeId)
                          ->whereDate('inv.report_date', '=', $currentDate);
                 })
-                ->whereNull('inv.itemid') // Items not in inventory_summaries
+                ->whereNull('inv.itemid') 
                 ->where('a.itemname', 'not like', '%CLASS B%')
                 ->select('a.itemid', 'a.itemname')
                 ->get();
@@ -349,7 +331,6 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                 'storeId' => $storeId
             ]);
 
-            // Prepare data for bulk insert
             $insertData = [];
             foreach ($missingItems as $item) {
                 $insertData[] = [
@@ -375,7 +356,6 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                 ];
             }
 
-            // Insert missing items in chunks to avoid memory issues
             $chunks = array_chunk($insertData, 100);
             foreach ($chunks as $chunk) {
                 DB::table('inventory_summaries')->insert($chunk);
@@ -397,7 +377,6 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
             'trace' => $e->getTraceAsString(),
             'storeId' => $storeId
         ]);
-        // Don't throw the exception to avoid breaking the main flow
     }
 }
 
@@ -410,7 +389,6 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                 'journalid' => $journalid
             ]);
             
-            // Let's try direct update first
             $affected = DB::table('stockcountingtables')
                 ->where('JOURNALID', $journalid)
                 ->where('STOREID', $storeids)
@@ -423,7 +401,6 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                 throw new \Illuminate\Database\Eloquent\ModelNotFoundException();
             }
             
-            // Fetch the updated record
             $stockCounting = stockcountingtables::where('JOURNALID', $journalid)
                 ->where('STOREID', $storeids)
                 ->first();
@@ -472,7 +449,6 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                 'sync_date' => $syncDate
             ]);
 
-            // Step 1: Create temporary tables for calculations
             DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_beginning");
             DB::statement("
                 CREATE TEMPORARY TABLE temp_beginning AS
@@ -589,7 +565,6 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                   AND counted != 0
             ", [$storeName, $syncDate]);
 
-            // Step 2: Update inventory_summaries using temporary tables
             $beginningResult = DB::update("
                 UPDATE inventory_summaries 
                 INNER JOIN temp_beginning ON inventory_summaries.itemid = temp_beginning.itemid
@@ -680,7 +655,6 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                   AND CAST(inventory_summaries.report_date AS DATE) = ?
             ", [$storeName, $syncDate]);
 
-            // Calculate and Update Ending Inventory for all records
             $endingResult = DB::update("
                 UPDATE inventory_summaries 
                 SET ending = (beginning + received_delivery + COALESCE(stock_transfer, 0)) 
@@ -690,16 +664,14 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                   AND CAST(report_date AS DATE) = ?
             ", [$storeName, $syncDate]);
 
-            // Calculate and Update Variance for all records
             $varianceResult = DB::update("
                 UPDATE inventory_summaries 
-                SET variance = ending - item_count,
+                SET variance = item_count - ending,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE storename = ?
                   AND CAST(report_date AS DATE) = ?
             ", [$storeName, $syncDate]);
 
-            // Step 3: Clean up temporary tables
             DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_beginning");
             DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_received");
             DB::statement("DROP TEMPORARY TABLE IF EXISTS temp_direct_sales");

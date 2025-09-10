@@ -175,12 +175,19 @@ const handleCategoryDropdownClickOutside = (event) => {
 
 // Transaction product dropdown functions
 const toggleProduct = (productId) => {
+  console.log('Toggling product:', productId);
+  console.log('Current selected products before toggle:', selectedProducts.value);
+  
   const index = selectedProducts.value.indexOf(productId);
   if (index === -1) {
     selectedProducts.value.push(productId);
+    console.log('Added product:', productId);
   } else {
     selectedProducts.value.splice(index, 1);
+    console.log('Removed product:', productId);
   }
+  
+  console.log('Selected products after toggle:', selectedProducts.value);
 };
 
 const toggleAllProducts = () => {
@@ -958,12 +965,18 @@ const fetchTransactionSales = async () => {
       start_date: selectedDateRange.value.start_date,
       end_date: selectedDateRange.value.end_date,
       filter_by: transactionSalesFilter.value,
+      stores: selectedStores.value.map(store => store.NAME || store),
       products: selectedProducts.value
     };
 
     console.log('Fetching transaction sales with payload:', payload);
+    console.log('Selected products:', selectedProducts.value);
+    console.log('Selected stores:', selectedStores.value);
+    
     const response = await axios.post(route('get.transaction.sales'), payload);
     console.log('Transaction sales response:', response.data);
+    console.log('Transaction sales data count:', response.data?.data?.length || 0);
+    
     initializeTransactionSalesChart(response.data || { data: [], summary: {} });
   } catch (error) {
     console.error('Error fetching transaction sales:', error);
@@ -984,16 +997,26 @@ const initializeTransactionSalesChart = (data) => {
   }
 
   const chartData = data.data || [];
+  console.log('Initializing chart with data:', chartData);
+  
   const labels = chartData.map(item => item.label);
   const values = chartData.map(item => item.total_value);
+  
+  console.log('Chart labels:', labels);
+  console.log('Chart values:', values);
+
+  // If no data, show a message
+  if (chartData.length === 0) {
+    console.log('No data to display in chart');
+  }
 
   transactionSalesChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels,
+      labels: labels.length > 0 ? labels : ['No Data'],
       datasets: [{
         label: transactionSalesFilter.value === 'qty' ? 'Total Quantity' : 'Total Sales (₱)',
-        data: values,
+        data: values.length > 0 ? values : [0],
         borderColor: 'rgba(59, 130, 246, 1)',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         tension: 0.4,
@@ -1006,7 +1029,7 @@ const initializeTransactionSalesChart = (data) => {
       plugins: {
         title: {
           display: true,
-          text: `Transaction ${transactionSalesFilter.value === 'qty' ? 'Quantity' : 'Sales'} Trend`,
+          text: `Transaction ${transactionSalesFilter.value === 'qty' ? 'Quantity' : 'Sales'} Trend${selectedProducts.value.length > 0 ? ` (${selectedProducts.value.length} products selected)` : ''}`,
           font: { size: 14, weight: 'bold' }
         },
         legend: { display: false }
@@ -1606,7 +1629,10 @@ watch(() => topStoresFilter.value, () => {
 
 // Watch for selected products changes
 watch(() => JSON.stringify(selectedProducts.value), () => {
+  console.log('Products watcher triggered, new products:', selectedProducts.value);
+  console.log('Is valid date range:', isValidDateRange.value);
   if (isValidDateRange.value) {
+    console.log('Calling fetchTransactionSales from watcher');
     fetchTransactionSales();
   }
 });
@@ -1895,9 +1921,9 @@ onUnmounted(() => {
                                         </span>
                                     </button>
 
-                                    <div v-if="transactionProductDropdownOpen" class="absolute z-30 mt-1 w-full bg-white shadow-xl border border-gray-200 rounded-lg overflow-hidden">
+                                    <div v-if="transactionProductDropdownOpen" class="absolute z-[9999] mt-1 w-full bg-white shadow-2xl border border-gray-300 rounded-lg overflow-hidden" style="background-color: white !important;">
                                         <!-- Search Input - Fixed at top -->
-                                        <div class="p-3 border-b border-gray-200 bg-gray-50">
+                                        <div class="p-3 border-b border-gray-200 bg-white" style="background-color: white !important;">
                                             <input
                                                 v-model="productSearchTerm"
                                                 @input="debouncedProductSearch"
@@ -1909,12 +1935,12 @@ onUnmounted(() => {
                                         </div>
                                         
                                         <!-- Scrollable content area -->
-                                        <div class="max-h-80 overflow-y-auto">
+                                        <div class="max-h-80 overflow-y-auto bg-white" style="background-color: white !important;">
                                             <!-- Select All Option -->
-                                            <div class="border-b border-gray-100 bg-gray-50">
+                                            <div class="border-b border-gray-100 bg-white" style="background-color: white !important;">
                                                 <div
                                                     class="px-4 py-3 cursor-pointer hover:bg-blue-100 flex items-center select-none"
-                                                    @click.stop="toggleAllProducts"
+                                                    @click.stop.prevent="toggleAllProducts"
                                                 >
                                                     <input
                                                         type="checkbox"
@@ -1922,6 +1948,7 @@ onUnmounted(() => {
                                                         :checked="selectedProducts.length === filteredProducts.length && filteredProducts.length > 0"
                                                         :indeterminate="selectedProducts.length > 0 && selectedProducts.length < filteredProducts.length"
                                                         tabindex="-1"
+                                                        readonly
                                                     >
                                                     <span class="ml-3 font-medium text-gray-900">
                                                         Select All ({{ filteredProducts.length }} items)
@@ -1933,14 +1960,16 @@ onUnmounted(() => {
                                             <div 
                                                 v-for="product in filteredProducts" 
                                                 :key="product.itemid" 
-                                                class="px-4 py-2 cursor-pointer hover:bg-blue-50 flex items-center border-b border-gray-50 select-none"
-                                                @click.stop="toggleProduct(product.itemid)"
+                                                class="px-4 py-2 cursor-pointer hover:bg-blue-50 flex items-center border-b border-gray-50 select-none bg-white"
+                                                style="background-color: white !important;"
+                                                @click.stop.prevent="toggleProduct(product.itemid)"
                                             >
                                                 <input
                                                     type="checkbox"
                                                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded pointer-events-none"
                                                     :checked="selectedProducts.includes(product.itemid)"
                                                     tabindex="-1"
+                                                    readonly
                                                 >
                                                 <div class="ml-3 flex-1">
                                                     <div class="text-sm font-medium text-gray-900">{{ product.itemname }}</div>
@@ -1966,7 +1995,7 @@ onUnmounted(() => {
                             </div>
                         </div>
                     </div>
-                    <div class="h-[400px] relative z-10">
+                    <div class="h-[400px] relative z-0">
                         <canvas ref="transactionSalesRef" class="w-full h-full"></canvas>
                     </div>
                 </div>
