@@ -750,9 +750,6 @@ public function sales(Request $request)
 
 public function tsales(Request $request)
 {
-    ini_set('memory_limit', '512M');
-    ini_set('max_execution_time', 300);
-    
     $request->validate([
         'startDate' => 'nullable|date',
         'endDate' => 'nullable|date|after_or_equal:startDate',
@@ -806,6 +803,7 @@ public function tsales(Request $request)
             'rbotransactionsalestrans.transactionid',
             DB::raw("REGEXP_REPLACE(rbotransactionsalestrans.receiptid, '[^0-9]', '') as receiptid"),
             
+            // Aggregate financial data for grouped records
             DB::raw('SUM(rbotransactionsalestrans.grossamount) as total_grossamount'),
             DB::raw('SUM(rbotransactionsalestrans.costamount) as total_costamount'),
             
@@ -813,24 +811,29 @@ public function tsales(Request $request)
             'rbotransactionsalestrans.itemgroup',
             'rbotransactionsalestrans.itemname',
             
+            // Sum quantities for the same item
             DB::raw('SUM(rbotransactionsalestrans.qty) as qty'),
             
             'rbotransactionsalestrans.price',
             'rbotransactionsalestrans.custaccount',
             'rbotransactionsalestrans.discofferid',
             
+            // Aggregate discount amounts
             DB::raw('SUM(rbotransactionsalestrans.discamount) as total_discamount'),
             DB::raw('SUM(rbotransactionsalestrans.price) / 1.12 as total_costprice'),
             DB::raw('SUM(rbotransactionsalestrans.netamount) as total_netamount'),
             DB::raw('SUM(rbotransactionsalestrans.netamountnotincltax) as vatablesales'),
             DB::raw('SUM(rbotransactionsalestrans.taxinclinprice) as vat'),
             
+            // Use the store field directly since it contains store names
             'rbotransactionsalestrans.store as storename',
             'rbotransactionsalestrans.staff',
             'rbotransactionsalestrans.remarks',
             
+            // Get transaction totals for percentage calculation
             DB::raw('rbt.netamount as transaction_total_netamount'),
             
+            // Improved payment method calculations - aggregate amounts
             DB::raw('
                 SUM(CASE 
                     WHEN rbotransactionsalestrans.netamount < 0 THEN
@@ -1048,6 +1051,7 @@ public function tsales(Request $request)
                 END) as representation
             '),
             
+            // Commission calculation based on remarks - aggregate
             DB::raw("
                 SUM(CASE 
                     WHEN LOWER(TRIM(rbotransactionsalestrans.remarks)) = 'qrph' 
@@ -1056,11 +1060,12 @@ public function tsales(Request $request)
                 END) as commission
             "),
             
+            // RD Discount - include '20% EMPLOYEE DISCOUNT' - aggregate
             DB::raw("
                 SUM(CASE 
                     WHEN rbotransactionsalestrans.discofferid LIKE '%SENIOR%' 
                       OR rbotransactionsalestrans.discofferid LIKE '%PWD%'
-                      OR rbotransactionsalestrans.discofferid LIKE '%25%'
+                      OR rbotransactionsalestrans.discofferid = '25% One Day Before'
                       OR rbotransactionsalestrans.discofferid = '20% EMPLOYEE DISCOUNT'
                       OR rbotransactionsalestrans.discofferid = '40% OFF'
                       OR rbotransactionsalestrans.discofferid = '50% OFF'
@@ -1069,13 +1074,14 @@ public function tsales(Request $request)
                 END) as rddisc
             "),
             
+            // Marketing Discount - exclude '20% EMPLOYEE DISCOUNT' - aggregate
             DB::raw("
                 SUM(CASE 
                     WHEN rbotransactionsalestrans.discofferid IS NOT NULL 
                       AND rbotransactionsalestrans.discofferid != ''
                       AND rbotransactionsalestrans.discofferid NOT LIKE '%SENIOR%' 
                       AND rbotransactionsalestrans.discofferid NOT LIKE '%PWD%'
-                      AND rbotransactionsalestrans.discofferid NOT LIKE '%25%'
+                      AND rbotransactionsalestrans.discofferid != '25% One Day Before'
                       AND rbotransactionsalestrans.discofferid != '20% EMPLOYEE DISCOUNT'
                       AND rbotransactionsalestrans.discofferid != '40% OFF'
                       AND rbotransactionsalestrans.discofferid != '50% OFF'
@@ -1084,10 +1090,11 @@ public function tsales(Request $request)
                 END) as mrktgdisc
             "),
             
+            // Product categories based on your requirements - aggregate
             DB::raw("
                 SUM(CASE 
                     WHEN UPPER(rbotransactionsalestrans.itemgroup) LIKE '%BW%' 
-                    AND UPPER(rbotransactionsalestrans.itemname) != 'PARTY CAKES'
+                    AND UPPER(rbotransactionsalestrans.itemname) != 'PARTYCAKES'
                     THEN rbotransactionsalestrans.grossamount 
                     ELSE 0 
                 END) as bw_products
@@ -1095,7 +1102,7 @@ public function tsales(Request $request)
             DB::raw("
                 SUM(CASE 
                     WHEN UPPER(rbotransactionsalestrans.itemgroup) NOT LIKE '%BW%' 
-                      AND UPPER(rbotransactionsalestrans.itemname) != 'PARTY CAKES'
+                      AND UPPER(rbotransactionsalestrans.itemname) != 'PARTYCAKES'
                     THEN rbotransactionsalestrans.grossamount 
                     ELSE 0 
                 END) as merchandise
@@ -1113,34 +1120,33 @@ public function tsales(Request $request)
                  ->on('rbotransactionsalestrans.store', '=', 'rbt.store');
         });
 
+    // **KEY OPTIMIZATION: Default to current date if no filters provided**
     if (!$request->filled(['startDate', 'endDate'])) {
+        // If no date filters provided, default to today's data only
         $today = now()->format('Y-m-d');
         $query->whereBetween('rbotransactionsalestrans.createddate', [
             $today . ' 00:00:00',
             $today . ' 23:59:59',
         ]);
     } else {
-        $startDate = \Carbon\Carbon::parse($request->startDate);
-        $endDate = \Carbon\Carbon::parse($request->endDate);
-        
-        if ($startDate->diffInDays($endDate) > 14) {
-            $endDate = $startDate->copy()->addDays(14);
-        }
-        
+        // Use provided date filters
         $query->whereBetween('rbotransactionsalestrans.createddate', [
-            $startDate->format('Y-m-d') . ' 00:00:00',
-            $endDate->format('Y-m-d') . ' 23:59:59',
+            $request->startDate . ' 00:00:00',
+            $request->endDate . ' 23:59:59',
         ]);
     }
 
+    // **FIXED: Store filtering - Filter directly by store names**
     if ($role === 'ADMIN' || $role === 'SUPERADMIN') {
         if ($request->filled('stores') && is_array($request->stores) && !empty($request->stores)) {
+            // Filter directly by store names since rbotransactionsalestrans.store contains store names
             $query->whereIn('rbotransactionsalestrans.store', $request->stores);
         }
     } else {
         $query->where('rbotransactionsalestrans.store', $userStoreId);
     }
 
+    // GROUP BY to remove redundant data based on receiptid, itemname, qty
     $query->groupBy([
         'rbotransactionsalestrans.receiptid',
         'rbotransactionsalestrans.itemname',
@@ -1167,9 +1173,11 @@ public function tsales(Request $request)
         'rbt.representation'
     ]);
 
+    // Order by latest first for better user experience
     $query->orderBy('rbotransactionsalestrans.createddate', 'DESC')
           ->orderBy('rbotransactionsalestrans.transactionid', 'DESC');
 
+    // Get stores list - Get unique store names from transactions table instead of rbostoretables
     $stores = DB::table('rbotransactionsalestrans')
         ->select('store as NAME')
         ->distinct()
@@ -1179,77 +1187,23 @@ public function tsales(Request $request)
         ->get()
         ->map(function($store) {
             return [
-                'STOREID' => $store->NAME, 
+                'STOREID' => $store->NAME, // Use store name as both ID and NAME
                 'NAME' => $store->NAME
             ];
         });
 
-    $page = $request->get('page', 1);
-    $perPage = 100; 
-    
-    try {
-        $ec = $query->paginate($perPage, ['*'], 'page', $page);
-    } catch (\Exception $e) {
-        if (strpos($e->getMessage(), 'memory') !== false) {
-            return Inertia::render('Reports/TSales', [
-                'ec' => [],
-                'stores' => [],
-                'userRole' => $role,
-                'totals' => ['grossamount' => 0, 'discamount' => 0, 'netamount' => 0, 'commission' => 0],
-                'filters' => ['startDate' => $request->startDate, 'endDate' => $request->endDate],
-                'error' => 'Date range too large. Please select a smaller date range (max 7 days).',
-                'pagination' => ['current_page' => 1, 'total' => 0, 'per_page' => 100, 'last_page' => 1]
-            ]);
-        }
-        throw $e;
-    }
-    
-    $totalsResult = DB::table('rbotransactionsalestrans')
-        ->leftJoin('rbotransactiontables as rbt', function($join) {
-            $join->on('rbotransactionsalestrans.transactionid', '=', 'rbt.transactionid')
-                 ->on('rbotransactionsalestrans.store', '=', 'rbt.store');
-        })
-        ->select([
-            DB::raw('SUM(rbotransactionsalestrans.grossamount) as total_grossamount'),
-            DB::raw('SUM(rbotransactionsalestrans.discamount) as total_discamount'), 
-            DB::raw('SUM(rbotransactionsalestrans.netamount) as total_netamount'),
-            DB::raw('SUM(rbotransactionsalestrans.netamount * 0.07) as commission')
-        ]);
-    
-    if (!$request->filled(['startDate', 'endDate'])) {
-        $today = now()->format('Y-m-d');
-        $totalsResult->whereBetween('rbotransactionsalestrans.createddate', [
-            $today . ' 00:00:00',
-            $today . ' 23:59:59',
-        ]);
-    } else {
-        $startDate = \Carbon\Carbon::parse($request->startDate);
-        $endDate = \Carbon\Carbon::parse($request->endDate);
-        if ($startDate->diffInDays($endDate) > 14) {
-            $endDate = $startDate->copy()->addDays(14);
-        }
-        $totalsResult->whereBetween('rbotransactionsalestrans.createddate', [
-            $startDate->format('Y-m-d') . ' 00:00:00',
-            $endDate->format('Y-m-d') . ' 23:59:59',
-        ]);
-    }
-    
-    if ($role === 'ADMIN' || $role === 'SUPERADMIN') {
-        if ($request->filled('stores') && is_array($request->stores) && !empty($request->stores)) {
-            $totalsResult->whereIn('rbotransactionsalestrans.store', $request->stores);
-        }
-    } else {
-        $totalsResult->where('rbotransactionsalestrans.store', $userStoreId);
-    }
-    
-    $totalsData = $totalsResult->first();
+    // Execute the optimized query
+    $ec = $query->get();
+
+    // Calculate totals
     $totals = [
-        'grossamount' => $totalsData->total_grossamount ?? 0,
-        'discamount' => $totalsData->total_discamount ?? 0,
-        'netamount' => $totalsData->total_netamount ?? 0,
-        'commission' => $totalsData->commission ?? 0,
+        'grossamount' => $ec->sum('total_grossamount'),
+        'discamount' => $ec->sum('total_discamount'),
+        'netamount' => $ec->sum('total_netamount'),
+        'commission' => $ec->sum('commission'),
     ];
 
+    // Set default filter values for frontend
     $defaultFilters = [
         'startDate' => $request->startDate ?: now()->format('Y-m-d'),
         'endDate' => $request->endDate ?: now()->format('Y-m-d'),
@@ -1257,18 +1211,12 @@ public function tsales(Request $request)
     ];
 
     return Inertia::render('Reports/TSales', [
-        'ec' => $ec->items(), 
+        'ec' => $ec,
         'stores' => $stores,
         'userRole' => $role,
         'totals' => $totals,
         'filters' => $defaultFilters,
-        'isInitialLoad' => !$request->filled(['startDate', 'endDate']), 
-        'pagination' => [
-            'current_page' => $ec->currentPage(),
-            'total' => $ec->total(),
-            'per_page' => $ec->perPage(),
-            'last_page' => $ec->lastPage(),
-        ]
+        'isInitialLoad' => !$request->filled(['startDate', 'endDate']), // Flag to indicate if this is initial load
     ]);
 }
 
