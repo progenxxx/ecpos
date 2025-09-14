@@ -17,7 +17,7 @@ import Import from "@/Components/Svgs/Import.vue";
 import MenuIcon from "@/Components/Svgs/Menu.vue";
 import CloseIcon from "@/Components/Svgs/Close.vue";
 
-import { ref, computed, toRefs, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, toRefs, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import axios from 'axios';
 
 // Reactive refs
@@ -38,6 +38,12 @@ const production = ref('');
 const default1 = ref(false);
 const default2 = ref(false);
 const default3 = ref(false);
+
+// Live edit functionality
+const isLiveEditEnabled = ref(false);
+const editingCell = ref(null);
+const tempEditValue = ref('');
+const savingCell = ref(null);
 
 const selectedItems = ref([]);
 const showImportModal = ref(false);
@@ -522,6 +528,217 @@ const nonproducts = () => {
     closeFloatingMenu();
 };
 
+// Live edit functions
+const startCellEdit = (itemId, field, currentValue) => {
+    if (!isLiveEditEnabled.value) return;
+
+    editingCell.value = `${itemId}-${field}`;
+    tempEditValue.value = currentValue || '';
+
+    // Auto-focus the input after Vue updates the DOM
+    nextTick(() => {
+        const input = document.querySelector(`input[data-editing="${itemId}-${field}"]`);
+        if (input) {
+            input.focus();
+            input.select();
+        }
+    });
+};
+
+const cancelCellEdit = () => {
+    editingCell.value = null;
+    tempEditValue.value = '';
+};
+
+const saveCellEdit = async (itemId, field) => {
+    if (!tempEditValue.value && tempEditValue.value !== '0') {
+        console.log(`Live Edit Mode - Cancelled edit for ${itemId}-${field}: Empty value`);
+        cancelCellEdit();
+        return;
+    }
+
+    const cellKey = `${itemId}-${field}`;
+    savingCell.value = cellKey;
+
+    // Log the start of Live Edit Mode operation
+    console.log(`===== LIVE EDIT MODE - FRONTEND START =====`, {
+        itemId: itemId,
+        field: field,
+        newValue: tempEditValue.value,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent
+    });
+
+    try {
+        const updateData = {
+            [field]: tempEditValue.value
+        };
+
+        // Add required fields for validation
+        const item = props.items.find(i => i.itemid === itemId);
+        if (!item) {
+            throw new Error(`Item with ID ${itemId} not found in props.items`);
+        }
+
+        console.log(`Live Edit Mode - Found item:`, {
+            itemId: item.itemid,
+            itemName: item.itemname,
+            currentValues: {
+                cost: item.cost,
+                price: item.price,
+                manilaprice: item.manilaprice,
+                foodpandaprice: item.foodpandaprice,
+                grabfoodprice: item.grabfoodprice,
+                mallprice: item.mallprice,
+                foodpandamallprice: item.foodpandamallprice,
+                grabfoodmallprice: item.grabfoodmallprice
+            }
+        });
+
+        // FIXED: Include itemid in request data (required for validation)
+        updateData.itemid = itemId;
+        updateData.itemname = item.itemname;
+        updateData.itemgroup = item.itemgroup;
+        updateData.cost = field === 'cost' ? tempEditValue.value : item.cost;
+        updateData.price = field === 'price' ? tempEditValue.value : item.price;
+        updateData.manilaprice = field === 'manilaprice' ? tempEditValue.value : (item.manilaprice || 0);
+        updateData.foodpandaprice = field === 'foodpandaprice' ? tempEditValue.value : (item.foodpandaprice || 0);
+        updateData.grabfoodprice = field === 'grabfoodprice' ? tempEditValue.value : (item.grabfoodprice || 0);
+        updateData.mallprice = field === 'mallprice' ? tempEditValue.value : (item.mallprice || 0);
+        updateData.foodpandamallprice = field === 'foodpandamallprice' ? tempEditValue.value : (item.foodpandamallprice || 0);
+        updateData.grabfoodmallprice = field === 'grabfoodmallprice' ? tempEditValue.value : (item.grabfoodmallprice || 0);
+        updateData.production = item.production || 'NEWCOM';
+        updateData.moq = item.moq;
+        updateData.default1 = item.default1 || false;
+        updateData.default2 = item.default2 || false;
+        updateData.default3 = item.default3 || false;
+        updateData.confirm_defaults = true;
+
+        console.log(`Live Edit Mode - Prepared update data:`, {
+            updateData: updateData,
+            payloadSize: JSON.stringify(updateData).length
+        });
+
+        const requestStart = performance.now();
+        console.log(`Live Edit Mode - Sending PUT request to /items/${itemId}`);
+
+        const response = await axios.put(`/items/${itemId}`, updateData);
+
+        const requestEnd = performance.now();
+        const requestTime = requestEnd - requestStart;
+
+        console.log(`Live Edit Mode - Request successful:`, {
+            responseStatus: response.status,
+            responseData: response.data,
+            requestTime: `${requestTime.toFixed(2)}ms`,
+            responseHeaders: {
+                contentType: response.headers['content-type'],
+                contentLength: response.headers['content-length']
+            }
+        });
+
+        // Update the item in the props array with Vue reactivity
+        const itemIndex = props.items.findIndex(i => i.itemid === itemId);
+        if (itemIndex !== -1) {
+            const oldValue = props.items[itemIndex][field];
+
+            // FIXED: Use Vue's reactivity system to update the value
+            // Convert to proper data type (number for price fields)
+            const newValue = ['cost', 'price', 'manilaprice', 'foodpandaprice', 'grabfoodprice', 'mallprice', 'foodpandamallprice', 'grabfoodmallprice'].includes(field)
+                ? Number(tempEditValue.value)
+                : tempEditValue.value;
+
+            // Use Vue's $set equivalent or direct assignment (Vue 3 handles reactivity automatically)
+            props.items[itemIndex] = { ...props.items[itemIndex], [field]: newValue };
+
+            console.log(`Live Edit Mode - Updated props.items[${itemIndex}].${field}:`, {
+                oldValue: oldValue,
+                newValue: newValue,
+                convertedType: typeof newValue
+            });
+        } else {
+            console.warn(`Live Edit Mode - Could not find item ${itemId} in props.items to update`);
+        }
+
+        console.log(`===== LIVE EDIT MODE - FRONTEND SUCCESS =====`, {
+            itemId: itemId,
+            field: field,
+            totalTime: `${requestTime.toFixed(2)}ms`
+        });
+
+        // OPTIONAL: Force a small delay to ensure UI updates
+        await nextTick();
+
+        // ALTERNATIVE: Use Inertia to refresh page data after successful edit
+        // This ensures the display always shows the latest data
+        setTimeout(() => {
+            console.log('Live Edit Mode - Refreshing page data to ensure display consistency');
+            router.reload({ only: ['items'] });
+        }, 100);
+
+        cancelCellEdit();
+    } catch (error) {
+        console.error(`===== LIVE EDIT MODE - FRONTEND ERROR =====`, {
+            itemId: itemId,
+            field: field,
+            newValue: tempEditValue.value,
+            errorMessage: error.message,
+            errorResponse: error.response ? {
+                status: error.response.status,
+                statusText: error.response.statusText,
+                data: error.response.data,
+                headers: error.response.headers
+            } : 'No response data',
+            errorStack: error.stack,
+            networkError: error.code,
+            requestConfig: error.config ? {
+                method: error.config.method,
+                url: error.config.url,
+                headers: error.config.headers,
+                data: error.config.data
+            } : 'No config data'
+        });
+
+        // More specific error messages based on error type
+        let userMessage = 'Error updating item. Please try again.';
+        if (error.response) {
+            switch (error.response.status) {
+                case 422:
+                    userMessage = 'Validation error. Please check your input.';
+                    if (error.response.data.errors) {
+                        console.log('Validation errors:', error.response.data.errors);
+                    }
+                    break;
+                case 404:
+                    userMessage = 'Item not found. Please refresh the page.';
+                    break;
+                case 500:
+                    userMessage = 'Server error occurred. Please try again later.';
+                    break;
+                case 403:
+                    userMessage = 'You do not have permission to edit this item.';
+                    break;
+                default:
+                    userMessage = `Server returned error ${error.response.status}. Please try again.`;
+            }
+        } else if (error.request) {
+            userMessage = 'Network error. Please check your connection and try again.';
+        }
+
+        alert(userMessage);
+    } finally {
+        savingCell.value = null;
+    }
+};
+
+const handleCellKeyPress = (event, itemId, field) => {
+    if (event.key === 'Enter') {
+        saveCellEdit(itemId, field);
+    } else if (event.key === 'Escape') {
+        cancelCellEdit();
+    }
+};
+
 // FIXED: Click outside handler for context menu
 const handleClickOutside = (event) => {
     if (showContextMenu.value) {
@@ -761,6 +978,19 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
           <!-- Desktop Header Controls -->
           <div class="hidden lg:block p-4 bg-gray-50 rounded-lg mb-4">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <!-- Live Edit Toggle -->
+              <div class="flex items-center">
+                <label class="flex items-center cursor-pointer">
+                  <input
+                    v-model="isLiveEditEnabled"
+                    type="checkbox"
+                    class="form-checkbox h-4 w-4 text-blue-600 mr-2"
+                  >
+                  <span class="text-sm font-medium text-gray-700">Live Edit Mode</span>
+                </label>
+                <span class="ml-2 text-xs text-gray-500">(Click table cells to edit)</span>
+              </div>
+
               <!-- Action Buttons -->
               <div class="flex flex-wrap gap-2">
                 <PrimaryButton
@@ -1009,14 +1239,213 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
                         <div class="max-w-xs truncate" :title="item?.itemname">{{ item?.itemname || '' }}</div>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item?.itemgroup || '' }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">₱{{ formatCurrency(item?.cost) }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono font-medium">₱{{ formatCurrency(item?.price) }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">₱{{ formatCurrency(item?.manilaprice) }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">₱{{ formatCurrency(item?.mallprice) }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">₱{{ formatCurrency(item?.foodpandaprice) }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">₱{{ formatCurrency(item?.grabfoodprice) }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">₱{{ formatCurrency(item?.foodpandamallprice) }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">₱{{ formatCurrency(item?.grabfoodmallprice) }}</td>
+                      <!-- Cost Cell -->
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono" @click.stop>
+                        <div v-if="editingCell === `${item.itemid}-cost`" class="relative">
+                          <input
+                            v-model="tempEditValue"
+                            @blur="saveCellEdit(item.itemid, 'cost')"
+                            @keydown="handleCellKeyPress($event, item.itemid, 'cost')"
+                            type="number"
+                            step="0.01"
+                            class="w-20 px-1 py-1 border rounded text-sm"
+                            :disabled="savingCell === `${item.itemid}-cost`"
+                            :data-editing="`${item.itemid}-cost`"
+                          />
+                          <div v-if="savingCell === `${item.itemid}-cost`" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded">
+                            <div class="animate-spin h-4 w-4 border-2 border-blue-600 rounded-full border-t-transparent"></div>
+                          </div>
+                        </div>
+                        <span
+                          v-else
+                          @click="startCellEdit(item.itemid, 'cost', item.cost)"
+                          :class="['cursor-pointer hover:bg-gray-100 rounded px-1 py-1', isLiveEditEnabled ? 'hover:ring-2 hover:ring-blue-300' : '']"
+                        >
+                          ₱{{ formatCurrency(item?.cost) }}
+                        </span>
+                      </td>
+
+                      <!-- Price Cell -->
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono font-medium" @click.stop>
+                        <div v-if="editingCell === `${item.itemid}-price`" class="relative">
+                          <input
+                            v-model="tempEditValue"
+                            @blur="saveCellEdit(item.itemid, 'price')"
+                            @keydown="handleCellKeyPress($event, item.itemid, 'price')"
+                            type="number"
+                            step="0.01"
+                            class="w-20 px-1 py-1 border rounded text-sm"
+                            :disabled="savingCell === `${item.itemid}-price`"
+                            :data-editing="`${item.itemid}-price`"
+                          />
+                          <div v-if="savingCell === `${item.itemid}-price`" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded">
+                            <div class="animate-spin h-4 w-4 border-2 border-blue-600 rounded-full border-t-transparent"></div>
+                          </div>
+                        </div>
+                        <span
+                          v-else
+                          @click="startCellEdit(item.itemid, 'price', item.price)"
+                          :class="['cursor-pointer hover:bg-gray-100 rounded px-1 py-1', isLiveEditEnabled ? 'hover:ring-2 hover:ring-blue-300' : '']"
+                        >
+                          ₱{{ formatCurrency(item?.price) }}
+                        </span>
+                      </td>
+
+                      <!-- Manila Price Cell -->
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono" @click.stop>
+                        <div v-if="editingCell === `${item.itemid}-manilaprice`" class="relative">
+                          <input
+                            v-model="tempEditValue"
+                            @blur="saveCellEdit(item.itemid, 'manilaprice')"
+                            @keydown="handleCellKeyPress($event, item.itemid, 'manilaprice')"
+                            type="number"
+                            step="0.01"
+                            class="w-20 px-1 py-1 border rounded text-sm"
+                            :disabled="savingCell === `${item.itemid}-manilaprice`"
+                            :data-editing="`${item.itemid}-manilaprice`"
+                          />
+                          <div v-if="savingCell === `${item.itemid}-manilaprice`" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded">
+                            <div class="animate-spin h-4 w-4 border-2 border-blue-600 rounded-full border-t-transparent"></div>
+                          </div>
+                        </div>
+                        <span
+                          v-else
+                          @click="startCellEdit(item.itemid, 'manilaprice', item.manilaprice)"
+                          :class="['cursor-pointer hover:bg-gray-100 rounded px-1 py-1', isLiveEditEnabled ? 'hover:ring-2 hover:ring-blue-300' : '']"
+                        >
+                          ₱{{ formatCurrency(item?.manilaprice) }}
+                        </span>
+                      </td>
+
+                      <!-- Mall Price Cell -->
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono" @click.stop>
+                        <div v-if="editingCell === `${item.itemid}-mallprice`" class="relative">
+                          <input
+                            v-model="tempEditValue"
+                            @blur="saveCellEdit(item.itemid, 'mallprice')"
+                            @keydown="handleCellKeyPress($event, item.itemid, 'mallprice')"
+                            type="number"
+                            step="0.01"
+                            class="w-20 px-1 py-1 border rounded text-sm"
+                            :disabled="savingCell === `${item.itemid}-mallprice`"
+                            :data-editing="`${item.itemid}-mallprice`"
+                          />
+                          <div v-if="savingCell === `${item.itemid}-mallprice`" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded">
+                            <div class="animate-spin h-4 w-4 border-2 border-blue-600 rounded-full border-t-transparent"></div>
+                          </div>
+                        </div>
+                        <span
+                          v-else
+                          @click="startCellEdit(item.itemid, 'mallprice', item.mallprice)"
+                          :class="['cursor-pointer hover:bg-gray-100 rounded px-1 py-1', isLiveEditEnabled ? 'hover:ring-2 hover:ring-blue-300' : '']"
+                        >
+                          ₱{{ formatCurrency(item?.mallprice) }}
+                        </span>
+                      </td>
+
+                      <!-- Foodpanda Price Cell -->
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono" @click.stop>
+                        <div v-if="editingCell === `${item.itemid}-foodpandaprice`" class="relative">
+                          <input
+                            v-model="tempEditValue"
+                            @blur="saveCellEdit(item.itemid, 'foodpandaprice')"
+                            @keydown="handleCellKeyPress($event, item.itemid, 'foodpandaprice')"
+                            type="number"
+                            step="0.01"
+                            class="w-20 px-1 py-1 border rounded text-sm"
+                            :disabled="savingCell === `${item.itemid}-foodpandaprice`"
+                            :data-editing="`${item.itemid}-foodpandaprice`"
+                          />
+                          <div v-if="savingCell === `${item.itemid}-foodpandaprice`" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded">
+                            <div class="animate-spin h-4 w-4 border-2 border-blue-600 rounded-full border-t-transparent"></div>
+                          </div>
+                        </div>
+                        <span
+                          v-else
+                          @click="startCellEdit(item.itemid, 'foodpandaprice', item.foodpandaprice)"
+                          :class="['cursor-pointer hover:bg-gray-100 rounded px-1 py-1', isLiveEditEnabled ? 'hover:ring-2 hover:ring-blue-300' : '']"
+                        >
+                          ₱{{ formatCurrency(item?.foodpandaprice) }}
+                        </span>
+                      </td>
+
+                      <!-- GrabFood Price Cell -->
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono" @click.stop>
+                        <div v-if="editingCell === `${item.itemid}-grabfoodprice`" class="relative">
+                          <input
+                            v-model="tempEditValue"
+                            @blur="saveCellEdit(item.itemid, 'grabfoodprice')"
+                            @keydown="handleCellKeyPress($event, item.itemid, 'grabfoodprice')"
+                            type="number"
+                            step="0.01"
+                            class="w-20 px-1 py-1 border rounded text-sm"
+                            :disabled="savingCell === `${item.itemid}-grabfoodprice`"
+                            :data-editing="`${item.itemid}-grabfoodprice`"
+                          />
+                          <div v-if="savingCell === `${item.itemid}-grabfoodprice`" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded">
+                            <div class="animate-spin h-4 w-4 border-2 border-blue-600 rounded-full border-t-transparent"></div>
+                          </div>
+                        </div>
+                        <span
+                          v-else
+                          @click="startCellEdit(item.itemid, 'grabfoodprice', item.grabfoodprice)"
+                          :class="['cursor-pointer hover:bg-gray-100 rounded px-1 py-1', isLiveEditEnabled ? 'hover:ring-2 hover:ring-blue-300' : '']"
+                        >
+                          ₱{{ formatCurrency(item?.grabfoodprice) }}
+                        </span>
+                      </td>
+
+                      <!-- Foodpanda Mall Price Cell -->
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono" @click.stop>
+                        <div v-if="editingCell === `${item.itemid}-foodpandamallprice`" class="relative">
+                          <input
+                            v-model="tempEditValue"
+                            @blur="saveCellEdit(item.itemid, 'foodpandamallprice')"
+                            @keydown="handleCellKeyPress($event, item.itemid, 'foodpandamallprice')"
+                            type="number"
+                            step="0.01"
+                            class="w-20 px-1 py-1 border rounded text-sm"
+                            :disabled="savingCell === `${item.itemid}-foodpandamallprice`"
+                            :data-editing="`${item.itemid}-foodpandamallprice`"
+                          />
+                          <div v-if="savingCell === `${item.itemid}-foodpandamallprice`" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded">
+                            <div class="animate-spin h-4 w-4 border-2 border-blue-600 rounded-full border-t-transparent"></div>
+                          </div>
+                        </div>
+                        <span
+                          v-else
+                          @click="startCellEdit(item.itemid, 'foodpandamallprice', item.foodpandamallprice)"
+                          :class="['cursor-pointer hover:bg-gray-100 rounded px-1 py-1', isLiveEditEnabled ? 'hover:ring-2 hover:ring-blue-300' : '']"
+                        >
+                          ₱{{ formatCurrency(item?.foodpandamallprice) }}
+                        </span>
+                      </td>
+
+                      <!-- GrabFood Mall Price Cell -->
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono" @click.stop>
+                        <div v-if="editingCell === `${item.itemid}-grabfoodmallprice`" class="relative">
+                          <input
+                            v-model="tempEditValue"
+                            @blur="saveCellEdit(item.itemid, 'grabfoodmallprice')"
+                            @keydown="handleCellKeyPress($event, item.itemid, 'grabfoodmallprice')"
+                            type="number"
+                            step="0.01"
+                            class="w-20 px-1 py-1 border rounded text-sm"
+                            :disabled="savingCell === `${item.itemid}-grabfoodmallprice`"
+                            :data-editing="`${item.itemid}-grabfoodmallprice`"
+                          />
+                          <div v-if="savingCell === `${item.itemid}-grabfoodmallprice`" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded">
+                            <div class="animate-spin h-4 w-4 border-2 border-blue-600 rounded-full border-t-transparent"></div>
+                          </div>
+                        </div>
+                        <span
+                          v-else
+                          @click="startCellEdit(item.itemid, 'grabfoodmallprice', item.grabfoodmallprice)"
+                          :class="['cursor-pointer hover:bg-gray-100 rounded px-1 py-1', isLiveEditEnabled ? 'hover:ring-2 hover:ring-blue-300' : '']"
+                        >
+                          ₱{{ formatCurrency(item?.grabfoodmallprice) }}
+                        </span>
+                      </td>
                       <td v-if="isAdmin || isOpic" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" @click.stop>
                         <div class="flex justify-end space-x-2">
                           <button

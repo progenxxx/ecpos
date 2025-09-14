@@ -217,7 +217,43 @@ public function index()
 
     public function update(Request $request, string $itemid)
     {
+        // Determine if this is a Live Edit Mode request
+        $isLiveEditMode = $request->ajax() || $request->wantsJson() || $request->expectsJson();
+
+        // Start comprehensive logging for Live Edit Mode
+        if ($isLiveEditMode) {
+            // Enable query logging for Live Edit Mode
+            DB::enableQueryLog();
+
+            \Log::info('===== LIVE EDIT MODE REQUEST STARTED =====', [
+                'itemid' => $itemid,
+                'user_agent' => $request->userAgent(),
+                'ip_address' => $request->ip(),
+                'user' => Auth::user() ? [
+                    'id' => Auth::user()->id,
+                    'name' => Auth::user()->name,
+                    'role' => Auth::user()->role
+                ] : 'Not authenticated',
+                'timestamp' => now()->toDateTimeString(),
+                'request_method' => $request->method(),
+                'content_type' => $request->header('Content-Type'),
+                'accepts' => $request->header('Accept')
+            ]);
+
+            \Log::info('Live Edit Mode - Request Data', [
+                'all_request_data' => $request->all(),
+                'request_size' => strlen(json_encode($request->all())),
+                'has_files' => $request->hasFile('*'),
+                'query_params' => $request->query()
+            ]);
+        }
+
         try {
+            // Log validation start for Live Edit Mode
+            if ($isLiveEditMode) {
+                \Log::info('Live Edit Mode - Starting validation');
+            }
+
             // Enhanced validation with all price fields and nullable MOQ
             $request->validate([
                 'itemid' => 'required|string',
@@ -240,23 +276,67 @@ public function index()
                 'confirm_defaults' => 'required|accepted', // Checkbox confirmation
             ]);
 
+            if ($isLiveEditMode) {
+                \Log::info('Live Edit Mode - Validation passed successfully');
+            }
+
             DB::beginTransaction();
+
+            if ($isLiveEditMode) {
+                \Log::info('Live Edit Mode - Database transaction started');
+            }
 
             // Check if item exists
             $itemExists = inventtables::where('itemid', $itemid)->exists();
             if (!$itemExists) {
+                if ($isLiveEditMode) {
+                    \Log::error('Live Edit Mode - Item not found', ['itemid' => $itemid]);
+                }
                 throw new \Exception('Item not found');
             }
 
+            if ($isLiveEditMode) {
+                \Log::info('Live Edit Mode - Item existence confirmed', ['itemid' => $itemid]);
+            }
+
             // Update item name in inventtables
-            inventtables::where('itemid', $itemid)
+            if ($isLiveEditMode) {
+                \Log::info('Live Edit Mode - Updating inventtables', [
+                    'itemid' => $itemid,
+                    'new_itemname' => $request->itemname
+                ]);
+            }
+
+            $inventtablesResult = inventtables::where('itemid', $itemid)
                 ->update([
                     'itemname' => $request->itemname,
                     'updated_at' => now(),
                 ]);
 
+            if ($isLiveEditMode) {
+                \Log::info('Live Edit Mode - inventtables update result', [
+                    'affected_rows' => $inventtablesResult
+                ]);
+            }
+
             // Update all prices in inventtablemodules
-            inventtablemodules::where('itemid', $itemid)
+            if ($isLiveEditMode) {
+                \Log::info('Live Edit Mode - Updating inventtablemodules', [
+                    'itemid' => $itemid,
+                    'price_updates' => [
+                        'cost' => $request->cost,
+                        'price' => $request->price,
+                        'manilaprice' => $request->manilaprice,
+                        'foodpandaprice' => $request->foodpandaprice,
+                        'grabfoodprice' => $request->grabfoodprice,
+                        'mallprice' => $request->mallprice,
+                        'foodpandamallprice' => $request->foodpandamallprice,
+                        'grabfoodmallprice' => $request->grabfoodmallprice
+                    ]
+                ]);
+            }
+
+            $inventmodulesResult = inventtablemodules::where('itemid', $itemid)
                 ->update([
                     'price' => $request->cost,
                     'priceincltax' => $request->price,
@@ -269,8 +349,28 @@ public function index()
                     'pricedate' => Carbon::now(),
                 ]);
 
+            if ($isLiveEditMode) {
+                \Log::info('Live Edit Mode - inventtablemodules update result', [
+                    'affected_rows' => $inventmodulesResult
+                ]);
+            }
+
             // Update production, moq, category and default fields in rboinventtables
-            rboinventtables::where('itemid', $itemid)
+            if ($isLiveEditMode) {
+                \Log::info('Live Edit Mode - Updating rboinventtables', [
+                    'itemid' => $itemid,
+                    'updates' => [
+                        'itemgroup' => $request->itemgroup,
+                        'production' => $request->production,
+                        'moq' => $request->moq,
+                        'default1' => $request->default1 ? 1 : 0,
+                        'default2' => $request->default2 ? 1 : 0,
+                        'default3' => $request->default3 ? 1 : 0
+                    ]
+                ]);
+            }
+
+            $rboinventResult = rboinventtables::where('itemid', $itemid)
                 ->update([
                     'itemgroup' => $request->itemgroup, // Update category
                     'production' => $request->production,
@@ -281,7 +381,36 @@ public function index()
                     'default3' => $request->default3 ? 1 : 0,
                 ]);
 
+            if ($isLiveEditMode) {
+                \Log::info('Live Edit Mode - rboinventtables update result', [
+                    'affected_rows' => $rboinventResult
+                ]);
+            }
+
             DB::commit();
+
+            if ($isLiveEditMode) {
+                \Log::info('Live Edit Mode - Database transaction committed successfully');
+            }
+
+            // Handle different response types
+            if ($isLiveEditMode) {
+                \Log::info('===== LIVE EDIT MODE REQUEST COMPLETED SUCCESSFULLY =====', [
+                    'itemid' => $itemid,
+                    'total_affected_rows' => $inventtablesResult + $inventmodulesResult + $rboinventResult,
+                    'processing_time_ms' => round((microtime(true) - LARAVEL_START) * 1000, 2),
+                    'database_queries' => DB::getQueryLog()
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Item updated successfully',
+                    'data' => [
+                        'itemid' => $itemid,
+                        'updated_fields' => array_keys($request->except(['_token', '_method', 'confirm_defaults']))
+                    ]
+                ]);
+            }
 
             return redirect()->route('items.index')
                 ->with('message', 'Item updated successfully')
@@ -289,12 +418,47 @@ public function index()
 
         } catch (ValidationException $e) {
             DB::rollBack();
+
+            if ($isLiveEditMode) {
+                \Log::error('===== LIVE EDIT MODE VALIDATION ERROR =====', [
+                    'itemid' => $itemid,
+                    'validation_errors' => $e->errors(),
+                    'failed_rules' => array_keys($e->errors()),
+                    'request_data' => $request->all()
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+
             return back()->withErrors($e->errors())
                 ->withInput()
                 ->with('message', "Validation failed")
                 ->with('isSuccess', false);
+
         } catch (\Exception $e) {
             DB::rollBack();
+
+            if ($isLiveEditMode) {
+                \Log::error('===== LIVE EDIT MODE ERROR =====', [
+                    'itemid' => $itemid,
+                    'error_message' => $e->getMessage(),
+                    'error_file' => $e->getFile(),
+                    'error_line' => $e->getLine(),
+                    'stack_trace' => $e->getTraceAsString(),
+                    'request_data' => $request->all(),
+                    'database_queries' => DB::getQueryLog()
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error updating item: ' . $e->getMessage()
+                ], 500);
+            }
+
             return back()
                 ->with('message', 'Error updating item: ' . $e->getMessage())
                 ->with('isSuccess', false);
