@@ -1,0 +1,1 @@
+import{_ as e}from"./_plugin-vue_export-helper-DlAUqK2U.js";import{o as r,e as t,r as s}from"./app-tcDoizJR.js";const n={},a={class:"px-2 py-3 max-h-[50vh] lg:max-h-[70vh] overflow-y-auto"};function c(o,m){return r(),t("form",a,[s(o.$slots,"default")])}const l=e(n,[["render",c]]);export{l as F};
