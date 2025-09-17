@@ -14,7 +14,8 @@
       "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\app\\Http\\Controllers/**)",
       "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\routes/**)",
       "Read(/D:\\MARK ADS\\fs-branch2\\ecpos\\resources\\js\\Pages\\Home/**)",
-      "Read(//d/MARK ADS/xavier/original/spitfire-pilot-resume/**)"
+      "Read(//d/MARK ADS/xavier/original/spitfire-pilot-resume/**)",
+      "Read(//d/MARK ADS/fs-branch2/Mware-main/Mware-main/**)"
     ],
     "deny": [],
     "ask": []

@@ -68,7 +68,8 @@ use App\Http\Controllers\{
     AttendanceController,
     ImportProductsController,
     Discountv2Controller,
-    ChatBotController
+    ChatBotController,
+    StaffController
 };
 
 Route::get('/', function () {
@@ -395,6 +396,10 @@ Route::middleware(['auth', 'role:SUPERADMIN,STORE,ADMIN,OPIC,PLANNING'])->group(
     Route::resource('customers', CustomersController::class);
     Route::get('ledger/{accountnum}', [LedgerController::class, 'ledger'])->name('ledger');
     Route::resource('customerledgerentries', LedgerController::class);
+
+    /*<==================STAFF====================>*/
+    Route::get('staff/users', [StaffController::class, 'getUsers'])->name('staff.users');
+    Route::resource('staff', StaffController::class);
 });
 
 // STORE routes
