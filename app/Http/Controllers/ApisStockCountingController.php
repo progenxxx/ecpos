@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Exception;
 
 class ApisStockCountingController extends Controller
 {
@@ -137,10 +138,18 @@ class ApisStockCountingController extends Controller
                 ]);
 
                 try {
-                    $this->createBatchIdFallback($storeids);
-                    Log::info('Fallback batch ID creation successful', ['storeids' => $storeids]);
+                    $this->callStockCountingControllerStore($storeids);
+                    Log::info('Fallback to StockCountingController store successful', ['storeids' => $storeids]);
+
+                    // Re-query stock counting records after successful fallback
+                    $stockCounting = $query
+                        ->groupBy('a.journalid', 'a.storeid', 'a.description', 'a.posted',
+                                 'a.updated_at', 'a.journaltype', 'a.createddatetime')
+                        ->orderBy('a.createddatetime', 'DESC')
+                        ->get();
+
                 } catch (Exception $fallbackException) {
-                    Log::error('Fallback batch ID creation also failed', [
+                    Log::error('Fallback to StockCountingController store also failed', [
                         'error' => $fallbackException->getMessage(),
                         'storeids' => $storeids
                     ]);
@@ -161,16 +170,24 @@ class ApisStockCountingController extends Controller
             'data' => $stockCounting
         ]);
 
-    } catch (Exception $e) {
+    } catch (\Throwable $e) {
         Log::error('Error in stock counting index', [
             'error' => $e->getMessage(),
             'trace' => $e->getTraceAsString(),
-            'sql' => DB::getQueryLog()
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'sql' => DB::getQueryLog(),
+            'storeids' => $storeids ?? 'not_set'
         ]);
 
         return response()->json([
             'success' => false,
-            'message' => 'Error loading stock counting data: ' . $e->getMessage()
+            'message' => 'Error loading stock counting data: ' . $e->getMessage(),
+            'error_details' => [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]
         ], 500);
     }
 }
@@ -735,25 +752,28 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
     }
 
     /**
-     * Fallback method to create batch ID using StockCountingController logic
+     * Fallback method using StockCountingController logic for stockcountingtables creation
      * Called when the primary batch ID creation fails
      */
-    private function createBatchIdFallback($storeids)
+    private function callStockCountingControllerStore($storeids)
     {
         DB::beginTransaction();
 
         try {
             $currentDateTime = Carbon::now('Asia/Manila');
+            $userId = 1; // Default user ID for API calls
 
+            // Check if stock counting already exists for today (StockCountingController logic)
             $existingOrder = DB::table('stockcountingtables')
-                ->whereDate('CREATEDDATETIME', $currentDateTime->toDateString())
+                ->whereDate('CREATEDDATETIME', $currentDateTime)
                 ->where('STOREID', $storeids)
                 ->exists();
 
             if ($existingOrder) {
-                throw new Exception('Stock counting already exists for this store today.');
+                throw new Exception('You have already Stock Counting this time.');
             }
 
+            // Get and increment stocknextrec (StockCountingController logic)
             $stocknextrec = DB::table('nubersequencevalues')
                 ->where('storeid', $storeids)
                 ->lockForUpdate()
@@ -765,9 +785,11 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                 ->where('STOREID', $storeids)
                 ->update(['stocknextrec' => $stocknextrec]);
 
-            $journalId = '1' . str_pad($stocknextrec, 8, '0', STR_PAD_LEFT);
+            // Create journal ID and description (StockCountingController logic)
+            $journalId = $userId . str_pad($stocknextrec, 8, '0', STR_PAD_LEFT);
             $description = "BATCH" . $journalId;
 
+            // Insert into stockcountingtables (StockCountingController logic)
             DB::table('stockcountingtables')->insert([
                 'JOURNALID' => $journalId,
                 'STOREID' => $storeids,
@@ -779,6 +801,7 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                 'CREATEDDATETIME' => $currentDateTime->format('Y-m-d H:i:s'),
             ]);
 
+            // Add inventory summaries creation like in the original logic
             $currentDate = $currentDateTime->toDateString();
 
             $existingSummaries = DB::table('inventory_summaries')
@@ -799,7 +822,7 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
 
             DB::commit();
 
-            Log::info('Fallback batch ID creation successful', [
+            Log::info('Fallback using StockCountingController logic successful', [
                 'journalid' => $journalId,
                 'storeids' => $storeids,
                 'description' => $description
@@ -807,7 +830,7 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
 
         } catch (Exception $e) {
             DB::rollBack();
-            Log::error('Fallback batch ID creation failed', [
+            Log::error('Fallback using StockCountingController logic failed', [
                 'error' => $e->getMessage(),
                 'storeids' => $storeids,
                 'trace' => $e->getTraceAsString()
