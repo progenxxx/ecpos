@@ -18,6 +18,7 @@ import Customers from "@/Components/Svgs/Customers-black.vue";
 import Attendance from "@/Components/Svgs/Attendance.vue";
 import BatchCount from "@/Components/Svgs/batchcount.vue";
 import Tag from "@/Components/Svgs/Discount-tag.vue";
+import Version from "@/Components/Svgs/Version.vue";
 
 import { ref, computed, defineProps, toRefs } from 'vue';
 
@@ -121,6 +122,12 @@ const logout = () => {
             <li v-if="$page.props.auth.user.role === 'SUPERADMIN' || $page.props.auth.user.role === 'ADMIN' || $page.props.auth.user.role === 'OPIC'" class="tooltip tooltip-right tooltip-primary" data-tip="Store">
                 <List :active-tab="activeTab" tabName="STORE" url="/store">
                     <Store class="h-6 lg:h-8" />
+                </List>
+            </li>
+
+            <li v-if="$page.props.auth.user.role === 'SUPERADMIN' || $page.props.auth.user.role === 'ADMIN'" class="tooltip tooltip-right tooltip-primary" data-tip="App Version">
+                <List :active-tab="activeTab" tabName="VERSION" url="/app-versions">
+                    <Version class="h-6 lg:h-8"/>
                 </List>
             </li>
 

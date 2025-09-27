@@ -1,0 +1,292 @@
+!32ELJIN CORP
+TIN: Your TIN Number
+MIN: Your MIN
+Store: GYRIES
+---------------------------------------------
+OFFICIAL RECEIPT
+Cashier: Jennelyn Tabo
+Date: 2025-09-18 01:35:22
+SI#: 000000770
+---------------------------------------------
+Item                    Price   Qty    Total
+---------------------------------------------
+GYRIES SHAWARMA          89.00  19   1691.00
+ Disc(Fixed):                   380.00
+GYRIES CHEESE            10.00  12    120.00
+---------------------------------------------
+Gross Amount:                    1811.00
+Less Discount:                    380.00
+Net Amount:                      1431.00
+Amount Paid:                     1431.00
+---------------------------------------------
+PAYMENT DETAILS
+---------------------------------------------
+Payment Method: Cash
+Amount Paid:                     1431.00
+Change:                             0.00
+---------------------------------------------
+VATable Sales:                   1277.68
+VAT Amount:                       153.32
+VAT Exempt:                         0.00
+---------------------------------------------
+ID/PWD/OSCA#:
+Name:
+Signature:
+Comment: 
+Valid for 5 years from PTU date
+POS Provider: Ray and Mark
+---------------------------------------------
+Thank you for shopping at BW Superbakeshop!
+Please rate your experience:
+
+(k 1A2(k 1C(k+ 1P0https://feedback.eljincorp.com/000000770(k 1Q0
+Scan to rate us!
+! 
+=============================================
+
+!32ELJIN CORP
+TIN: Your TIN Number
+MIN: Your MIN
+Store: GYRIES
+---------------------------------------------
+MIXED PAYMENT RECEIPT
+Cashier: Jennelyn Tabo
+Date: 2025-09-18 01:36:14
+SI#: 000000771
+---------------------------------------------
+Item                    Price   Qty    Total
+---------------------------------------------
+GYRIES SHAWARMA          89.00  23   2047.00
+ Disc(Fixed):                   460.00
+GYRIES CHEESE            10.00  11    110.00
+---------------------------------------------
+Gross Amount:                    2157.00
+Less Discount:                    460.00
+Net Amount:                      1697.00
+Amount Paid:                        0.00
+---------------------------------------------
+PAYMENT DETAILS
+---------------------------------------------
+Payment Method: Charge
+Amount Paid:                     1697.00
+Change:                             0.00
+---------------------------------------------
+VATable Sales:                   1515.18
+VAT Amount:                       181.83
+VAT Exempt:                         0.00
+---------------------------------------------
+ID/PWD/OSCA#:
+Name:
+Signature:
+Comment: 
+---------------------------------------------
+Customer Account: Community
+Customer Name: Community
+---------------------------------------------
+Valid for 5 years from PTU date
+POS Provider: Ray and Mark
+---------------------------------------------
+Thank you for shopping at BW Superbakeshop!
+Please rate your experience:
+
+(k 1A2(k 1C(k+ 1P0https://feedback.eljincorp.com/000000771(k 1Q0
+Scan to rate us!
+! 
+=============================================
+
+!32ELJIN CORP
+TIN: Your TIN Number
+MIN: Your MIN
+Store: GYRIES
+---------------------------------------------
+OFFICIAL RECEIPT
+Cashier: Jennelyn Tabo
+Date: 2025-09-18 01:50:28
+SI#: 000000772
+---------------------------------------------
+Item                    Price   Qty    Total
+---------------------------------------------
+GYRIES SHAWARMA          89.00   1     89.00
+ Disc(Fixed):                    20.00
+GYRIES SHAWARMA          89.00   1     89.00
+ Disc(Fixed):                    20.00
+GYRIES CHEESE            10.00   2     20.00
+---------------------------------------------
+Gross Amount:                     198.00
+Less Discount:                     40.00
+Net Amount:                       158.00
+Amount Paid:                      158.00
+---------------------------------------------
+PAYMENT DETAILS
+---------------------------------------------
+Payment Method: Cash
+Amount Paid:                      158.00
+Change:                             0.00
+---------------------------------------------
+VATable Sales:                    141.07
+VAT Amount:                        16.92
+VAT Exempt:                         0.00
+---------------------------------------------
+ID/PWD/OSCA#:
+Name:
+Signature:
+Comment: 
+Valid for 5 years from PTU date
+POS Provider: Ray and Mark
+---------------------------------------------
+Thank you for shopping at BW Superbakeshop!
+Please rate your experience:
+
+(k 1A2(k 1C(k+ 1P0https://feedback.eljincorp.com/000000772(k 1Q0
+Scan to rate us!
+! 
+=============================================
+
+!32ELJIN CORP
+TIN: Your TIN Number
+MIN: Your MIN
+Store: GYRIES
+---------------------------------------------
+OFFICIAL RECEIPT
+Cashier: Jennelyn Tabo
+Date: 2025-09-18 02:09:50
+SI#: 000000773
+---------------------------------------------
+Item                    Price   Qty    Total
+---------------------------------------------
+GYRIES SHAWARMA          89.00   1     89.00
+ Disc(Fixed):                    20.00
+GYRIES SHAWARMA          89.00   1     89.00
+ Disc(Fixed):                    20.00
+GYRIES SHAWARMA          89.00   1     89.00
+ Disc(Fixed):                    20.00
+GYRIES SHAWARMA          89.00   1     89.00
+ Disc(Fixed):                    20.00
+GYRIES CHEESE            10.00   1     10.00
+---------------------------------------------
+Gross Amount:                     366.00
+Less Discount:                     80.00
+Net Amount:                       286.00
+Amount Paid:                      286.00
+---------------------------------------------
+PAYMENT DETAILS
+---------------------------------------------
+Payment Method: Cash
+Amount Paid:                      286.00
+Change:                             0.00
+---------------------------------------------
+VATable Sales:                    255.36
+VAT Amount:                        30.63
+VAT Exempt:                         0.00
+---------------------------------------------
+ID/PWD/OSCA#:
+Name:
+Signature:
+Comment: 
+Valid for 5 years from PTU date
+POS Provider: Ray and Mark
+---------------------------------------------
+Thank you for shopping at BW Superbakeshop!
+Please rate your experience:
+
+(k 1A2(k 1C(k+ 1P0https://feedback.eljincorp.com/000000773(k 1Q0
+Scan to rate us!
+! 
+=============================================
+
+!32ELJIN CORP
+TIN: Your TIN Number
+MIN: Your MIN
+Store: GYRIES
+---------------------------------------------
+OFFICIAL RECEIPT
+Cashier: Jennelyn Tabo
+Date: 2025-09-18 03:41:30
+SI#: 000000774
+---------------------------------------------
+Item                    Price   Qty    Total
+---------------------------------------------
+GYRIES SHAWARMA          89.00   2    178.00
+ Disc(Fixed):                    40.00
+GYRIES MEAT              15.00   6     90.00
+---------------------------------------------
+Gross Amount:                     268.00
+Less Discount:                     40.00
+Net Amount:                       228.00
+Amount Paid:                      228.00
+---------------------------------------------
+PAYMENT DETAILS
+---------------------------------------------
+Payment Method: Cash
+Amount Paid:                      228.00
+Change:                             0.00
+---------------------------------------------
+VATable Sales:                    203.57
+VAT Amount:                        24.43
+VAT Exempt:                         0.00
+---------------------------------------------
+ID/PWD/OSCA#:
+Name:
+Signature:
+Comment: 
+Valid for 5 years from PTU date
+POS Provider: Ray and Mark
+---------------------------------------------
+Thank you for shopping at BW Superbakeshop!
+Please rate your experience:
+
+(k 1A2(k 1C(k+ 1P0https://feedback.eljincorp.com/000000774(k 1Q0
+Scan to rate us!
+! 
+=============================================
+
+!32ELJIN CORP
+TIN: Your TIN Number
+MIN: Your MIN
+Store: GYRIES
+---------------------------------------------
+MIXED PAYMENT RECEIPT
+Cashier: Jennelyn Tabo
+Date: 2025-09-18 03:42:55
+SI#: 000000775
+---------------------------------------------
+Item                    Price   Qty    Total
+---------------------------------------------
+GYRIES SHAWARMA          89.00   7    623.00
+ Disc(Fixed):                   140.00
+GYRIES CHEESE            10.00   3     30.00
+---------------------------------------------
+Gross Amount:                     653.00
+Less Discount:                    140.00
+Net Amount:                       513.00
+Amount Paid:                        0.00
+---------------------------------------------
+PAYMENT DETAILS
+---------------------------------------------
+Payment Method: Charge
+Amount Paid:                      513.00
+Change:                             0.00
+---------------------------------------------
+VATable Sales:                    458.04
+VAT Amount:                        54.96
+VAT Exempt:                         0.00
+---------------------------------------------
+ID/PWD/OSCA#:
+Name:
+Signature:
+Comment: 
+---------------------------------------------
+Customer Account: Community
+Customer Name: Community
+---------------------------------------------
+Valid for 5 years from PTU date
+POS Provider: Ray and Mark
+---------------------------------------------
+Thank you for shopping at BW Superbakeshop!
+Please rate your experience:
+
+(k 1A2(k 1C(k+ 1P0https://feedback.eljincorp.com/000000775(k 1Q0
+Scan to rate us!
+! 
+=============================================
+

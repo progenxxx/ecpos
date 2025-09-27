@@ -131,9 +131,21 @@ class ApisStockCountingController extends Controller
 
             } catch (Exception $e) {
                 DB::rollBack();
-                Log::error('Detailed error in transaction: ' . $e->getMessage());
-                Log::error('Stack trace: ' . $e->getTraceAsString());
-                throw $e;
+                Log::error('Batch ID creation failed in ApisStockCountingController, attempting fallback to StockCountingController', [
+                    'error' => $e->getMessage(),
+                    'storeids' => $storeids
+                ]);
+
+                try {
+                    $this->createBatchIdFallback($storeids);
+                    Log::info('Fallback batch ID creation successful', ['storeids' => $storeids]);
+                } catch (Exception $fallbackException) {
+                    Log::error('Fallback batch ID creation also failed', [
+                        'error' => $fallbackException->getMessage(),
+                        'storeids' => $storeids
+                    ]);
+                    throw $e;
+                }
             }
         } else {
             Log::info('Stock counting records found, checking for missing items', ['storeids' => $storeids]);
@@ -720,5 +732,87 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
             ]);
             return false;
         }
-    }   
+    }
+
+    /**
+     * Fallback method to create batch ID using StockCountingController logic
+     * Called when the primary batch ID creation fails
+     */
+    private function createBatchIdFallback($storeids)
+    {
+        DB::beginTransaction();
+
+        try {
+            $currentDateTime = Carbon::now('Asia/Manila');
+
+            $existingOrder = DB::table('stockcountingtables')
+                ->whereDate('CREATEDDATETIME', $currentDateTime->toDateString())
+                ->where('STOREID', $storeids)
+                ->exists();
+
+            if ($existingOrder) {
+                throw new Exception('Stock counting already exists for this store today.');
+            }
+
+            $stocknextrec = DB::table('nubersequencevalues')
+                ->where('storeid', $storeids)
+                ->lockForUpdate()
+                ->value('stocknextrec');
+
+            $stocknextrec = $stocknextrec !== null ? (int)$stocknextrec + 1 : 1;
+
+            DB::table('nubersequencevalues')
+                ->where('STOREID', $storeids)
+                ->update(['stocknextrec' => $stocknextrec]);
+
+            $journalId = '1' . str_pad($stocknextrec, 8, '0', STR_PAD_LEFT);
+            $description = "BATCH" . $journalId;
+
+            DB::table('stockcountingtables')->insert([
+                'JOURNALID' => $journalId,
+                'STOREID' => $storeids,
+                'DESCRIPTION' => $description,
+                'POSTED' => "0",
+                'POSTEDDATETIME' => $currentDateTime->format('Y-m-d H:i:s'),
+                'JOURNALTYPE' => "1",
+                'DELETEPOSTEDLINES' => "0",
+                'CREATEDDATETIME' => $currentDateTime->format('Y-m-d H:i:s'),
+            ]);
+
+            $currentDate = $currentDateTime->toDateString();
+
+            $existingSummaries = DB::table('inventory_summaries')
+                ->where('storename', $storeids)
+                ->whereDate('report_date', $currentDate)
+                ->exists();
+
+            if (!$existingSummaries) {
+                DB::table('inventory_summaries')
+                    ->insertUsing(
+                        ['itemid', 'itemname', 'storename', 'report_date'],
+                        DB::table('inventtables')
+                            ->select('itemid', 'itemname', DB::raw("'{$storeids}' as storename"), DB::raw("'{$currentDate}' as report_date"))
+                    );
+            }
+
+            $this->updateInventorySummaries($storeids, $currentDate);
+
+            DB::commit();
+
+            Log::info('Fallback batch ID creation successful', [
+                'journalid' => $journalId,
+                'storeids' => $storeids,
+                'description' => $description
+            ]);
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Fallback batch ID creation failed', [
+                'error' => $e->getMessage(),
+                'storeids' => $storeids,
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+    }
 }

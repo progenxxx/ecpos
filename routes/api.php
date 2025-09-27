@@ -23,6 +23,7 @@ use App\Http\Controllers\StockTransferLineController;
 use App\Http\Controllers\LoyaltyCardJsonController;
 use App\Http\Controllers\StoreExpenseController;
 use App\Http\Controllers\AttendanceRecordController;
+use App\Http\Controllers\AppVersionController;
 
 use App\Http\Controllers\ApisStockCountingController;
 use App\Http\Controllers\ApisStockCountingLineController;
@@ -243,9 +244,18 @@ Route::delete('/attendance/{id}', [AttendanceRecordController::class, 'destroy']
   Route::get('/staff/{staffId}', [AttendanceApiController::class, 'getByStaff']);
   Route::get('api-attendance/store/{storeId}', [AttendanceApiController::class, 'getByStore']);
   Route::get('/{id}', [AttendanceApiController::class, 'show']);
-  
-  
-  
-  
-  
+
+  // App Version Management Routes
+  Route::get('/app-version/current', [AppVersionController::class, 'getCurrentVersion']);
+  Route::post('/app-version/check', [AppVersionController::class, 'checkVersion']);
+
+  // Admin routes for version management (protected by middleware)
+  Route::middleware(['auth:sanctum'])->group(function () {
+      Route::get('/app-versions', [AppVersionController::class, 'index']);
+      Route::post('/app-versions', [AppVersionController::class, 'store']);
+      Route::put('/app-versions/{id}', [AppVersionController::class, 'update']);
+      Route::delete('/app-versions/{id}', [AppVersionController::class, 'destroy']);
+      Route::post('/app-versions/{id}/set-active', [AppVersionController::class, 'setActive']);
+  });
+
   

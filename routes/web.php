@@ -69,7 +69,8 @@ use App\Http\Controllers\{
     ImportProductsController,
     Discountv2Controller,
     ChatBotController,
-    StaffController
+    StaffController,
+    AppVersionController
 };
 
 Route::get('/', function () {
@@ -240,6 +241,13 @@ Route::middleware(['auth', 'role:ADMIN,SUPERADMIN'])->group(function () {
 
     Route::post('/inventory/sync-variance', [ECReportController::class, 'syncInventoryVariance'])->name('inventory.sync-variance');
     Route::get('/inventory/sync-stores', [ECReportController::class, 'getSyncStores'])->name('inventory.sync-stores');
+
+    // App Version Management routes
+    Route::get('/app-versions', [AppVersionController::class, 'indexWeb'])->name('app-versions.index');
+    Route::post('/app-versions', [AppVersionController::class, 'store'])->name('app-versions.store');
+    Route::put('/app-versions/{id}', [AppVersionController::class, 'update'])->name('app-versions.update');
+    Route::delete('/app-versions/{id}', [AppVersionController::class, 'destroy'])->name('app-versions.destroy');
+    Route::post('/app-versions/{id}/set-active', [AppVersionController::class, 'setActive'])->name('app-versions.set-active');
 
 });
 
