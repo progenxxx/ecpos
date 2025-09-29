@@ -109,8 +109,9 @@ class StockCountingController extends Controller
             }
 
             $stocknextrec = DB::table('nubersequencevalues')
-            ->lockForUpdate()
-            ->max('stocknextrec');
+                ->where('storeid', $storeId)
+                ->lockForUpdate()
+                ->value('stocknextrec');
 
             $stocknextrec = $stocknextrec !== null ? (int)$stocknextrec + 1 : 1;
 

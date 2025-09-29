@@ -526,6 +526,7 @@ class ApisStockCountingLineController extends Controller
 
     try {
 
+        // Update throw_away
         Log::info("Updating throw_away for inventory summaries");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries 
@@ -551,6 +552,8 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Throw away update completed", ['affected_rows' => $affectedRows]);
 
+
+        // Update early_molds
         Log::info("Updating early_molds for inventory summaries");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries 
@@ -576,6 +579,8 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Early Molds update completed", ['affected_rows' => $affectedRows]);
 
+
+        // Update pull_out
         Log::info("Updating pull_out for inventory summaries");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries 
@@ -601,6 +606,8 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Pull Out update completed", ['affected_rows' => $affectedRows]);
 
+
+        // Update rat_bites
         Log::info("Updating rat_bites for inventory summaries");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries 
@@ -626,6 +633,8 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Rat Bites update completed", ['affected_rows' => $affectedRows]);
 
+
+        // Update ant_bites
         Log::info("Updating rat_bites for inventory summaries");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries 
@@ -651,6 +660,8 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Ant Bites update completed", ['affected_rows' => $affectedRows]);
 
+
+        // Update received_delivery
         Log::info("Updating received_delivery for inventory summaries");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries 
@@ -674,6 +685,7 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Received delivery update completed", ['affected_rows' => $affectedRows]);
 
+        // Update sales
         Log::info("Updating sales for inventory summaries");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries 
@@ -703,6 +715,7 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Sales update completed", ['affected_rows' => $affectedRows]);
 
+        // Update bundle_sales
         Log::info("Updating bundle_sales for inventory summaries");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries invs
@@ -728,6 +741,7 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Bundle sales update completed", ['affected_rows' => $affectedRows]);
 
+        // Update beginning
         Log::info("Updating beginning inventory for inventory summaries");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries 
@@ -751,6 +765,7 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Beginning inventory update completed", ['affected_rows' => $affectedRows]);
 
+        // Update ending inventory
         Log::info("Updating ending inventory for inventory summaries");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries 
@@ -775,6 +790,7 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Ending inventory update completed", ['affected_rows' => $affectedRows]);
 
+        // Update item_count with calculated ending inventory
         Log::info("Updating item_count with calculated ending inventory");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries 
@@ -799,6 +815,7 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Item count recalculation completed", ['affected_rows' => $affectedRows]);
 
+        // Update item_count
         Log::info("Updating item_count for inventory summaries");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries 
@@ -824,6 +841,7 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Item count update completed", ['affected_rows' => $affectedRows]);
 
+        // Final item_count update with null safety
         Log::info("Performing final item_count update with null safety");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries 
@@ -848,6 +866,7 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Final item count update completed", ['affected_rows' => $affectedRows]);
 
+        // Update variance
         Log::info("Updating variance for inventory summaries");
         $affectedRows = DB::statement("
             UPDATE inventory_summaries 
@@ -858,6 +877,7 @@ class ApisStockCountingLineController extends Controller
         
         Log::info("Variance update completed", ['affected_rows' => $affectedRows]);
 
+        // Log summary of what was updated
         $summaryData = DB::select("
             SELECT 
                 COUNT(*) as total_records,
@@ -901,6 +921,7 @@ public function postbatchline($itemid, $storeid, $journalid, $adjustment, $recei
     ]);
 
     try {
+        // Validate inputs
         if (empty($itemid) || empty($storeid) || empty($journalid)) {
             Log::error("Missing required parameters", [
                 'itemid' => $itemid,
@@ -913,6 +934,7 @@ public function postbatchline($itemid, $storeid, $journalid, $adjustment, $recei
             ], 400);
         }
 
+        // Check if record exists before updating
         $existingRecord = stockcountingtrans::where([
             'ITEMID' => $itemid,
             'STORENAME' => $storeid,
@@ -960,6 +982,7 @@ public function postbatchline($itemid, $storeid, $journalid, $adjustment, $recei
             ]);
         }
 
+        // Fetch the updated record to return in response
         Log::info("Fetching updated stock counting record");
         $stockCount = stockcountingtrans::where([
             'ITEMID' => $itemid,
@@ -986,6 +1009,7 @@ public function postbatchline($itemid, $storeid, $journalid, $adjustment, $recei
             'itemid' => $stockCount->ITEMID ?? null
         ]);
 
+        // Prepare dates and store information
         $currentDateTime = Carbon::now('Asia/Manila')->toDateString();
         $yesterday = Carbon::yesterday('Asia/Manila')->toDateString();
         $storename = Auth::user()->storeid ?? $storeid;
@@ -996,6 +1020,9 @@ public function postbatchline($itemid, $storeid, $journalid, $adjustment, $recei
             'yesterday' => $yesterday,
             'authenticated_user' => Auth::user()->id ?? 'N/A'
         ]);
+
+        // Update inventory summaries
+        //$this->updateInventorySummaries($storename, $currentDateTime, $yesterday);
 
         Log::info("Postbatchline operation completed successfully", [
             'itemid' => $itemid,
