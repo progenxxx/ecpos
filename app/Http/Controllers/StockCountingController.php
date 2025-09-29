@@ -32,7 +32,7 @@ class StockCountingController extends Controller
                             'a.posted', 'a.updated_at', 'a.journaltype', 'a.createddatetime')
                     ->leftJoin('stockcountingtrans AS b', 'b.JOURNALID', '=', 'a.journalid')
                     ->leftJoin('inventtablemodules AS c', 'c.itemid', '=', 'b.ITEMID')
-                    ->where('a.posted', '!=', '1')
+                    /* ->where('a.posted', '!=', '1') */
                     ->groupBy('a.journalid', 'a.storeid', 'a.description',
                             'a.posted', 'a.updated_at', 'a.journaltype', 'a.createddatetime')
                     ->orderBy('a.createddatetime', 'DESC')
@@ -46,7 +46,7 @@ class StockCountingController extends Controller
                     ->leftJoin('stockcountingtrans AS b', 'b.JOURNALID', '=', 'a.journalid')
                     ->leftJoin('inventtablemodules AS c', 'c.itemid', '=', 'b.ITEMID')
                     ->where('storeid', '=', $storeId)
-                    ->where('a.posted', '!=', '1')
+                    /* ->where('a.posted', '!=', '1') */
                     ->groupBy('a.journalid', 'a.storeid', 'a.description',
                             'a.posted', 'a.updated_at', 'a.journaltype', 'a.createddatetime')
                     ->orderBy('a.createddatetime', 'DESC')
@@ -70,8 +70,8 @@ class StockCountingController extends Controller
                     ->leftJoin('stockcountingtrans as c', 'b.JOURNALID', '=', 'c.JOURNALID')
                     ->leftJoin('inventtables as d', 'c.ITEMID', '=', 'd.itemid')
                     ->leftJoin('rbostoretables as e', 'b.STOREID', '=', 'e.NAME')
-                    ->whereRaw("DATE(b.createddatetime) = ?", [$currentDateTime])
-                    ->where('b.POSTED', '=', '0')
+                    /* ->whereRaw("DATE(b.createddatetime) = ?", [$currentDateTime]) */
+                    /* ->where('b.POSTED', '=', '0') */
                     ->where('b.STOREID', '=', $storeId) 
                     ->get();
             }
@@ -109,9 +109,8 @@ class StockCountingController extends Controller
             }
 
             $stocknextrec = DB::table('nubersequencevalues')
-                ->where('storeid', $storeId)
-                ->lockForUpdate()
-                ->value('stocknextrec');
+            ->lockForUpdate()
+            ->max('stocknextrec');
 
             $stocknextrec = $stocknextrec !== null ? (int)$stocknextrec + 1 : 1;
 
