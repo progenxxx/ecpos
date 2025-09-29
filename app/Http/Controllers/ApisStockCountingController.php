@@ -77,9 +77,10 @@ class ApisStockCountingController extends Controller
             try {
                 $currentDateTime = Carbon::now('Asia/Manila');
 
-                $stocknextrec = DB::table('nubersequencevalues')
-                ->lockForUpdate()
-                ->max('stocknextrec');
+                $stocknextrec = DB::table('nubersequencevalues') 
+                ->where('STOREID', $storeids)
+                ->lockForUpdate() 
+                ->value('stocknextrec');
 
                 $stocknextrec = $stocknextrec !== null ? (int)$stocknextrec + 1 : 1;
 
