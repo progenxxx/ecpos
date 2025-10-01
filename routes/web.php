@@ -206,6 +206,7 @@ Route::middleware(['auth', 'role:ADMIN,SUPERADMIN'])->group(function () {
     Route::get('/chatbot/welcome', [ChatBotController::class, 'getWelcomeMessage'])->name('chatbot.welcome');
 
     Route::resource('attendance', AttendanceController::class);
+    Route::get('/attendance/export/excel', [AttendanceController::class, 'export'])->name('attendance.export');
 
     Route::post('/inventory/adjust-item-count', [ECReportController::class, 'adjustItemCount'])
         ->name('inventory.adjust');

@@ -67,7 +67,7 @@
 
               <!-- Filter Buttons (Mobile: full width, Desktop: auto) -->
               <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                <select 
+                <select
                   v-model="statusFilter"
                   class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 >
@@ -75,12 +75,22 @@
                   <option value="ACTIVE">Active</option>
                   <option value="INACTIVE">Inactive</option>
                 </select>
-                
+
                 <input
                   v-model="dateFilter"
                   type="date"
                   class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
+
+                <button
+                  @click="exportToExcel"
+                  class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>Export</span>
+                </button>
               </div>
             </div>
 
@@ -336,6 +346,29 @@ const handleDelete = (id) => {
     if (confirm('Are you sure you want to delete this record?')) {
         form.delete(route('attendance.destroy', id));
     }
+};
+
+const exportToExcel = () => {
+    // Build query parameters
+    const params = new URLSearchParams();
+
+    if (search.value) {
+        params.append('search', search.value);
+    }
+
+    if (statusFilter.value) {
+        params.append('status', statusFilter.value);
+    }
+
+    if (dateFilter.value) {
+        params.append('date', dateFilter.value);
+    }
+
+    // Construct the export URL
+    const exportUrl = `/attendance/export/excel${params.toString() ? '?' + params.toString() : ''}`;
+
+    // Trigger download by opening URL
+    window.location.href = exportUrl;
 };
 
 </script>

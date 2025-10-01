@@ -7,6 +7,11 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class AttendanceController extends Controller
 {
@@ -421,9 +426,163 @@ class AttendanceController extends Controller
             'files_in_attendance-photos' => Storage::disk('public')->files('attendance-photos'),
             'all_files' => Storage::disk('public')->allFiles(),
         ];
-        
+
         Log::info('Storage Debug Info', $info);
-        
+
         return response()->json($info);
+    }
+
+    public function export(Request $request)
+    {
+        try {
+            Log::info('Starting attendance export');
+
+            // Get query parameters for filtering
+            $query = AttendanceRecord::query();
+
+            // Apply filters if provided
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('date', [$request->start_date, $request->end_date]);
+            }
+
+            if ($request->has('date') && $request->date) {
+                $query->where('date', $request->date);
+            }
+
+            if ($request->has('staffId') && $request->staffId) {
+                $query->where('staffId', $request->staffId);
+            }
+
+            if ($request->has('storeId') && $request->storeId) {
+                $query->where('storeId', $request->storeId);
+            }
+
+            if ($request->has('status') && $request->status) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->has('search') && $request->search) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('staffId', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('storeId', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('date', 'like', '%' . $searchTerm . '%');
+                });
+            }
+
+            $attendances = $query->orderBy('date', 'desc')
+                ->orderBy('timeIn', 'desc')
+                ->get();
+
+            Log::info('Found ' . $attendances->count() . ' attendance records');
+
+            // Create new Spreadsheet object
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            // Set header style
+            $headerStyle = [
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF'],
+                    'size' => 12
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '4472C4']
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => '000000']
+                    ]
+                ]
+            ];
+
+            // Define headers
+            $headers = [
+                'ID',
+                'Staff ID',
+                'Store ID',
+                'Date',
+                'Time In',
+                'Break In',
+                'Break Out',
+                'Time Out',
+                'Status',
+                'Created At',
+                'Updated At'
+            ];
+
+            // Set headers
+            $column = 'A';
+            foreach ($headers as $header) {
+                $sheet->setCellValue($column . '1', $header);
+                $sheet->getStyle($column . '1')->applyFromArray($headerStyle);
+                $sheet->getColumnDimension($column)->setAutoSize(true);
+                $column++;
+            }
+
+            // Add data
+            $row = 2;
+            foreach ($attendances as $attendance) {
+                $sheet->setCellValue('A' . $row, $attendance->id);
+                $sheet->setCellValue('B' . $row, $attendance->staffId);
+                $sheet->setCellValue('C' . $row, $attendance->storeId);
+                $sheet->setCellValue('D' . $row, $attendance->date);
+                $sheet->setCellValue('E' . $row, $attendance->timeIn);
+                $sheet->setCellValue('F' . $row, $attendance->breakIn ?? '');
+                $sheet->setCellValue('G' . $row, $attendance->breakOut ?? '');
+                $sheet->setCellValue('H' . $row, $attendance->timeOut ?? '');
+                $sheet->setCellValue('I' . $row, $attendance->status);
+                $sheet->setCellValue('J' . $row, $attendance->created_at);
+                $sheet->setCellValue('K' . $row, $attendance->updated_at);
+
+                // Add borders to data rows
+                $sheet->getStyle('A' . $row . ':K' . $row)->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => 'CCCCCC']
+                        ]
+                    ]
+                ]);
+
+                $row++;
+            }
+
+            // Auto-size all columns
+            foreach (range('A', 'K') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            // Create Excel file
+            $writer = new Xlsx($spreadsheet);
+            $fileName = 'attendance_' . date('Y-m-d_His') . '.xlsx';
+            $tempFile = tempnam(sys_get_temp_dir(), $fileName);
+
+            $writer->save($tempFile);
+
+            Log::info('Excel file created successfully', ['file' => $fileName]);
+
+            // Return file for download
+            return response()->download($tempFile, $fileName)->deleteFileAfterSend(true);
+
+        } catch (\Exception $e) {
+            Log::error('Error exporting attendance to Excel', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export attendance data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
