@@ -508,6 +508,64 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
         ]);
 
         try {
+            // First, insert missing items from stockcountingtrans into inventory_summaries
+            Log::info("Checking for missing items in inventory_summaries");
+
+            $missingItems = DB::table('stockcountingtrans as st')
+                ->leftJoin('inventory_summaries as inv', function($join) use ($storename, $currentDateTime) {
+                    $join->on('st.ITEMID', '=', 'inv.itemid')
+                         ->where('inv.storename', '=', $storename)
+                         ->whereDate('inv.report_date', '=', $currentDateTime);
+                })
+                ->leftJoin('inventtables as it', 'st.ITEMID', '=', 'it.itemid')
+                ->whereNull('inv.itemid')
+                ->where('st.STORENAME', $storename)
+                ->whereDate('st.TRANSDATE', $currentDateTime)
+                ->select('st.ITEMID', 'it.itemname')
+                ->distinct()
+                ->get();
+
+            if ($missingItems->count() > 0) {
+                Log::info("Found missing items, inserting into inventory_summaries", [
+                    'count' => $missingItems->count()
+                ]);
+
+                $insertData = [];
+                foreach ($missingItems as $item) {
+                    $insertData[] = [
+                        'itemid' => $item->ITEMID,
+                        'itemname' => $item->itemname ?? $item->ITEMID,
+                        'storename' => $storename,
+                        'beginning' => 0.00,
+                        'received_delivery' => 0.00,
+                        'stock_transfer' => 0.00,
+                        'sales' => 0.00,
+                        'bundle_sales' => 0.00,
+                        'throw_away' => 0.00,
+                        'early_molds' => 0.00,
+                        'pull_out' => 0.00,
+                        'rat_bites' => 0.00,
+                        'ant_bites' => 0.00,
+                        'item_count' => 0.00,
+                        'ending' => 0.00,
+                        'variance' => 0.00,
+                        'report_date' => $currentDateTime,
+                        'sync' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                }
+
+                // Insert in chunks
+                $chunks = array_chunk($insertData, 100);
+                foreach ($chunks as $chunk) {
+                    DB::table('inventory_summaries')->insert($chunk);
+                }
+
+                Log::info("Missing items inserted successfully", [
+                    'count' => count($insertData)
+                ]);
+            }
 
             // Update throw_away
             Log::info("Updating throw_away for inventory summaries");
