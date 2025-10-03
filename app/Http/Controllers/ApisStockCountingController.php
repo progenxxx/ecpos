@@ -91,8 +91,23 @@ class ApisStockCountingController extends Controller
 
                 $journalId = $storeids . str_pad($stocknextrec, 8, '0', STR_PAD_LEFT);
 
+                // Check if journalid already exists and increment if necessary
+                $finalJournalId = $stocknextrec;
+                while (DB::table('stockcountingtables')
+                    ->where('JOURNALID', $finalJournalId)
+                    ->exists()) {
+                    $finalJournalId++;
+                    Log::info('Journalid exists, incrementing', [
+                        'original' => $stocknextrec,
+                        'new' => $finalJournalId
+                    ]);
+                }
+
+                // Update the journalId for description
+                $journalId = $storeids . str_pad($finalJournalId, 8, '0', STR_PAD_LEFT);
+
                 DB::table('stockcountingtables')->insert([
-                    'JOURNALID' => $stocknextrec,
+                    'JOURNALID' => $finalJournalId,
                     'STOREID' => $storeids,
                     'DESCRIPTION' => 'BATCH' . $journalId,
                     'POSTED' => 0,
@@ -112,9 +127,9 @@ class ApisStockCountingController extends Controller
                 if (!$existingSummaries) {
                     DB::table('inventory_summaries')
                         ->insertUsing(
-                            ['itemid', 'itemname', 'storename', 'report_date'],
+                            ['itemid', 'itemname', 'storename', 'report_date', 'sync'],
                             DB::table('inventtables')
-                                ->select('itemid', 'itemname', DB::raw("'{$storeids}' as storename"), DB::raw("'{$currentDate}' as report_date"))
+                                ->select('itemid', 'itemname', DB::raw("'{$storeids}' as storename"), DB::raw("'{$currentDate}' as report_date"), DB::raw('0 as sync'))
                         );
                 }
 
@@ -128,7 +143,7 @@ class ApisStockCountingController extends Controller
                     ->get();
 
                 Log::info('New stock counting record created', [
-                    'journalid' => $stocknextrec,
+                    'journalid' => $finalJournalId,
                     'storeids' => $storeids
                 ]);
 
@@ -145,6 +160,56 @@ class ApisStockCountingController extends Controller
             foreach ($stockCounting as $stockCountRecord) {
                 $this->insertMissingItemsToStockCountingTrans($stockCountRecord->journalid, $storeids, $currentDate);
                 $this->insertMissingItemsToInventorySummaries($storeids, $currentDate);
+            }
+
+            // Check for all unsynced inventory_summaries records
+            $unsyncedRecords = DB::table('inventory_summaries')
+                ->select('storename', DB::raw('DATE(report_date) as report_date'))
+                ->where('sync', 0)
+                ->groupBy('storename', DB::raw('DATE(report_date)'))
+                ->get();
+
+            if ($unsyncedRecords->count() > 0) {
+                Log::info('Found unsynced inventory summaries', [
+                    'count' => $unsyncedRecords->count()
+                ]);
+
+                foreach ($unsyncedRecords as $record) {
+                    try {
+                        $reportDate = $record->report_date;
+                        $storeName = $record->storename;
+
+                        // Calculate yesterday based on the report_date
+                        $yesterday = Carbon::parse($reportDate)->subDay()->toDateString();
+
+                        Log::info('Processing unsynced inventory summary', [
+                            'storename' => $storeName,
+                            'report_date' => $reportDate,
+                            'yesterday' => $yesterday
+                        ]);
+
+                        $this->updateInventorySummaries($storeName, $reportDate, $yesterday);
+
+                        // Mark as synced
+                        DB::table('inventory_summaries')
+                            ->where('storename', $storeName)
+                            ->whereDate('report_date', $reportDate)
+                            ->update(['sync' => 1]);
+
+                        Log::info('Inventory summaries synced', [
+                            'storename' => $storeName,
+                            'date' => $reportDate
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Error syncing inventory summary', [
+                            'storename' => $record->storename,
+                            'report_date' => $record->report_date,
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ]);
+                        // Continue with next record even if one fails
+                    }
+                }
             }
         }
 
@@ -406,7 +471,7 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                 'posted' => $posted,
                 'journalid' => $journalid
             ]);
-            
+
             // Let's try direct update first
             $affected = DB::table('stockcountingtables')
                 ->where('JOURNALID', $journalid)
@@ -415,22 +480,22 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                     'POSTED' => $posted,
                     'updated_at' => now()
                 ]);
-                
+
             if ($affected === 0) {
                 throw new \Illuminate\Database\Eloquent\ModelNotFoundException();
             }
-            
+
             // Fetch the updated record
             $stockCounting = stockcountingtables::where('JOURNALID', $journalid)
                 ->where('STOREID', $storeids)
                 ->first();
-            
+
             \Log::info('Stock counting record updated', [
                 'journalid' => $journalid,
                 'posted' => $posted,
                 'affected_rows' => $affected
             ]);
-            
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Stock counting record updated successfully',
@@ -456,5 +521,395 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                 'message' => 'An error occurred while updating the record'
             ], 500);
         }
-    }   
+    }
+
+    private function updateInventorySummaries($storename, $currentDateTime, $yesterday)
+    {
+        Log::info("Starting inventory summaries update", [
+            'storename' => $storename,
+            'current_date' => $currentDateTime,
+            'yesterday' => $yesterday
+        ]);
+
+        try {
+
+            // Update throw_away
+            Log::info("Updating throw_away for inventory summaries");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries
+                SET throw_away = (
+                    SELECT SUM(WASTECOUNT)
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.ITEMID = inventory_summaries.itemid
+                      AND WASTETYPE = 'Throw Away'
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                )
+                WHERE CAST(report_date AS DATE) = ?
+                  AND storename = ?
+                  AND EXISTS (
+                    SELECT 1
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.itemid = inventory_summaries.itemid
+                      AND WASTETYPE = 'Throw Away'
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                )
+            ", [$storename, $currentDateTime, $currentDateTime, $storename, $storename, $currentDateTime]);
+
+            Log::info("Throw away update completed", ['affected_rows' => $affectedRows]);
+
+
+            // Update early_molds
+            Log::info("Updating early_molds for inventory summaries");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries
+                SET early_molds = (
+                    SELECT SUM(WASTECOUNT)
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.ITEMID = inventory_summaries.itemid
+                      AND WASTETYPE = 'Early Molds'
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                )
+                WHERE CAST(report_date AS DATE) = ?
+                  AND storename = ?
+                  AND EXISTS (
+                    SELECT 1
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.itemid = inventory_summaries.itemid
+                      AND WASTETYPE = 'Early Molds'
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                )
+            ", [$storename, $currentDateTime, $currentDateTime, $storename, $storename, $currentDateTime]);
+
+            Log::info("Early Molds update completed", ['affected_rows' => $affectedRows]);
+
+
+            // Update pull_out
+            Log::info("Updating pull_out for inventory summaries");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries
+                SET pull_out = (
+                    SELECT SUM(WASTECOUNT)
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.ITEMID = inventory_summaries.itemid
+                      AND WASTETYPE = 'Pull Out'
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                )
+                WHERE CAST(report_date AS DATE) = ?
+                  AND storename = ?
+                  AND EXISTS (
+                    SELECT 1
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.itemid = inventory_summaries.itemid
+                      AND WASTETYPE = 'Pull Out'
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                )
+            ", [$storename, $currentDateTime, $currentDateTime, $storename, $storename, $currentDateTime]);
+
+            Log::info("Pull Out update completed", ['affected_rows' => $affectedRows]);
+
+
+            // Update rat_bites
+            Log::info("Updating rat_bites for inventory summaries");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries
+                SET rat_bites = (
+                    SELECT SUM(WASTECOUNT)
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.ITEMID = inventory_summaries.itemid
+                      AND WASTETYPE = 'Rat Bites'
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                )
+                WHERE CAST(report_date AS DATE) = ?
+                  AND storename = ?
+                  AND EXISTS (
+                    SELECT 1
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.itemid = inventory_summaries.itemid
+                      AND WASTETYPE = 'Rat Bites'
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                )
+            ", [$storename, $currentDateTime, $currentDateTime, $storename, $storename, $currentDateTime]);
+
+            Log::info("Rat Bites update completed", ['affected_rows' => $affectedRows]);
+
+
+            // Update ant_bites
+            Log::info("Updating ant_bites for inventory summaries");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries
+                SET ant_bites = (
+                    SELECT SUM(WASTECOUNT)
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.ITEMID = inventory_summaries.itemid
+                      AND WASTETYPE = 'Ant Bites'
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                )
+                WHERE CAST(report_date AS DATE) = ?
+                  AND storename = ?
+                  AND EXISTS (
+                    SELECT 1
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.itemid = inventory_summaries.itemid
+                      AND WASTETYPE = 'Ant Bites'
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                )
+            ", [$storename, $currentDateTime, $currentDateTime, $storename, $storename, $currentDateTime]);
+
+            Log::info("Ant Bites update completed", ['affected_rows' => $affectedRows]);
+
+
+            // Update received_delivery
+            Log::info("Updating received_delivery for inventory summaries");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries
+                SET received_delivery = (
+                    SELECT SUM(RECEIVEDCOUNT)
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.ITEMID = inventory_summaries.itemid
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                )
+                WHERE CAST(report_date AS DATE) = ?
+                  AND storename = ?
+                  AND EXISTS (
+                    SELECT 1
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.itemid = inventory_summaries.itemid
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                )
+            ", [$storename, $currentDateTime, $currentDateTime, $storename, $storename, $currentDateTime]);
+
+            Log::info("Received delivery update completed", ['affected_rows' => $affectedRows]);
+
+            // Update sales
+            Log::info("Updating sales for inventory summaries");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries
+                SET sales = (
+                    SELECT COALESCE(SUM(b.qty), 0)
+                    FROM rbotransactiontables a
+                    LEFT JOIN rbotransactionsalestrans b ON a.transactionid = b.transactionid
+                    LEFT JOIN rboinventtables c ON b.itemid = c.itemid
+                    WHERE a.store = ?
+                    AND CAST(a.createddate AS DATE) = ?
+                    AND b.itemgroup NOT LIKE '%PROMO%'
+                    AND c.itemid = inventory_summaries.itemid
+                )
+                WHERE CAST(report_date AS DATE) = ?
+                  AND storename = ?
+                  AND inventory_summaries.itemid IN (
+                    SELECT DISTINCT c.itemid
+                    FROM rbotransactiontables a
+                    LEFT JOIN rbotransactionsalestrans b ON a.transactionid = b.transactionid
+                    LEFT JOIN rboinventtables c ON b.itemid = c.itemid
+                    WHERE a.store = ?
+                    AND CAST(a.createddate AS DATE) = ?
+                    AND b.itemgroup NOT LIKE '%PROMO%'
+                    AND c.itemid IS NOT NULL
+                )
+            ", [$storename, $currentDateTime, $currentDateTime, $storename, $storename, $currentDateTime]);
+
+            Log::info("Sales update completed", ['affected_rows' => $affectedRows]);
+
+            // Update bundle_sales
+            Log::info("Updating bundle_sales for inventory summaries");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries invs
+                JOIN (
+                    SELECT
+                        il.child_itemid,
+                        il.quantity AS link_quantity,
+                        COALESCE(SUM(rst.qty), 0) * il.quantity AS result
+                    FROM item_links il
+                    LEFT JOIN rbotransactionsalestrans rst
+                        ON rst.itemid = il.parent_itemid OR rst.itemid = il.child_itemid
+                    WHERE
+                        CAST(rst.createddate AS DATE) = ?
+                        AND rst.store = ?
+                        AND rst.itemgroup LIKE '%PROMO%'
+                    GROUP BY il.child_itemid, il.quantity
+                ) AS bundle_data
+                ON invs.itemid = bundle_data.child_itemid
+                   AND invs.storename = ?
+                SET invs.bundle_sales = bundle_data.result
+                WHERE CAST(invs.report_date AS DATE) = ?
+            ", [$currentDateTime, $storename, $storename, $currentDateTime]);
+
+            Log::info("Bundle sales update completed", ['affected_rows' => $affectedRows]);
+
+            // Update beginning
+            Log::info("Updating beginning inventory for inventory summaries");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries
+                SET beginning = (
+                    SELECT item_count
+                    FROM inventory_summaries prev
+                    WHERE prev.ITEMID = inventory_summaries.ITEMID
+                      AND prev.STORENAME = ?
+                      AND CAST(prev.report_date AS DATE) = ?
+                )
+                WHERE CAST(report_date AS DATE) = ?
+                  AND storename = ?
+                  AND EXISTS (
+                    SELECT 1
+                    FROM inventory_summaries prev
+                    WHERE prev.ITEMID = inventory_summaries.ITEMID
+                      AND prev.STORENAME = ?
+                      AND CAST(prev.report_date AS DATE) = ?
+                )
+            ", [$storename, $yesterday, $currentDateTime, $storename, $storename, $yesterday]);
+
+            Log::info("Beginning inventory update completed", ['affected_rows' => $affectedRows]);
+
+            // Update ending inventory
+            Log::info("Updating ending inventory for inventory summaries");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries
+                SET ending = CASE
+                    WHEN beginning IS NOT NULL
+                         AND beginning != 0
+                         AND COALESCE(received_delivery, 0) = 0
+                         AND COALESCE(stock_transfer, 0) = 0
+                         AND COALESCE(sales, 0) = 0
+                         AND COALESCE(bundle_sales, 0) = 0
+                         AND COALESCE(throw_away, 0) = 0
+                         AND COALESCE(early_molds, 0) = 0
+                         AND COALESCE(pull_out, 0) = 0
+                         AND COALESCE(rat_bites, 0) = 0
+                         AND COALESCE(ant_bites, 0) = 0
+                    THEN beginning
+                    ELSE COALESCE(beginning, 0) + COALESCE(received_delivery, 0) - COALESCE(stock_transfer, 0) - COALESCE(sales, 0) - COALESCE(bundle_sales, 0) - COALESCE(throw_away, 0) - COALESCE(early_molds, 0) - COALESCE(pull_out, 0) - COALESCE(rat_bites, 0) - COALESCE(ant_bites, 0)
+                END
+                WHERE CAST(report_date AS DATE) = ?
+                  AND storename = ?
+            ", [$currentDateTime, $storename]);
+
+            Log::info("Ending inventory update completed", ['affected_rows' => $affectedRows]);
+
+            // Update item_count with calculated ending inventory
+            Log::info("Updating item_count with calculated ending inventory");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries
+                SET item_count = CASE
+                    WHEN beginning IS NOT NULL
+                         AND beginning != 0
+                         AND COALESCE(received_delivery, 0) = 0
+                         AND COALESCE(stock_transfer, 0) = 0
+                         AND COALESCE(sales, 0) = 0
+                         AND COALESCE(bundle_sales, 0) = 0
+                         AND COALESCE(throw_away, 0) = 0
+                         AND COALESCE(early_molds, 0) = 0
+                         AND COALESCE(pull_out, 0) = 0
+                         AND COALESCE(rat_bites, 0) = 0
+                         AND COALESCE(ant_bites, 0) = 0
+                    THEN beginning
+                    ELSE 0
+                END
+                WHERE CAST(report_date AS DATE) = ?
+                  AND storename = ?
+            ", [$currentDateTime, $storename]);
+
+            Log::info("Item count recalculation completed", ['affected_rows' => $affectedRows]);
+
+            // Update item_count
+            Log::info("Updating item_count for inventory summaries");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries
+                SET item_count = (
+                    SELECT COUNTED
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.ITEMID = inventory_summaries.itemid
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                      AND COUNTED > 0
+                )
+                WHERE CAST(report_date AS DATE) = ?
+                  AND storename = ?
+                  AND EXISTS (
+                    SELECT 1
+                    FROM stockcountingtrans
+                    WHERE stockcountingtrans.itemid = inventory_summaries.itemid
+                      AND STORENAME = ?
+                      AND CAST(TRANSDATE AS DATE) = ?
+                      AND COUNTED > 0
+                )
+            ", [$storename, $currentDateTime, $currentDateTime, $storename, $storename, $currentDateTime]);
+
+            Log::info("Item count update completed", ['affected_rows' => $affectedRows]);
+
+            // Final item_count update with null safety
+            Log::info("Performing final item_count update with null safety");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries
+                SET item_count = CASE
+                    WHEN beginning IS NOT NULL
+                         AND beginning != 0
+                         AND COALESCE(received_delivery, 0) = 0
+                         AND COALESCE(stock_transfer, 0) = 0
+                         AND COALESCE(sales, 0) = 0
+                         AND COALESCE(bundle_sales, 0) = 0
+                         AND COALESCE(throw_away, 0) = 0
+                         AND COALESCE(early_molds, 0) = 0
+                         AND COALESCE(pull_out, 0) = 0
+                         AND COALESCE(rat_bites, 0) = 0
+                         AND COALESCE(ant_bites, 0) = 0
+                    THEN beginning
+                    ELSE item_count
+                END
+                WHERE CAST(report_date AS DATE) = ?
+                AND storename = ?
+            ", [$currentDateTime, $storename]);
+
+            Log::info("Final item count update completed", ['affected_rows' => $affectedRows]);
+
+            // Update variance
+            Log::info("Updating variance for inventory summaries");
+            $affectedRows = DB::statement("
+                UPDATE inventory_summaries
+                SET variance = COALESCE(ending, 0) - COALESCE(item_count, 0)
+                WHERE CAST(report_date AS DATE) = ?
+                  AND storename = ?
+            ", [$currentDateTime, $storename]);
+
+            Log::info("Variance update completed", ['affected_rows' => $affectedRows]);
+
+            // Log summary of what was updated
+            $summaryData = DB::select("
+                SELECT
+                    COUNT(*) as total_records,
+                    SUM(CASE WHEN item_count IS NOT NULL THEN 1 ELSE 0 END) as records_with_count,
+                    SUM(CASE WHEN variance != 0 THEN 1 ELSE 0 END) as records_with_variance,
+                    SUM(CASE WHEN ending IS NOT NULL THEN 1 ELSE 0 END) as records_with_ending
+                FROM inventory_summaries
+                WHERE CAST(report_date AS DATE) = ? AND storename = ?
+            ", [$currentDateTime, $storename]);
+
+            Log::info("Inventory summaries update completed successfully", [
+                'summary' => $summaryData[0] ?? null,
+                'storename' => $storename,
+                'date' => $currentDateTime
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Error updating inventory summaries", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'storename' => $storename,
+                'current_date' => $currentDateTime,
+                'yesterday' => $yesterday
+            ]);
+            throw $e;
+        }
+    }
 }

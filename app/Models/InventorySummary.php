@@ -27,7 +27,8 @@ class InventorySummary extends Model
         'ending',
         'variance',
         'report_date',
-        'remarks'
+        'remarks',
+        'sync'
     ];
 
     protected $casts = [
@@ -44,6 +45,7 @@ class InventorySummary extends Model
         'item_count' => 'float',
         'ending' => 'float',
         'variance' => 'float',
-        'report_date' => 'date'
+        'report_date' => 'date',
+        'sync' => 'integer'
     ];
 }
