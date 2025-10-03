@@ -138,17 +138,20 @@ class ApisStockCountingController extends Controller
                 $this->insertMissingItemsToInventorySummaries($storeids, $currentDate);
             }
 
-            // Check for unsynced inventory_summaries records (optimized to process all without timeout)
+            // Check for unsynced inventory_summaries records (only for yesterday's date)
+            $yesterday = Carbon::yesterday('Asia/Manila')->toDateString();
+
             $unsyncedRecords = DB::table('inventory_summaries')
                 ->select('storename', DB::raw('DATE(report_date) as report_date'))
                 ->where('sync', 0)
+                ->whereDate('report_date', $yesterday)
                 ->groupBy('storename', DB::raw('DATE(report_date)'))
-                ->orderBy(DB::raw('DATE(report_date)'), 'ASC')
                 ->get();
 
             if ($unsyncedRecords->count() > 0) {
-                Log::info('Found unsynced inventory summaries', [
-                    'count' => $unsyncedRecords->count()
+                Log::info('Found unsynced inventory summaries for yesterday', [
+                    'count' => $unsyncedRecords->count(),
+                    'yesterday' => $yesterday
                 ]);
 
                 foreach ($unsyncedRecords as $record) {
@@ -156,16 +159,16 @@ class ApisStockCountingController extends Controller
                         $reportDate = $record->report_date;
                         $storeName = $record->storename;
 
-                        // Calculate yesterday based on the report_date
-                        $yesterday = Carbon::parse($reportDate)->subDay()->toDateString();
+                        // Calculate the day before the report_date
+                        $dayBefore = Carbon::parse($reportDate)->subDay()->toDateString();
 
                         Log::info('Processing unsynced inventory summary', [
                             'storename' => $storeName,
                             'report_date' => $reportDate,
-                            'yesterday' => $yesterday
+                            'day_before' => $dayBefore
                         ]);
 
-                        $this->updateInventorySummariesOptimized($storeName, $reportDate, $yesterday);
+                        $this->updateInventorySummariesOptimized($storeName, $reportDate, $dayBefore);
 
                         // Mark as synced
                         DB::table('inventory_summaries')
