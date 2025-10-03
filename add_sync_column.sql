@@ -10,11 +10,22 @@ UPDATE `inventory_summaries`
 SET `sync` = 0
 WHERE `sync` IS NULL;
 
--- Add index on sync column for better query performance
+-- Add performance indexes for faster queries
 CREATE INDEX IF NOT EXISTS `idx_sync` ON `inventory_summaries` (`sync`);
-
--- Add composite index for faster lookup of unsynced records by store and date
 CREATE INDEX IF NOT EXISTS `idx_storename_reportdate_sync` ON `inventory_summaries` (`storename`, `report_date`, `sync`);
+CREATE INDEX IF NOT EXISTS `idx_itemid_storename_reportdate` ON `inventory_summaries` (`itemid`, `storename`, `report_date`);
+
+-- Indexes for stockcountingtrans table (improves JOIN performance)
+CREATE INDEX IF NOT EXISTS `idx_itemid_storename_transdate` ON `stockcountingtrans` (`ITEMID`, `STORENAME`, `TRANSDATE`);
+CREATE INDEX IF NOT EXISTS `idx_storename_transdate` ON `stockcountingtrans` (`STORENAME`, `TRANSDATE`);
+CREATE INDEX IF NOT EXISTS `idx_wastetype` ON `stockcountingtrans` (`WASTETYPE`);
+
+-- Indexes for rbotransactiontables (improves sales calculation)
+CREATE INDEX IF NOT EXISTS `idx_store_createddate` ON `rbotransactiontables` (`store`, `createddate`);
+
+-- Indexes for rbotransactionsalestrans (improves sales/bundle calculation)
+CREATE INDEX IF NOT EXISTS `idx_transactionid_itemid` ON `rbotransactionsalestrans` (`transactionid`, `itemid`);
+CREATE INDEX IF NOT EXISTS `idx_itemid_createddate` ON `rbotransactionsalestrans` (`itemid`, `createddate`);
 
 -- Show the updated table structure
 DESCRIBE `inventory_summaries`;

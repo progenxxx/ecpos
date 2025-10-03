@@ -138,11 +138,12 @@ class ApisStockCountingController extends Controller
                 $this->insertMissingItemsToInventorySummaries($storeids, $currentDate);
             }
 
-            // Check for all unsynced inventory_summaries records
+            // Check for unsynced inventory_summaries records (optimized to process all without timeout)
             $unsyncedRecords = DB::table('inventory_summaries')
                 ->select('storename', DB::raw('DATE(report_date) as report_date'))
                 ->where('sync', 0)
                 ->groupBy('storename', DB::raw('DATE(report_date)'))
+                ->orderBy(DB::raw('DATE(report_date)'), 'ASC')
                 ->get();
 
             if ($unsyncedRecords->count() > 0) {
@@ -164,7 +165,7 @@ class ApisStockCountingController extends Controller
                             'yesterday' => $yesterday
                         ]);
 
-                        $this->updateInventorySummaries($storeName, $reportDate, $yesterday);
+                        $this->updateInventorySummariesOptimized($storeName, $reportDate, $yesterday);
 
                         // Mark as synced
                         DB::table('inventory_summaries')
@@ -942,6 +943,167 @@ private function insertMissingItemsToInventorySummaries($storeId, $currentDate)
                 'storename' => $storename,
                 'current_date' => $currentDateTime,
                 'yesterday' => $yesterday
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Optimized version of updateInventorySummaries using direct UPDATE with JOINs
+     * Much faster than subqueries - can handle all stores without timeout
+     */
+    private function updateInventorySummariesOptimized($storename, $currentDateTime, $yesterday)
+    {
+        try {
+            // Insert missing items first
+            $missingItems = DB::table('stockcountingtrans as st')
+                ->leftJoin('inventory_summaries as inv', function($join) use ($storename, $currentDateTime) {
+                    $join->on('st.ITEMID', '=', 'inv.itemid')
+                         ->where('inv.storename', '=', $storename)
+                         ->whereDate('inv.report_date', '=', $currentDateTime);
+                })
+                ->leftJoin('inventtables as it', 'st.ITEMID', '=', 'it.itemid')
+                ->whereNull('inv.itemid')
+                ->where('st.STORENAME', $storename)
+                ->whereDate('st.TRANSDATE', $currentDateTime)
+                ->select('st.ITEMID', 'it.itemname')
+                ->distinct()
+                ->get();
+
+            if ($missingItems->count() > 0) {
+                $insertData = [];
+                foreach ($missingItems as $item) {
+                    $insertData[] = [
+                        'itemid' => $item->ITEMID,
+                        'itemname' => $item->itemname ?? $item->ITEMID,
+                        'storename' => $storename,
+                        'report_date' => $currentDateTime,
+                        'sync' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                }
+                foreach (array_chunk($insertData, 100) as $chunk) {
+                    DB::table('inventory_summaries')->insert($chunk);
+                }
+            }
+
+            // Optimized updates using LEFT JOIN instead of subqueries
+
+            // Update waste counts (throw_away, early_molds, pull_out, rat_bites, ant_bites)
+            DB::statement("
+                UPDATE inventory_summaries inv
+                LEFT JOIN (
+                    SELECT ITEMID, STORENAME,
+                        SUM(CASE WHEN WASTETYPE = 'Throw Away' THEN WASTECOUNT ELSE 0 END) as throw_away_sum,
+                        SUM(CASE WHEN WASTETYPE = 'Early Molds' THEN WASTECOUNT ELSE 0 END) as early_molds_sum,
+                        SUM(CASE WHEN WASTETYPE = 'Pull Out' THEN WASTECOUNT ELSE 0 END) as pull_out_sum,
+                        SUM(CASE WHEN WASTETYPE = 'Rat Bites' THEN WASTECOUNT ELSE 0 END) as rat_bites_sum,
+                        SUM(CASE WHEN WASTETYPE = 'Ant Bites' THEN WASTECOUNT ELSE 0 END) as ant_bites_sum
+                    FROM stockcountingtrans
+                    WHERE STORENAME = ? AND CAST(TRANSDATE AS DATE) = ?
+                    GROUP BY ITEMID, STORENAME
+                ) st ON inv.itemid = st.ITEMID AND inv.storename = st.STORENAME
+                SET
+                    inv.throw_away = COALESCE(st.throw_away_sum, 0),
+                    inv.early_molds = COALESCE(st.early_molds_sum, 0),
+                    inv.pull_out = COALESCE(st.pull_out_sum, 0),
+                    inv.rat_bites = COALESCE(st.rat_bites_sum, 0),
+                    inv.ant_bites = COALESCE(st.ant_bites_sum, 0)
+                WHERE inv.storename = ? AND CAST(inv.report_date AS DATE) = ?
+            ", [$storename, $currentDateTime, $storename, $currentDateTime]);
+
+            // Update received_delivery
+            DB::statement("
+                UPDATE inventory_summaries inv
+                LEFT JOIN (
+                    SELECT ITEMID, STORENAME, SUM(RECEIVEDCOUNT) as received_sum
+                    FROM stockcountingtrans
+                    WHERE STORENAME = ? AND CAST(TRANSDATE AS DATE) = ?
+                    GROUP BY ITEMID, STORENAME
+                ) st ON inv.itemid = st.ITEMID AND inv.storename = st.STORENAME
+                SET inv.received_delivery = COALESCE(st.received_sum, 0)
+                WHERE inv.storename = ? AND CAST(inv.report_date AS DATE) = ?
+            ", [$storename, $currentDateTime, $storename, $currentDateTime]);
+
+            // Update sales
+            DB::statement("
+                UPDATE inventory_summaries inv
+                LEFT JOIN (
+                    SELECT c.itemid, SUM(b.qty) as sales_sum
+                    FROM rbotransactiontables a
+                    LEFT JOIN rbotransactionsalestrans b ON a.transactionid = b.transactionid
+                    LEFT JOIN rboinventtables c ON b.itemid = c.itemid
+                    WHERE a.store = ? AND CAST(a.createddate AS DATE) = ?
+                    AND b.itemgroup NOT LIKE '%PROMO%'
+                    GROUP BY c.itemid
+                ) sales ON inv.itemid = sales.itemid
+                SET inv.sales = COALESCE(sales.sales_sum, 0)
+                WHERE inv.storename = ? AND CAST(inv.report_date AS DATE) = ?
+            ", [$storename, $currentDateTime, $storename, $currentDateTime]);
+
+            // Update bundle_sales
+            DB::statement("
+                UPDATE inventory_summaries inv
+                LEFT JOIN (
+                    SELECT il.child_itemid, SUM(rst.qty * il.quantity) as bundle_sum
+                    FROM item_links il
+                    LEFT JOIN rbotransactionsalestrans rst
+                        ON rst.itemid = il.parent_itemid OR rst.itemid = il.child_itemid
+                    WHERE CAST(rst.createddate AS DATE) = ? AND rst.store = ?
+                    AND rst.itemgroup LIKE '%PROMO%'
+                    GROUP BY il.child_itemid
+                ) bundle ON inv.itemid = bundle.child_itemid
+                SET inv.bundle_sales = COALESCE(bundle.bundle_sum, 0)
+                WHERE inv.storename = ? AND CAST(inv.report_date AS DATE) = ?
+            ", [$currentDateTime, $storename, $storename, $currentDateTime]);
+
+            // Update beginning from yesterday's item_count
+            DB::statement("
+                UPDATE inventory_summaries inv
+                LEFT JOIN inventory_summaries prev
+                    ON inv.itemid = prev.itemid
+                    AND inv.storename = prev.storename
+                    AND CAST(prev.report_date AS DATE) = ?
+                SET inv.beginning = COALESCE(prev.item_count, 0)
+                WHERE inv.storename = ? AND CAST(inv.report_date AS DATE) = ?
+            ", [$yesterday, $storename, $currentDateTime]);
+
+            // Update ending inventory
+            DB::statement("
+                UPDATE inventory_summaries
+                SET ending = COALESCE(beginning, 0) + COALESCE(received_delivery, 0)
+                           - COALESCE(stock_transfer, 0) - COALESCE(sales, 0)
+                           - COALESCE(bundle_sales, 0) - COALESCE(throw_away, 0)
+                           - COALESCE(early_molds, 0) - COALESCE(pull_out, 0)
+                           - COALESCE(rat_bites, 0) - COALESCE(ant_bites, 0)
+                WHERE storename = ? AND CAST(report_date AS DATE) = ?
+            ", [$storename, $currentDateTime]);
+
+            // Update item_count from stockcountingtrans
+            DB::statement("
+                UPDATE inventory_summaries inv
+                LEFT JOIN (
+                    SELECT ITEMID, STORENAME, COUNTED
+                    FROM stockcountingtrans
+                    WHERE STORENAME = ? AND CAST(TRANSDATE AS DATE) = ? AND COUNTED > 0
+                ) st ON inv.itemid = st.ITEMID AND inv.storename = st.STORENAME
+                SET inv.item_count = COALESCE(st.COUNTED, inv.ending, 0)
+                WHERE inv.storename = ? AND CAST(inv.report_date AS DATE) = ?
+            ", [$storename, $currentDateTime, $storename, $currentDateTime]);
+
+            // Update variance
+            DB::statement("
+                UPDATE inventory_summaries
+                SET variance = COALESCE(ending, 0) - COALESCE(item_count, 0)
+                WHERE storename = ? AND CAST(report_date AS DATE) = ?
+            ", [$storename, $currentDateTime]);
+
+        } catch (\Exception $e) {
+            Log::error("Error in optimized inventory summaries update", [
+                'error' => $e->getMessage(),
+                'storename' => $storename,
+                'date' => $currentDateTime
             ]);
             throw $e;
         }
