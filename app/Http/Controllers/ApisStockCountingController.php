@@ -47,33 +47,9 @@ class ApisStockCountingController extends Controller
             ->get();
 
         if ($stockCounting->isEmpty()) {
-            Log::info('No unposted stock counting records found, checking for posted records', ['storeids' => $storeids]);
+            Log::info('No unposted stock counting records found, creating new record', ['storeids' => $storeids]);
 
-            // Check if there are any posted records for the current date
-            $postedRecordsQuery = DB::table('stockcountingtables')
-                ->where('posted', '=', '1')
-                ->whereDate('createddatetime', '=', $currentDate);
-
-            if ($storeids !== "HQ2") {
-                $postedRecordsQuery->where('storeid', '=', $storeids);
-            }
-
-            $hasPostedRecords = $postedRecordsQuery->exists();
-
-            if ($hasPostedRecords) {
-                Log::info('Posted stock counting records already exist for current date', [
-                    'storeids' => $storeids,
-                    'date' => $currentDate
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'data' => [],
-                    'message' => 'Stock counting already completed for today'
-                ]);
-            }
-
-            // If no posted records exist, create new record
+            // Create new record
             DB::beginTransaction();
             try {
                 $currentDateTime = Carbon::now('Asia/Manila');
