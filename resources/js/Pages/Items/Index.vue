@@ -160,8 +160,8 @@ const filteredItems = computed(() => {
                 codeStartsWithMatches.push(item);
                 matchedIds.add(uniqueKey);
             }
-            // Priority 3: Barcode starts with query
-            else if (barcode !== 'n/a' && barcode.startsWith(query)) {
+            // Priority 3: Barcode starts with query (must be valid barcode, not N/A)
+            else if (barcode && barcode !== 'n/a' && barcode !== '' && barcode.startsWith(query)) {
                 barcodeStartsWithMatches.push(item);
                 matchedIds.add(uniqueKey);
             }
@@ -170,10 +170,18 @@ const filteredItems = computed(() => {
                 nameStartsWithMatches.push(item);
                 matchedIds.add(uniqueKey);
             }
-            // Priority 5: Query appears as a whole word in item name (e.g., "BREAD" in "SLICED BREAD")
-            else if (new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(itemName)) {
-                nameWordMatches.push(item);
-                matchedIds.add(uniqueKey);
+            // Priority 5: Query appears as a whole word in item name (e.g., "HOPIA" in "CLASS B HOPIA PASTILLAS")
+            // Only match if query length is 3+ characters and appears as complete word
+            else if (query.length >= 3) {
+                // Split item name into words and check if any word contains or matches the query
+                const words = itemName.split(/\s+/);
+                const matchesWord = words.some(word =>
+                    word === query || word.startsWith(query) || word.includes(query)
+                );
+                if (matchesWord) {
+                    nameWordMatches.push(item);
+                    matchedIds.add(uniqueKey);
+                }
             }
         });
 
