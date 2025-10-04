@@ -127,7 +127,7 @@ const filteredItems = computed(() => {
 
     let filtered = [...props.items];
 
-    // Search filter with prioritized matching and word boundary detection
+    // Search filter with strict matching for better accuracy
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase().trim();
 
@@ -135,10 +135,9 @@ const filteredItems = computed(() => {
         const matchedIds = new Set();
         const exactMatches = [];
         const codeStartsWithMatches = [];
+        const barcodeStartsWithMatches = [];
         const nameStartsWithMatches = [];
-        const barcodeExactMatches = [];
-        const wordBoundaryMatches = [];
-        const partialMatches = [];
+        const nameWordMatches = [];
 
         filtered.forEach(item => {
             const itemId = (item?.itemid || '').toLowerCase();
@@ -156,14 +155,14 @@ const filteredItems = computed(() => {
                 exactMatches.push(item);
                 matchedIds.add(uniqueKey);
             }
-            // Priority 2: CODE starts with query (e.g., "FBC" matches "FBC-001")
+            // Priority 2: CODE starts with query (e.g., "PRM-PRO" matches "PRM-PRO-41")
             else if (itemId.startsWith(query)) {
                 codeStartsWithMatches.push(item);
                 matchedIds.add(uniqueKey);
             }
-            // Priority 3: Exact barcode match
-            else if (barcode === query) {
-                barcodeExactMatches.push(item);
+            // Priority 3: Barcode starts with query
+            else if (barcode !== 'n/a' && barcode.startsWith(query)) {
+                barcodeStartsWithMatches.push(item);
                 matchedIds.add(uniqueKey);
             }
             // Priority 4: Item name starts with query
@@ -171,30 +170,20 @@ const filteredItems = computed(() => {
                 nameStartsWithMatches.push(item);
                 matchedIds.add(uniqueKey);
             }
-            // Priority 5: Word boundary match (query appears as whole word)
-            else if (
-                new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(itemId) ||
-                new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(itemName) ||
-                barcode.startsWith(query)
-            ) {
-                wordBoundaryMatches.push(item);
-                matchedIds.add(uniqueKey);
-            }
-            // Priority 6: Contains match (only show if query is 3+ chars to avoid too many results)
-            else if (query.length >= 3 && (itemId.includes(query) || itemName.includes(query) || barcode.includes(query))) {
-                partialMatches.push(item);
+            // Priority 5: Query appears as a whole word in item name (e.g., "BREAD" in "SLICED BREAD")
+            else if (new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(itemName)) {
+                nameWordMatches.push(item);
                 matchedIds.add(uniqueKey);
             }
         });
 
-        // Combine results with priority order (no duplicates)
+        // Combine results with priority order (no duplicates, removed partial matches)
         filtered = [
             ...exactMatches,
             ...codeStartsWithMatches,
-            ...barcodeExactMatches,
+            ...barcodeStartsWithMatches,
             ...nameStartsWithMatches,
-            ...wordBoundaryMatches,
-            ...partialMatches
+            ...nameWordMatches
         ];
     }
 
