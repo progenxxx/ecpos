@@ -122,117 +122,11 @@ const categories = computed(() => {
     return Array.from(cats).sort();
 });
 
+// FIXED: Simplified - backend now handles filtering and sorting
 const filteredItems = computed(() => {
     if (!props.items || !Array.isArray(props.items)) return [];
-
-    let filtered = [...props.items];
-
-    // Search filter with strict matching for better accuracy
-    if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase().trim();
-
-        // Use a Set to track matched item IDs to prevent duplicates
-        const matchedIds = new Set();
-        const exactMatches = [];
-        const codeStartsWithMatches = [];
-        const barcodeStartsWithMatches = [];
-        const nameStartsWithMatches = [];
-        const nameWordMatches = [];
-
-        filtered.forEach(item => {
-            const itemId = (item?.itemid || '').toLowerCase();
-            const itemName = (item?.itemname || '').toLowerCase();
-            const barcode = (item?.barcode || '').toLowerCase();
-            const uniqueKey = item?.itemid; // Use original itemid as unique key
-
-            // Skip if already matched
-            if (matchedIds.has(uniqueKey)) {
-                return;
-            }
-
-            // Priority 1: Exact match on CODE (itemid)
-            if (itemId === query) {
-                exactMatches.push(item);
-                matchedIds.add(uniqueKey);
-            }
-            // Priority 2: CODE starts with query (e.g., "PRM-PRO" matches "PRM-PRO-41")
-            else if (itemId.startsWith(query)) {
-                codeStartsWithMatches.push(item);
-                matchedIds.add(uniqueKey);
-            }
-            // Priority 3: Barcode starts with query (must be valid barcode, not N/A)
-            else if (barcode && barcode !== 'n/a' && barcode !== '' && barcode.startsWith(query)) {
-                barcodeStartsWithMatches.push(item);
-                matchedIds.add(uniqueKey);
-            }
-            // Priority 4: Item name starts with query
-            else if (itemName.startsWith(query)) {
-                nameStartsWithMatches.push(item);
-                matchedIds.add(uniqueKey);
-            }
-            // Priority 5: Query appears as a whole word in item name (e.g., "HOPIA" in "CLASS B HOPIA PASTILLAS")
-            // Only match if query length is 3+ characters and appears as complete word
-            else if (query.length >= 3) {
-                // Split item name into words and check if any word contains or matches the query
-                const words = itemName.split(/\s+/);
-                const matchesWord = words.some(word =>
-                    word === query || word.startsWith(query) || word.includes(query)
-                );
-                if (matchesWord) {
-                    nameWordMatches.push(item);
-                    matchedIds.add(uniqueKey);
-                }
-            }
-        });
-
-        // Combine results with priority order (no duplicates, removed partial matches)
-        filtered = [
-            ...exactMatches,
-            ...codeStartsWithMatches,
-            ...barcodeStartsWithMatches,
-            ...nameStartsWithMatches,
-            ...nameWordMatches
-        ];
-    }
-
-    // Category filter
-    if (selectedCategory.value) {
-        filtered = filtered.filter(item => item?.itemgroup === selectedCategory.value);
-    }
-
-    // Status filter
-    if (selectedStatus.value !== '') {
-        const status = selectedStatus.value === '1';
-        filtered = filtered.filter(item => Boolean(item?.Activeondelivery) === status);
-    }
-
-    // Sorting
-    if (sortField.value) {
-        filtered.sort((a, b) => {
-            let aVal = a[sortField.value];
-            let bVal = b[sortField.value];
-
-            // Handle null/undefined values
-            if (aVal === null || aVal === undefined) aVal = '';
-            if (bVal === null || bVal === undefined) bVal = '';
-
-            // Convert to appropriate type for comparison
-            if (typeof aVal === 'string') aVal = aVal.toLowerCase();
-            if (typeof bVal === 'string') bVal = bVal.toLowerCase();
-
-            // Numeric comparison for price fields
-            if (['cost', 'price', 'manilaprice', 'mallprice', 'foodpandaprice', 'grabfoodprice', 'foodpandamallprice', 'grabfoodmallprice', 'moq'].includes(sortField.value)) {
-                aVal = Number(aVal) || 0;
-                bVal = Number(bVal) || 0;
-            }
-
-            if (aVal < bVal) return sortDirection.value === 'asc' ? -1 : 1;
-            if (aVal > bVal) return sortDirection.value === 'asc' ? 1 : -1;
-            return 0;
-        });
-    }
-
-    return filtered;
+    // Backend already filtered and sorted the data, just return it
+    return props.items;
 });
 
 const totalPages = computed(() => {
@@ -827,7 +721,7 @@ const handleCellKeyPress = (event, itemId, field) => {
     }
 };
 
-// Sort function
+// FIXED: Sort function - reload data from backend
 const handleSort = (field) => {
     if (sortField.value === field) {
         // Toggle sort direction if clicking the same column
@@ -837,6 +731,24 @@ const handleSort = (field) => {
         sortField.value = field;
         sortDirection.value = 'asc';
     }
+
+    // Reload data from backend with new sort
+    reloadItems();
+};
+
+// FIXED: Function to reload items from backend with current filters
+const reloadItems = () => {
+    router.get('/items', {
+        search: searchQuery.value,
+        category: selectedCategory.value,
+        status: selectedStatus.value,
+        sort_field: sortField.value,
+        sort_direction: sortDirection.value
+    }, {
+        preserveState: true,
+        preserveScroll: true,
+        only: ['items']
+    });
 };
 
 // FIXED: Click outside handler for context menu
@@ -857,9 +769,20 @@ onMounted(() => {
     document.addEventListener('click', handleClickOutside);
 });
 
-// Reset to first page when filters change
-watch([searchQuery, selectedCategory, selectedStatus], () => {
+// FIXED: Reload from backend when filters change (debounced for search)
+let searchTimeout = null;
+watch(searchQuery, () => {
     currentPage.value = 1;
+    // Debounce search to avoid too many requests
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        reloadItems();
+    }, 300);
+});
+
+watch([selectedCategory, selectedStatus], () => {
+    currentPage.value = 1;
+    reloadItems();
 });
 
 </script>

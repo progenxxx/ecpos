@@ -20,61 +20,108 @@ use Carbon\Carbon;
 
 class ItemsController extends Controller
 {
-public function index()
+public function index(Request $request)
 {
     try {
         $rboinventitemretailgroups = DB::table('rboinventitemretailgroups')->get();
 
-        // Fixed query with better error handling and proper joins
-        $items = DB::table('inventtablemodules as a')
-        ->select(
-            'a.ITEMID as itemid',
-            'c.Activeondelivery as Activeondelivery',
-            'b.itemname as itemname',
-            'c.itemgroup as itemgroup',
-            'c.itemdepartment as specialgroup',
-            'c.production as production',
-            'c.moq as moq',
-            // FIXED: Added default fields to the select query
-            'c.default1 as default1',
-            'c.default2 as default2',
-            'c.default3 as default3',
-            DB::raw('CAST(a.priceincltax as float) as price'),
-            DB::raw('CAST(COALESCE(a.manilaprice, 0) as float) as manilaprice'),
-            DB::raw('CAST(COALESCE(a.grabfood, 0) as float) as grabfoodprice'),
-            DB::raw('CAST(COALESCE(a.foodpanda, 0) as float) as foodpandaprice'),
-            DB::raw('CAST(COALESCE(a.mallprice, 0) as float) as mallprice'),
-            // Add new price fields
-            DB::raw('CAST(COALESCE(a.foodpandamall, 0) as float) as foodpandamallprice'),
-            DB::raw('CAST(COALESCE(a.grabfoodmall, 0) as float) as grabfoodmallprice'),
-            DB::raw('CAST(a.price as float) as cost'),
-            // FIXED: Better barcode handling - use rboinventtables.barcode as primary, fallback to inventitembarcodes
-            DB::raw("CASE 
-                WHEN c.barcode IS NOT NULL AND c.barcode != '' THEN c.barcode 
-                WHEN d.ITEMBARCODE IS NOT NULL AND d.ITEMBARCODE != '' THEN d.itembarcode 
-                ELSE 'N/A' 
-            END as barcode")
-        )
-        ->leftJoin('inventtables as b', 'a.ITEMID', '=', 'b.itemid')
-        ->leftJoin('rboinventtables as c', 'b.itemid', '=', 'c.itemid')
-        ->leftJoin('inventitembarcodes as d', function($join) {
-            $join->on('c.itemid', '=', 'd.itemid')
-                 ->orOn('c.barcode', '=', 'd.ITEMBARCODE');
-        })
-        ->where('c.itemdepartment', '=', 'REGULAR PRODUCT') 
-        ->whereNotNull('b.itemid') // Ensure we have a valid item
-        ->whereNotNull('c.itemid') // Ensure we have rboinventtables data
-        ->get();
+        // Build query with DISTINCT to prevent duplicates
+        $query = DB::table('inventtablemodules as a')
+            ->select(
+                'a.ITEMID as itemid',
+                'c.Activeondelivery as Activeondelivery',
+                'b.itemname as itemname',
+                'c.itemgroup as itemgroup',
+                'c.itemdepartment as specialgroup',
+                'c.production as production',
+                'c.moq as moq',
+                'c.default1 as default1',
+                'c.default2 as default2',
+                'c.default3 as default3',
+                DB::raw('CAST(a.priceincltax as float) as price'),
+                DB::raw('CAST(COALESCE(a.manilaprice, 0) as float) as manilaprice'),
+                DB::raw('CAST(COALESCE(a.grabfood, 0) as float) as grabfoodprice'),
+                DB::raw('CAST(COALESCE(a.foodpanda, 0) as float) as foodpandaprice'),
+                DB::raw('CAST(COALESCE(a.mallprice, 0) as float) as mallprice'),
+                DB::raw('CAST(COALESCE(a.foodpandamall, 0) as float) as foodpandamallprice'),
+                DB::raw('CAST(COALESCE(a.grabfoodmall, 0) as float) as grabfoodmallprice'),
+                DB::raw('CAST(a.price as float) as cost'),
+                // FIXED: Use only rboinventtables.barcode to prevent duplicates
+                DB::raw("COALESCE(c.barcode, 'N/A') as barcode")
+            )
+            ->leftJoin('inventtables as b', 'a.ITEMID', '=', 'b.itemid')
+            ->leftJoin('rboinventtables as c', 'b.itemid', '=', 'c.itemid')
+            ->where('c.itemdepartment', '=', 'REGULAR PRODUCT')
+            ->whereNotNull('b.itemid')
+            ->whereNotNull('c.itemid')
+            ->distinct(); // FIXED: Add DISTINCT to ensure no duplicates
+
+        // Backend search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('a.ITEMID', 'LIKE', '%' . $searchTerm . '%')
+                  ->orWhere('b.itemname', 'LIKE', '%' . $searchTerm . '%')
+                  ->orWhere('c.barcode', 'LIKE', '%' . $searchTerm . '%');
+            });
+        }
+
+        // Backend category filter
+        if ($request->has('category') && !empty($request->category)) {
+            $query->where('c.itemgroup', '=', $request->category);
+        }
+
+        // Backend status filter
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('c.Activeondelivery', '=', $request->status);
+        }
+
+        // Backend sorting
+        $sortField = $request->get('sort_field', 'itemid');
+        $sortDirection = $request->get('sort_direction', 'asc');
+
+        // Map frontend field names to database columns
+        $sortMapping = [
+            'itemid' => 'a.ITEMID',
+            'itemname' => 'b.itemname',
+            'itemgroup' => 'c.itemgroup',
+            'cost' => 'a.price',
+            'price' => 'a.priceincltax',
+            'manilaprice' => 'a.manilaprice',
+            'mallprice' => 'a.mallprice',
+            'foodpandaprice' => 'a.foodpanda',
+            'grabfoodprice' => 'a.grabfood',
+            'foodpandamallprice' => 'a.foodpandamall',
+            'grabfoodmallprice' => 'a.grabfoodmall',
+            'moq' => 'c.moq',
+            'Activeondelivery' => 'c.Activeondelivery'
+        ];
+
+        $dbSortField = $sortMapping[$sortField] ?? 'a.ITEMID';
+        $query->orderBy($dbSortField, $sortDirection);
+
+        $items = $query->get();
 
         // Log the query for debugging
         \Log::info('Items index query executed', [
             'total_items_found' => $items->count(),
-            'sample_item' => $items->first()
+            'search_term' => $request->search ?? 'none',
+            'category' => $request->category ?? 'all',
+            'status' => $request->status ?? 'all',
+            'sort_field' => $sortField,
+            'sort_direction' => $sortDirection
         ]);
 
         return Inertia::render('Items/Index', [
-            'items' => $items, 
-            'rboinventitemretailgroups' => $rboinventitemretailgroups
+            'items' => $items,
+            'rboinventitemretailgroups' => $rboinventitemretailgroups,
+            'filters' => [
+                'search' => $request->search ?? '',
+                'category' => $request->category ?? '',
+                'status' => $request->status ?? '',
+                'sort_field' => $sortField,
+                'sort_direction' => $sortDirection
+            ]
         ]);
 
     } catch (\Exception $e) {
@@ -83,9 +130,8 @@ public function index()
             'trace' => $e->getTraceAsString()
         ]);
 
-        // Return empty result with error message
         return Inertia::render('Items/Index', [
-            'items' => collect([]), 
+            'items' => collect([]),
             'rboinventitemretailgroups' => collect([]),
             'error' => 'Error loading items: ' . $e->getMessage()
         ]);
@@ -522,12 +568,14 @@ public function index()
             'c.default2 as default2',
             'c.default3 as default3',
             'c.Activeondelivery as Activeondelivery',
-            'd.itembarcode as barcode'
+            DB::raw("COALESCE(c.barcode, '') as barcode")
         )
         ->leftJoin('inventtables as b', 'a.ITEMID', '=', 'b.itemid')
         ->leftJoin('rboinventtables as c', 'b.itemid', '=', 'c.itemid')
-        ->leftJoin('inventitembarcodes as d', 'c.barcode', '=', 'd.ITEMBARCODE')
         ->where('c.itemdepartment', '=', 'REGULAR PRODUCT')
+        ->whereNotNull('b.itemid')
+        ->whereNotNull('c.itemid')
+        ->distinct() // FIXED: Add DISTINCT to prevent duplicates
         ->get();
 
         return response()->json($items);
@@ -539,16 +587,12 @@ public function index()
     public function downloadTemplate()
 {
     try {
-        // Get current items data (same query as index function)
+        // Get current items data with DISTINCT to prevent duplicates
         $items = DB::table('inventtablemodules as a')
             ->select(
                 'a.ITEMID as itemid',
                 'b.itemname as itemname',
-                DB::raw("CASE 
-                    WHEN c.barcode IS NOT NULL AND c.barcode != '' THEN c.barcode 
-                    WHEN d.ITEMBARCODE IS NOT NULL AND d.ITEMBARCODE != '' THEN d.itembarcode 
-                    ELSE '' 
-                END as barcode"),
+                DB::raw("COALESCE(c.barcode, '') as barcode"),
                 'c.itemgroup as itemgroup',
                 'c.itemdepartment as specialgroup',
                 'c.production as production',
@@ -568,13 +612,10 @@ public function index()
             )
             ->leftJoin('inventtables as b', 'a.ITEMID', '=', 'b.itemid')
             ->leftJoin('rboinventtables as c', 'b.itemid', '=', 'c.itemid')
-            ->leftJoin('inventitembarcodes as d', function($join) {
-                $join->on('c.itemid', '=', 'd.itemid')
-                     ->orOn('c.barcode', '=', 'd.ITEMBARCODE');
-            })
             ->where('c.itemdepartment', '=', 'REGULAR PRODUCT')
             ->whereNotNull('b.itemid')
             ->whereNotNull('c.itemid')
+            ->distinct() // FIXED: Add DISTINCT to prevent duplicates
             ->limit(1000) // Limit to prevent memory issues
             ->get();
 
