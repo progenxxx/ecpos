@@ -120,17 +120,39 @@ const categories = computed(() => {
 
 const filteredItems = computed(() => {
     if (!props.items || !Array.isArray(props.items)) return [];
-    
+
     let filtered = [...props.items];
 
-    // Search filter
+    // Search filter with prioritized matching
     if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase();
-        filtered = filtered.filter(item => 
-            item?.itemid?.toLowerCase().includes(query) ||
-            item?.itemname?.toLowerCase().includes(query) ||
-            item?.barcode?.toLowerCase().includes(query)
-        );
+        const query = searchQuery.value.toLowerCase().trim();
+
+        // Split search into exact matches and partial matches for better accuracy
+        const exactMatches = [];
+        const startsWithMatches = [];
+        const partialMatches = [];
+
+        filtered.forEach(item => {
+            const itemId = (item?.itemid || '').toLowerCase();
+            const itemName = (item?.itemname || '').toLowerCase();
+            const barcode = (item?.barcode || '').toLowerCase();
+
+            // Exact match has highest priority
+            if (itemId === query || itemName === query || barcode === query) {
+                exactMatches.push(item);
+            }
+            // Starts with match has second priority
+            else if (itemId.startsWith(query) || itemName.startsWith(query) || barcode.startsWith(query)) {
+                startsWithMatches.push(item);
+            }
+            // Contains match has lowest priority (word boundary preferred)
+            else if (itemId.includes(query) || itemName.includes(query) || barcode.includes(query)) {
+                partialMatches.push(item);
+            }
+        });
+
+        // Combine results with priority order
+        filtered = [...exactMatches, ...startsWithMatches, ...partialMatches];
     }
 
     // Category filter

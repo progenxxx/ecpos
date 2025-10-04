@@ -22,6 +22,12 @@ createInertiaApp({
     progress: {
         color: '#4B5563',
     },
+    onError: (error) => {
+        // Suppress 419 errors (CSRF token mismatch)
+        if (error.response?.status === 419) {
+            return false; // Prevent default error handling
+        }
+    },
 });
 
 // PWA

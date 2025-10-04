@@ -217,8 +217,8 @@ public function index()
 
     public function update(Request $request, string $itemid)
     {
-        // Determine if this is a Live Edit Mode request
-        $isLiveEditMode = $request->ajax() || $request->wantsJson() || $request->expectsJson();
+        // Determine if this is a Live Edit Mode request (but exclude Inertia requests)
+        $isLiveEditMode = ($request->ajax() || $request->wantsJson() || $request->expectsJson()) && !$request->header('X-Inertia');
 
         // Start comprehensive logging for Live Edit Mode
         if ($isLiveEditMode) {
