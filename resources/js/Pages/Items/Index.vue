@@ -68,6 +68,10 @@ const searchQuery = ref('');
 const selectedCategory = ref('');
 const selectedStatus = ref('');
 
+// Sorting state
+const sortField = ref('');
+const sortDirection = ref('asc'); // 'asc' or 'desc'
+
 // Props with proper validation and defaults
 const props = defineProps({
     items: {
@@ -123,13 +127,16 @@ const filteredItems = computed(() => {
 
     let filtered = [...props.items];
 
-    // Search filter with prioritized matching
+    // Search filter with prioritized matching and word boundary detection
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase().trim();
 
         // Split search into exact matches and partial matches for better accuracy
         const exactMatches = [];
-        const startsWithMatches = [];
+        const codeStartsWithMatches = [];
+        const nameStartsWithMatches = [];
+        const barcodeExactMatches = [];
+        const wordBoundaryMatches = [];
         const partialMatches = [];
 
         filtered.forEach(item => {
@@ -137,22 +144,45 @@ const filteredItems = computed(() => {
             const itemName = (item?.itemname || '').toLowerCase();
             const barcode = (item?.barcode || '').toLowerCase();
 
-            // Exact match has highest priority
-            if (itemId === query || itemName === query || barcode === query) {
+            // Priority 1: Exact match on CODE (itemid)
+            if (itemId === query) {
                 exactMatches.push(item);
             }
-            // Starts with match has second priority
-            else if (itemId.startsWith(query) || itemName.startsWith(query) || barcode.startsWith(query)) {
-                startsWithMatches.push(item);
+            // Priority 2: CODE starts with query (e.g., "FBC" matches "FBC-001")
+            else if (itemId.startsWith(query)) {
+                codeStartsWithMatches.push(item);
             }
-            // Contains match has lowest priority (word boundary preferred)
-            else if (itemId.includes(query) || itemName.includes(query) || barcode.includes(query)) {
+            // Priority 3: Exact barcode match
+            else if (barcode === query) {
+                barcodeExactMatches.push(item);
+            }
+            // Priority 4: Item name starts with query
+            else if (itemName.startsWith(query)) {
+                nameStartsWithMatches.push(item);
+            }
+            // Priority 5: Word boundary match (query appears as whole word)
+            else if (
+                new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(itemId) ||
+                new RegExp(`\\b${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(itemName) ||
+                barcode.startsWith(query)
+            ) {
+                wordBoundaryMatches.push(item);
+            }
+            // Priority 6: Contains match (only show if query is 3+ chars to avoid too many results)
+            else if (query.length >= 3 && (itemId.includes(query) || itemName.includes(query) || barcode.includes(query))) {
                 partialMatches.push(item);
             }
         });
 
         // Combine results with priority order
-        filtered = [...exactMatches, ...startsWithMatches, ...partialMatches];
+        filtered = [
+            ...exactMatches,
+            ...codeStartsWithMatches,
+            ...barcodeExactMatches,
+            ...nameStartsWithMatches,
+            ...wordBoundaryMatches,
+            ...partialMatches
+        ];
     }
 
     // Category filter
@@ -164,6 +194,32 @@ const filteredItems = computed(() => {
     if (selectedStatus.value !== '') {
         const status = selectedStatus.value === '1';
         filtered = filtered.filter(item => Boolean(item?.Activeondelivery) === status);
+    }
+
+    // Sorting
+    if (sortField.value) {
+        filtered.sort((a, b) => {
+            let aVal = a[sortField.value];
+            let bVal = b[sortField.value];
+
+            // Handle null/undefined values
+            if (aVal === null || aVal === undefined) aVal = '';
+            if (bVal === null || bVal === undefined) bVal = '';
+
+            // Convert to appropriate type for comparison
+            if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+            if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+
+            // Numeric comparison for price fields
+            if (['cost', 'price', 'manilaprice', 'mallprice', 'foodpandaprice', 'grabfoodprice', 'foodpandamallprice', 'grabfoodmallprice', 'moq'].includes(sortField.value)) {
+                aVal = Number(aVal) || 0;
+                bVal = Number(bVal) || 0;
+            }
+
+            if (aVal < bVal) return sortDirection.value === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortDirection.value === 'asc' ? 1 : -1;
+            return 0;
+        });
     }
 
     return filtered;
@@ -761,6 +817,18 @@ const handleCellKeyPress = (event, itemId, field) => {
     }
 };
 
+// Sort function
+const handleSort = (field) => {
+    if (sortField.value === field) {
+        // Toggle sort direction if clicking the same column
+        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
+    } else {
+        // New column, default to ascending
+        sortField.value = field;
+        sortDirection.value = 'asc';
+    }
+};
+
 // FIXED: Click outside handler for context menu
 const handleClickOutside = (event) => {
     if (showContextMenu.value) {
@@ -1218,18 +1286,102 @@ watch([searchQuery, selectedCategory, selectedStatus], () => {
                           class="form-checkbox h-4 w-4 text-blue-600"
                         >
                       </th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SRP</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Manila</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mall</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Foodpanda</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GrabFood</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FP Mall</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GF Mall</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" @click="handleSort('Activeondelivery')">
+                        <div class="flex items-center gap-1">
+                          Status
+                          <span v-if="sortField === 'Activeondelivery'" class="text-blue-600">
+                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" @click="handleSort('itemid')">
+                        <div class="flex items-center gap-1">
+                          Code
+                          <span v-if="sortField === 'itemid'" class="text-blue-600">
+                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" @click="handleSort('itemname')">
+                        <div class="flex items-center gap-1">
+                          Description
+                          <span v-if="sortField === 'itemname'" class="text-blue-600">
+                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" @click="handleSort('itemgroup')">
+                        <div class="flex items-center gap-1">
+                          Category
+                          <span v-if="sortField === 'itemgroup'" class="text-blue-600">
+                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" @click="handleSort('cost')">
+                        <div class="flex items-center gap-1">
+                          Cost
+                          <span v-if="sortField === 'cost'" class="text-blue-600">
+                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" @click="handleSort('price')">
+                        <div class="flex items-center gap-1">
+                          SRP
+                          <span v-if="sortField === 'price'" class="text-blue-600">
+                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" @click="handleSort('manilaprice')">
+                        <div class="flex items-center gap-1">
+                          Manila
+                          <span v-if="sortField === 'manilaprice'" class="text-blue-600">
+                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" @click="handleSort('mallprice')">
+                        <div class="flex items-center gap-1">
+                          Mall
+                          <span v-if="sortField === 'mallprice'" class="text-blue-600">
+                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" @click="handleSort('foodpandaprice')">
+                        <div class="flex items-center gap-1">
+                          Foodpanda
+                          <span v-if="sortField === 'foodpandaprice'" class="text-blue-600">
+                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" @click="handleSort('grabfoodprice')">
+                        <div class="flex items-center gap-1">
+                          GrabFood
+                          <span v-if="sortField === 'grabfoodprice'" class="text-blue-600">
+                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" @click="handleSort('foodpandamallprice')">
+                        <div class="flex items-center gap-1">
+                          FP Mall
+                          <span v-if="sortField === 'foodpandamallprice'" class="text-blue-600">
+                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none" @click="handleSort('grabfoodmallprice')">
+                        <div class="flex items-center gap-1">
+                          GF Mall
+                          <span v-if="sortField === 'grabfoodmallprice'" class="text-blue-600">
+                            {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                          </span>
+                        </div>
+                      </th>
                       <th v-if="isAdmin || isOpic" scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
