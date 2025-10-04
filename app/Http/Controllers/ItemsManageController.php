@@ -18,42 +18,122 @@ use Carbon\Carbon;
 
 class ItemsManageController extends Controller
 {
-    public function warehouse()
+    public function warehouse(Request $request)
     {
-        $rboinventitemretailgroups = DB::table('rboinventitemretailgroups')->get();
+        try {
+            $rboinventitemretailgroups = DB::table('rboinventitemretailgroups')->get();
 
-        $items = DB::table('inventtablemodules as a')
-        ->select(
-            'a.ITEMID as itemid',
-            'c.Activeondelivery as Activeondelivery',
-            'b.itemname as itemname',
-            'c.itemgroup as itemgroup',
-            'c.itemdepartment as specialgroup',
-            'c.production as production',
-            'c.moq as moq',
-            // Added default fields
-            'c.default1 as default1',
-            'c.default2 as default2',
-            'c.default3 as default3',
-            // Fixed: Added all required price columns for DataTable
-            DB::raw('CAST(a.priceincltax as float) as price'),
-            DB::raw('CAST(a.manilaprice as float) as manilaprice'),
-            DB::raw('CAST(a.grabfood as float) as grabfoodprice'),
-            DB::raw('CAST(a.foodpanda as float) as foodpandaprice'),
-            DB::raw('CAST(a.mallprice as float) as mallprice'),
-            DB::raw('CAST(a.price as float) as cost'),
-            DB::raw("CASE WHEN d.ITEMBARCODE <> '' THEN d.itembarcode ELSE 'N/A' END as barcode")
-        )
-        ->leftJoin('inventtables as b', 'a.ITEMID', '=', 'b.itemid')
-        ->leftJoin('rboinventtables as c', 'b.itemid', '=', 'c.itemid')
-        ->leftJoin('inventitembarcodes as d', 'c.barcode', '=', 'd.ITEMBARCODE')
-        ->where('c.itemdepartment', '=', 'NON PRODUCT') 
-        ->get();
+            // Build query with DISTINCT to prevent duplicates
+            $query = DB::table('inventtablemodules as a')
+                ->select(
+                    'a.ITEMID as itemid',
+                    'c.Activeondelivery as Activeondelivery',
+                    'b.itemname as itemname',
+                    'c.itemgroup as itemgroup',
+                    'c.itemdepartment as specialgroup',
+                    'c.production as production',
+                    'c.moq as moq',
+                    'c.default1 as default1',
+                    'c.default2 as default2',
+                    'c.default3 as default3',
+                    DB::raw('CAST(a.priceincltax as float) as price'),
+                    DB::raw('CAST(COALESCE(a.manilaprice, 0) as float) as manilaprice'),
+                    DB::raw('CAST(COALESCE(a.grabfood, 0) as float) as grabfoodprice'),
+                    DB::raw('CAST(COALESCE(a.foodpanda, 0) as float) as foodpandaprice'),
+                    DB::raw('CAST(COALESCE(a.mallprice, 0) as float) as mallprice'),
+                    DB::raw('CAST(COALESCE(a.foodpandamall, 0) as float) as foodpandamallprice'),
+                    DB::raw('CAST(COALESCE(a.grabfoodmall, 0) as float) as grabfoodmallprice'),
+                    DB::raw('CAST(a.price as float) as cost'),
+                    // FIXED: Use only rboinventtables.barcode to prevent duplicates
+                    DB::raw("COALESCE(c.barcode, 'N/A') as barcode")
+                )
+                ->leftJoin('inventtables as b', 'a.ITEMID', '=', 'b.itemid')
+                ->leftJoin('rboinventtables as c', 'b.itemid', '=', 'c.itemid')
+                ->where('c.itemdepartment', '=', 'NON PRODUCT')
+                ->whereNotNull('b.itemid')
+                ->whereNotNull('c.itemid')
+                ->distinct(); // FIXED: Add DISTINCT to ensure no duplicates
 
-        return Inertia::render('Items/Index', [
-            'items' => $items, 
-            'rboinventitemretailgroups' => $rboinventitemretailgroups
-        ]);
+            // Backend search functionality
+            if ($request->has('search') && !empty($request->search)) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('a.ITEMID', 'LIKE', '%' . $searchTerm . '%')
+                      ->orWhere('b.itemname', 'LIKE', '%' . $searchTerm . '%')
+                      ->orWhere('c.barcode', 'LIKE', '%' . $searchTerm . '%');
+                });
+            }
+
+            // Backend category filter
+            if ($request->has('category') && !empty($request->category)) {
+                $query->where('c.itemgroup', '=', $request->category);
+            }
+
+            // Backend status filter
+            if ($request->has('status') && $request->status !== '') {
+                $query->where('c.Activeondelivery', '=', $request->status);
+            }
+
+            // Backend sorting
+            $sortField = $request->get('sort_field', 'itemid');
+            $sortDirection = $request->get('sort_direction', 'asc');
+
+            // Map frontend field names to database columns
+            $sortMapping = [
+                'itemid' => 'a.ITEMID',
+                'itemname' => 'b.itemname',
+                'itemgroup' => 'c.itemgroup',
+                'cost' => 'a.price',
+                'price' => 'a.priceincltax',
+                'manilaprice' => 'a.manilaprice',
+                'mallprice' => 'a.mallprice',
+                'foodpandaprice' => 'a.foodpanda',
+                'grabfoodprice' => 'a.grabfood',
+                'foodpandamallprice' => 'a.foodpandamall',
+                'grabfoodmallprice' => 'a.grabfoodmall',
+                'moq' => 'c.moq',
+                'Activeondelivery' => 'c.Activeondelivery'
+            ];
+
+            $dbSortField = $sortMapping[$sortField] ?? 'a.ITEMID';
+            $query->orderBy($dbSortField, $sortDirection);
+
+            $items = $query->get();
+
+            // Log the query for debugging
+            \Log::info('Warehouse query executed', [
+                'total_items_found' => $items->count(),
+                'search_term' => $request->search ?? 'none',
+                'category' => $request->category ?? 'all',
+                'status' => $request->status ?? 'all',
+                'sort_field' => $sortField,
+                'sort_direction' => $sortDirection
+            ]);
+
+            return Inertia::render('Items/Index', [
+                'items' => $items,
+                'rboinventitemretailgroups' => $rboinventitemretailgroups,
+                'filters' => [
+                    'search' => $request->search ?? '',
+                    'category' => $request->category ?? '',
+                    'status' => $request->status ?? '',
+                    'sort_field' => $sortField,
+                    'sort_direction' => $sortDirection
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in warehouse index', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return Inertia::render('Items/Index', [
+                'items' => collect([]),
+                'rboinventitemretailgroups' => collect([]),
+                'error' => 'Error loading warehouse items: ' . $e->getMessage()
+            ]);
+        }
     }
 
     public function store(Request $request)

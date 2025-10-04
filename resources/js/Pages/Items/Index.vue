@@ -737,8 +737,12 @@ const handleSort = (field) => {
 };
 
 // FIXED: Function to reload items from backend with current filters
+// Detects if we're on warehouse or items page based on URL
 const reloadItems = () => {
-    router.get('/items', {
+    const currentPath = window.location.pathname;
+    const endpoint = currentPath.includes('warehouse') ? '/warehouse' : '/items';
+
+    router.get(endpoint, {
         search: searchQuery.value,
         category: selectedCategory.value,
         status: selectedStatus.value,
