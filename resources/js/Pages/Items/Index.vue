@@ -131,7 +131,8 @@ const filteredItems = computed(() => {
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase().trim();
 
-        // Split search into exact matches and partial matches for better accuracy
+        // Use a Set to track matched item IDs to prevent duplicates
+        const matchedIds = new Set();
         const exactMatches = [];
         const codeStartsWithMatches = [];
         const nameStartsWithMatches = [];
@@ -143,22 +144,32 @@ const filteredItems = computed(() => {
             const itemId = (item?.itemid || '').toLowerCase();
             const itemName = (item?.itemname || '').toLowerCase();
             const barcode = (item?.barcode || '').toLowerCase();
+            const uniqueKey = item?.itemid; // Use original itemid as unique key
+
+            // Skip if already matched
+            if (matchedIds.has(uniqueKey)) {
+                return;
+            }
 
             // Priority 1: Exact match on CODE (itemid)
             if (itemId === query) {
                 exactMatches.push(item);
+                matchedIds.add(uniqueKey);
             }
             // Priority 2: CODE starts with query (e.g., "FBC" matches "FBC-001")
             else if (itemId.startsWith(query)) {
                 codeStartsWithMatches.push(item);
+                matchedIds.add(uniqueKey);
             }
             // Priority 3: Exact barcode match
             else if (barcode === query) {
                 barcodeExactMatches.push(item);
+                matchedIds.add(uniqueKey);
             }
             // Priority 4: Item name starts with query
             else if (itemName.startsWith(query)) {
                 nameStartsWithMatches.push(item);
+                matchedIds.add(uniqueKey);
             }
             // Priority 5: Word boundary match (query appears as whole word)
             else if (
@@ -167,14 +178,16 @@ const filteredItems = computed(() => {
                 barcode.startsWith(query)
             ) {
                 wordBoundaryMatches.push(item);
+                matchedIds.add(uniqueKey);
             }
             // Priority 6: Contains match (only show if query is 3+ chars to avoid too many results)
             else if (query.length >= 3 && (itemId.includes(query) || itemName.includes(query) || barcode.includes(query))) {
                 partialMatches.push(item);
+                matchedIds.add(uniqueKey);
             }
         });
 
-        // Combine results with priority order
+        // Combine results with priority order (no duplicates)
         filtered = [
             ...exactMatches,
             ...codeStartsWithMatches,
