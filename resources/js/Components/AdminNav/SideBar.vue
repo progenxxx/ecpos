@@ -20,7 +20,7 @@ import BatchCount from "@/Components/Svgs/batchcount.vue";
 import Tag from "@/Components/Svgs/Discount-tag.vue";
 import Version from "@/Components/Svgs/Version.vue";
 
-import { ref, computed, defineProps, toRefs } from 'vue';
+import { ref, computed, defineProps, toRefs, onMounted } from 'vue';
 
 const props = defineProps({
     isSidebarOpen: {
@@ -42,6 +42,23 @@ const emit = defineEmits();
 const logout = () => {
     emit('logout');
 };
+
+// Snowflake animation
+const snowflakes = ref([]);
+
+onMounted(() => {
+    // Generate random snowflakes
+    for (let i = 0; i < 30; i++) {
+        snowflakes.value.push({
+            id: i,
+            left: Math.random() * 100,
+            animationDelay: Math.random() * 5,
+            animationDuration: 5 + Math.random() * 10,
+            size: 5 + Math.random() * 10,
+            opacity: 0.3 + Math.random() * 0.5
+        });
+    }
+});
 </script>
 
 <template>
@@ -53,10 +70,53 @@ const logout = () => {
     ></div>
 
     <div :class="[
-        'rounded-tr-3xl rounded-br-3xl p-4 bg-navy top-0 bottom-0 left-0 w-28 text-black font-bold absolute z-20 pt-12 pb-2 flex flex-col justify-between transition-all duration-500 ease-in-out px-2',
+        'rounded-tr-3xl rounded-br-3xl p-4 bg-navy top-0 bottom-0 left-0 w-28 text-black font-bold absolute z-20 pt-12 pb-2 flex flex-col justify-between transition-all duration-500 ease-in-out px-2 overflow-hidden',
         (isSidebarOpen ? 'translate-x-0' : 'translate-x-[-100%]')
     ]" v-if="$page.props.auth.user.role === 'SUPERADMIN' || $page.props.auth.user.role === 'DISPATCH' || $page.props.auth.user.role === 'ADMIN' || $page.props.auth.user.role === 'STORE' || $page.props.auth.user.role === 'OPIC' || $page.props.auth.user.role === 'PLANNING'" >
-        <ul class="flex justify-center flex-col items-center gap-3 text-xs">
+
+        <!-- Christmas Background Pattern with opacity -->
+        <div class="absolute inset-0 opacity-15 pointer-events-none z-0">
+            <!-- Christmas tree pattern -->
+            <div class="absolute top-10 left-1/2 -translate-x-1/2 w-16 h-20">
+                <svg viewBox="0 0 100 120" class="w-full h-full text-green-400 opacity-50">
+                    <polygon points="50,10 20,50 30,50 10,80 40,80 25,110 75,110 60,80 90,80 70,50 80,50" fill="currentColor"/>
+                    <rect x="45" y="110" width="10" height="10" fill="#8B4513"/>
+                </svg>
+            </div>
+
+            <!-- Decorative snowflakes pattern -->
+            <svg class="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <pattern id="christmas-pattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+                        <circle cx="20" cy="20" r="2" fill="white" opacity="0.3"/>
+                        <circle cx="60" cy="40" r="1.5" fill="white" opacity="0.4"/>
+                        <circle cx="40" cy="70" r="2.5" fill="white" opacity="0.3"/>
+                        <circle cx="80" cy="80" r="1" fill="white" opacity="0.5"/>
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#christmas-pattern)"/>
+            </svg>
+        </div>
+
+        <!-- Animated Snowflakes -->
+        <div class="absolute inset-0 pointer-events-none overflow-hidden z-0">
+            <div
+                v-for="snowflake in snowflakes"
+                :key="snowflake.id"
+                class="absolute text-white snowflake"
+                :style="{
+                    left: snowflake.left + '%',
+                    animationDelay: snowflake.animationDelay + 's',
+                    animationDuration: snowflake.animationDuration + 's',
+                    fontSize: snowflake.size + 'px',
+                    opacity: snowflake.opacity
+                }"
+            >
+                ❄
+            </div>
+        </div>
+
+        <ul class="flex justify-center flex-col items-center gap-3 text-xs relative z-10">
             <li class="flex justify-center flex-col items-center mb-5 p-3 text-white text-lg font-sans font-extrabold rounded-md w-full">
                 ADMIN
             </li>
@@ -145,3 +205,39 @@ const logout = () => {
         </ul>
     </div>
 </template>
+
+<style scoped>
+@keyframes snowfall {
+    0% {
+        transform: translateY(-10px) translateX(0);
+    }
+    50% {
+        transform: translateY(50vh) translateX(20px);
+    }
+    100% {
+        transform: translateY(100vh) translateX(0);
+    }
+}
+
+.snowflake {
+    animation: snowfall linear infinite;
+    will-change: transform;
+}
+
+/* Crystal/sparkle effect */
+@keyframes sparkle {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.2);
+        filter: brightness(1.5);
+    }
+}
+
+.snowflake:nth-child(3n) {
+    animation: snowfall linear infinite, sparkle 2s ease-in-out infinite;
+}
+</style>
