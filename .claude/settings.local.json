@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/MARK ADS/fs-branch2/backup/ECPOS/ECPOS/app/src/main/java/com/example/possystembw/ui/**)",
+      "Read(//d/MARK ADS/fs-branch2/backup/ECPOS/ECPOS/app/src/main/java/com/example/possystembw/data/**)",
+      "Read(//d/MARK ADS/fs-branch2/backup/ECPOS/ECPOS/app/src/main/java/com/example/possystembw/DAO/**)",
+      "Read(//d/MARK ADS/fs-branch2/backup/ECPOS/ECPOS/**)",
+      "Read(//d/MARK ADS/fs-branch2/backup/ECPOS/ECPOS/app/src/main/java/com/example/possystembw/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

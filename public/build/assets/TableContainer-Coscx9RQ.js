@@ -1,0 +1,1 @@
+import{_ as o}from"./_plugin-vue_export-helper-DlAUqK2U.js";import{o as r,e as t,r as s}from"./app-Brw7jJEf.js";const d={},a={class:"shadow-md shadow-gray-400 mx-1 sm:mx-2 mt-2 rounded-md overflow-hidden border border-gray-200 pt-3 sm:pt-4 md:pt-5 bg-white"};function n(e,m){return r(),t("div",a,[s(e.$slots,"default")])}const i=o(d,[["render",n]]);export{i as T};

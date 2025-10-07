@@ -247,6 +247,16 @@ let topBottomProductsChart = null;
 // Loading states
 const isLoadingMetrics = ref(false);
 const isLoadingCharts = ref(false);
+const isLoadingMonthlySales = ref(false);
+const isLoadingTopWastes = ref(false);
+const isLoadingTopBottomProducts = ref(false);
+const isLoadingTransactionSales = ref(false);
+const isLoadingSalesByHour = ref(false);
+const isLoadingTopStores = ref(false);
+const isLoadingAdvancedAnalysis = ref(false);
+const isLoadingReceivedDelivery = ref(false);
+const isLoadingSalesByCategory = ref(false);
+const isLoadingTopVarianceStores = ref(false);
 
 // Set default date range to last 30 days to ensure we have data
 const getDefaultDateRange = () => {
@@ -461,10 +471,11 @@ const initializePaymentChart = () => {
 
 const fetchTopBottomProducts = async () => {
   try {
+    isLoadingTopBottomProducts.value = true;
     const payload = {
       start_date: selectedDateRange.value.start_date,
       end_date: selectedDateRange.value.end_date,
-      stores: selectedStores.value.map(store => 
+      stores: selectedStores.value.map(store =>
           store.NAME || (typeof store === 'object' ? store.NAME : store)
       ),
       product_type: selectedProductType.value
@@ -481,11 +492,11 @@ const fetchTopBottomProducts = async () => {
       throw new Error(`API returned status: ${response.status}`);
     }
 
-    const topProducts = Array.isArray(response?.data?.topProducts) 
-      ? response.data.topProducts 
+    const topProducts = Array.isArray(response?.data?.topProducts)
+      ? response.data.topProducts
       : [];
-    const bottomProducts = Array.isArray(response?.data?.bottomProducts) 
-      ? response.data.bottomProducts 
+    const bottomProducts = Array.isArray(response?.data?.bottomProducts)
+      ? response.data.bottomProducts
       : [];
     const summary = response?.data?.summary || {};
 
@@ -499,6 +510,8 @@ const fetchTopBottomProducts = async () => {
   } catch (error) {
     console.error('Error fetching top/bottom products:', error);
     initializeTopBottomProductsChart([], [], {});
+  } finally {
+    isLoadingTopBottomProducts.value = false;
   }
 };
 
@@ -697,10 +710,11 @@ const fetchMetrics = async () => {
 
 const fetchMonthlySales = async () => {
   try {
+    isLoadingMonthlySales.value = true;
     const payload = {
       start_date: selectedDateRange.value.start_date,
       end_date: selectedDateRange.value.end_date,
-      stores: selectedStores.value.map(store => 
+      stores: selectedStores.value.map(store =>
         typeof store === 'object' ? store.NAME : store
       )
     };
@@ -710,6 +724,8 @@ const fetchMonthlySales = async () => {
   } catch (error) {
     console.error('Error fetching monthly sales:', error);
     initializeMonthlySalesChart([]);
+  } finally {
+    isLoadingMonthlySales.value = false;
   }
 };
 
@@ -775,30 +791,33 @@ const initializeMonthlySalesChart = (monthlySalesData) => {
 
 const fetchTopWastes = async () => {
   try {
+    isLoadingTopWastes.value = true;
     const payload = {
       start_date: selectedDateRange.value.start_date,
       end_date: selectedDateRange.value.end_date,
-      stores: selectedStores.value.map(store => 
+      stores: selectedStores.value.map(store =>
         typeof store === 'object' ? store.NAME : store
       )
     };
 
     const response = await axios.post(route('get.top.wastes'), payload);
-    
+
     console.log('Waste Analysis Response:', response.data);
 
-    const topWastesOverall = Array.isArray(response?.data?.topWastesOverall) 
-      ? response.data.topWastesOverall 
+    const topWastesOverall = Array.isArray(response?.data?.topWastesOverall)
+      ? response.data.topWastesOverall
       : [];
-      
-    const wasteSummaryByType = Array.isArray(response?.data?.wasteSummaryByType) 
-      ? response.data.wasteSummaryByType 
+
+    const wasteSummaryByType = Array.isArray(response?.data?.wasteSummaryByType)
+      ? response.data.wasteSummaryByType
       : [];
 
     initializeTopWasteChart(topWastesOverall, wasteSummaryByType);
   } catch (error) {
     console.error('Error fetching top wastes:', error);
     initializeTopWasteChart([], []);
+  } finally {
+    isLoadingTopWastes.value = false;
   }
 };
 
@@ -1863,19 +1882,33 @@ onUnmounted(() => {
                             </select>
                         </div>
                     </div>
-                    <div class="h-[500px] relative z-10">
+                    <div class="h-[500px] relative">
+                        <!-- Loading Overlay -->
+                        <div v-if="isLoadingTopBottomProducts" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-30 flex items-center justify-center rounded-xl">
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="w-10 h-10 border-3 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+                                <span class="text-sm text-gray-600">Loading products...</span>
+                            </div>
+                        </div>
                         <canvas ref="topBottomProductsRef" class="w-full h-full"></canvas>
                     </div>
                 </div>
 
-                <!-- Monthly Sales and Wastes Sections would follow similar design -->
+                <!-- Monthly Sales and Wastes Sections -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.02] transition-all duration-300">
                         <div class="absolute inset-0 opacity-10 bg-teal-100"></div>
                         <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center relative z-10">
                             Monthly Sales Trend
                         </h3>
-                        <div class="h-[400px] relative z-10">
+                        <div class="h-[400px] relative">
+                            <!-- Loading Overlay -->
+                            <div v-if="isLoadingMonthlySales" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-30 flex items-center justify-center rounded-xl">
+                                <div class="flex flex-col items-center gap-2">
+                                    <div class="w-10 h-10 border-3 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+                                    <span class="text-sm text-gray-600">Loading sales...</span>
+                                </div>
+                            </div>
                             <canvas ref="monthlySalesRef" class="w-full h-full"></canvas>
                         </div>
                     </div>
@@ -1888,7 +1921,14 @@ onUnmounted(() => {
                             </svg>
                             Top Waste Items (Stock Counting Analysis)
                         </h3>
-                        <div class="h-[400px] relative z-10">
+                        <div class="h-[400px] relative">
+                            <!-- Loading Overlay -->
+                            <div v-if="isLoadingTopWastes" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-30 flex items-center justify-center rounded-xl">
+                                <div class="flex flex-col items-center gap-2">
+                                    <div class="w-10 h-10 border-3 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+                                    <span class="text-sm text-gray-600">Loading wastes...</span>
+                                </div>
+                            </div>
                             <canvas ref="topWasteRef" class="w-full h-full"></canvas>
                         </div>
                     </div>
