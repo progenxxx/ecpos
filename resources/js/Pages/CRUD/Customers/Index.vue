@@ -9,6 +9,7 @@ import Delete from "@/Components/CRUD/Customers/Delete.vue";
 import More from "@/Components/CRUD/Customers/More.vue";
 import PrimaryButton from "@/Components/Buttons/PrimaryButton.vue";
 import DangerButton from "@/Components/Buttons/DangerButton.vue";
+import TransparentButton from "@/Components/Buttons/TransparentButton.vue";
 import Main from "@/Layouts/AdminPanel.vue";
 import Excel from "@/Components/Exports/Excel.vue";
 
@@ -82,6 +83,7 @@ const options = {
     scrollX: true,
     scrollY: "60vh",
     scrollCollapse: true,
+    responsive: true,
 };
 
 
@@ -176,78 +178,108 @@ const navigateToCustomerLedger = (accountnum) => {
         </template>
 
         <template v-slot:main>
-
             <TableContainer>
-                
-                <div class="absolute adjust">
-                    <div class="flex justify-start items-center">
-
-                        <PrimaryButton
-                        type="button"
-                        @click="toggleCreateModal"
-                        class="m-6 bg-navy"
-                        >
-                        <Add class="h-4" />
-                        </PrimaryButton>
-
-                        <Excel
-                            :data="customers"
-                            :headers="['ACCOUNTNUM', 'NAME', 'ADDRESS', 'PHONE', 'EMAIL', 'GENDER']"
-                            :row-name-props="['accountnum', 'name', 'address', 'phone', 'email', 'gender']"
-                            class="ml-4 relative display"
-                        />
-
+                <!-- Header with Actions -->
+                <div class="px-3 sm:px-4 md:px-6 pb-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Customers</h2>
+                        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                            <PrimaryButton
+                                type="button"
+                                @click="toggleCreateModal"
+                                class="bg-navy hover:bg-navy-dark flex-1 sm:flex-none"
+                            >
+                                <Add class="h-3 sm:h-4" />
+                                <span class="hidden sm:inline ml-2">Add Customer</span>
+                            </PrimaryButton>
+                            <Excel
+                                :data="customers"
+                                :headers="['ACCOUNTNUM', 'NAME', 'ADDRESS', 'PHONE', 'EMAIL', 'GENDER']"
+                                :row-name-props="['accountnum', 'name', 'address', 'phone', 'email', 'gender']"
+                                class="flex-1 sm:flex-none"
+                            />
+                        </div>
                     </div>
                 </div>
 
-                <DataTable :data="customers" :columns="columns" class="w-full relative display" :options="options" >
-                    <template #action="data">
+                <!-- Mobile Card View -->
+                <div class="lg:hidden px-3 sm:px-4 space-y-3 pb-4 max-h-[70vh] overflow-y-auto">
+                    <div
+                        v-for="customer in customers"
+                        :key="customer.accountnum"
+                        class="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900 text-sm sm:text-base mb-1">{{ customer.name }}</h3>
+                                <p class="text-xs sm:text-sm text-gray-500 font-mono">{{ customer.accountnum }}</p>
+                            </div>
+                            <div class="flex gap-2 ml-2">
+                                <button
+                                    @click="toggleUpdateModal(
+                                        customer.accountnum, customer.name, customer.address, customer.phone,
+                                        customer.currency, customer.blocked, customer.creditmax, customer.country,
+                                        customer.zipcode, customer.state, customer.email, customer.cellularphone,
+                                        customer.gender)"
+                                    class="text-blue-600 hover:text-blue-800 p-1"
+                                    title="Edit"
+                                >
+                                    <editblue class="h-5 w-5 sm:h-6 sm:w-6" />
+                                </button>
+                                <button
+                                    @click="navigateToCustomerLedger(customer.accountnum)"
+                                    class="text-gray-600 hover:text-gray-800 p-1"
+                                    title="View Ledger"
+                                >
+                                    <moreblue class="h-5 w-5 sm:h-6 sm:w-6" />
+                                </button>
+                            </div>
+                        </div>
 
-                        <div class="flex justify-start">
-                            <TransparentButton type="button" @click="toggleUpdateModal(
-                                data.cellData.accountnum, data.cellData.name, data.cellData.address, data.cellData.phone,
-                                data.cellData.currency, data.cellData.blocked, data.cellData.creditmax, data.cellData.country,
-                                data.cellData.zipcode, data.cellData.state, data.cellData.email, data.cellData.cellularphone,
-                                data.cellData.gender)" class="me-1">
-                                <editblue class="h-6 cursor-pointer"></editblue>
-                            </TransparentButton>
+                        <div class="space-y-1.5 text-xs sm:text-sm">
+                            <div class="flex" v-if="customer.address">
+                                <span class="text-gray-500 min-w-[70px]">Address:</span>
+                                <span class="text-gray-900 flex-1 break-words">{{ customer.address }}</span>
+                            </div>
+                            <div class="flex" v-if="customer.phone">
+                                <span class="text-gray-500 min-w-[70px]">Phone:</span>
+                                <span class="text-gray-900">{{ customer.phone }}</span>
+                            </div>
+                            <div class="flex" v-if="customer.email">
+                                <span class="text-gray-500 min-w-[70px]">Email:</span>
+                                <span class="text-gray-900 break-words">{{ customer.email }}</span>
+                            </div>
+                            <div class="flex" v-if="customer.gender">
+                                <span class="text-gray-500 min-w-[70px]">Gender:</span>
+                                <span class="text-gray-900">{{ customer.gender }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                            <!-- <TransparentButton :url="route('customer.index', { accountnum: form.accountnum })">
-                                <moreblue class="h-6 ml-5 cursor-pointer"></moreblue>
-                            </TransparentButton> -->
-                                <!-- <TransparentButton @click="redirectToLedger(accountNumber)">
-                                    <moreblue class="h-6 ml-5 cursor-pointer" />
-                                </TransparentButton> -->
-                                <!-- <TransparentButton
-                                    type="button"
-                                    @click="
-                                    toggleMoreModal(
-                                        data.cellData.accountnum
-                                    )
-                                    "
-                                    class="ml-5 cursor-pointer"
-                                    >
-                                    <moreblue class="h-6"></moreblue>
-                                </TransparentButton> -->
+                <!-- Desktop Table View -->
+                <div class="hidden lg:block overflow-x-auto">
+                    <DataTable :data="customers" :columns="columns" class="w-full relative display" :options="options">
+                        <template #action="data">
+                            <div class="flex justify-start">
+                                <TransparentButton type="button" @click="toggleUpdateModal(
+                                    data.cellData.accountnum, data.cellData.name, data.cellData.address, data.cellData.phone,
+                                    data.cellData.currency, data.cellData.blocked, data.cellData.creditmax, data.cellData.country,
+                                    data.cellData.zipcode, data.cellData.state, data.cellData.email, data.cellData.cellularphone,
+                                    data.cellData.gender)" class="me-1">
+                                    <editblue class="h-6 cursor-pointer"></editblue>
+                                </TransparentButton>
 
                                 <TransparentButton
-                                class="ml-5 cursor-pointer"
-                                @click="navigateToCustomerLedger(data.cellData.accountnum)"
+                                    class="ml-5 cursor-pointer"
+                                    @click="navigateToCustomerLedger(data.cellData.accountnum)"
                                 >
-                                <moreblue class="h-6"></moreblue>
+                                    <moreblue class="h-6"></moreblue>
                                 </TransparentButton>
                             </div>
-
-
-                        <!-- <DangerButton type="button" @click="toggleDeleteModal(data.cellData.accountnum)">
-                            Delete
-                        </DangerButton> -->
-
-                        <!-- <button class=" ms-2 p-10px inline-flex items-center justify-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-500 active:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150"  @click="navigateToCustomerLedger('/customerledgerentries/', { accountnum: data.cellData.accountnum })">MORE</button> -->
-
-                    </template>
-                </DataTable>
-                
+                        </template>
+                    </DataTable>
+                </div>
             </TableContainer>
         </template>
     </Main>

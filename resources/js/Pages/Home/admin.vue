@@ -244,6 +244,10 @@ const topBottomProductsRef = ref(null);
 let paymentChart = null;
 let topBottomProductsChart = null;
 
+// Loading states
+const isLoadingMetrics = ref(false);
+const isLoadingCharts = ref(false);
+
 // Set default date range to last 30 days to ensure we have data
 const getDefaultDateRange = () => {
   const today = new Date();
@@ -662,12 +666,13 @@ const initializeTopBottomProductsChart = (topProducts, bottomProducts, summary =
 
 const fetchMetrics = async () => {
   try {
+    isLoadingMetrics.value = true;
     console.log('Selected Stores:', selectedStores.value);
-    
+
     const payload = {
       start_date: selectedDateRange.value.start_date,
       end_date: selectedDateRange.value.end_date,
-      stores: selectedStores.value.map(store => 
+      stores: selectedStores.value.map(store =>
         typeof store === 'object' ? store.NAME : store
       )
     };
@@ -675,9 +680,9 @@ const fetchMetrics = async () => {
     console.log('Payload for metrics:', payload);
 
     const response = await axios.post(route('get.metrics'), payload);
-    
+
     console.log('Metrics response:', response.data);
-    
+
     localMetrics.value = response.data || props.metrics;
     initializePaymentChart();
   } catch (error) {
@@ -685,6 +690,8 @@ const fetchMetrics = async () => {
     // Fallback to props.metrics if request fails
     localMetrics.value = props.metrics;
     initializePaymentChart();
+  } finally {
+    isLoadingMetrics.value = false;
   }
 };
 
@@ -1690,144 +1697,153 @@ onUnmounted(() => {
                     <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                         <!-- Date Range and Welcome Section -->
                         <div class="flex flex-col w-full md:w-auto">
-                            <div class="flex items-center space-x-4">
-                                <h1 
-                                    class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-3 animate-pulse-slow"
-                                >
-                                    Welcome back, {{ username }}! 👋
-                                </h1>
-                                <div class="flex space-x-4">
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between w-full gap-4">
+                                <!-- Welcome Message - Simpler, cleaner style -->
+                                <div>
+                                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-1">
+                                        Welcome back, <span class="text-blue-600">{{ username }}!</span>
+                                    </h1>
+                                    <p class="text-sm text-gray-500">Track your sales, analyze performance, and manage your business</p>
+                                </div>
+
+                                <!-- Date Range Controls - Compact design -->
+                                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
                                     <div class="flex flex-col">
-                                        <label class="text-sm font-medium text-gray-600 mb-1">Start Date</label>
-                                        <input 
-                                            type="date" 
-                                            v-model="selectedDateRange.start_date" 
-                                            class="border-2 border-blue-200 rounded-xl px-4 py-2 focus:ring-4 focus:ring-blue-300/50 transition-all duration-300"
+                                        <label class="text-xs font-medium text-gray-500 mb-1">Start Date</label>
+                                        <input
+                                            type="date"
+                                            v-model="selectedDateRange.start_date"
+                                            class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                             :class="{'border-red-500': dateRangeError}"
                                         >
                                     </div>
                                     <div class="flex flex-col">
-                                        <label class="text-sm font-medium text-gray-600 mb-1">End Date</label>
-                                        <input 
-                                            type="date" 
-                                            v-model="selectedDateRange.end_date" 
-                                            class="border-2 border-blue-200 rounded-xl px-4 py-2 focus:ring-4 focus:ring-blue-300/50 transition-all duration-300"
+                                        <label class="text-xs font-medium text-gray-500 mb-1">End Date</label>
+                                        <input
+                                            type="date"
+                                            v-model="selectedDateRange.end_date"
+                                            class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                             :class="{'border-red-500': dateRangeError}"
                                         >
                                     </div>
                                 </div>
                             </div>
-                            <!-- Error Message with Animation -->
-                            <div 
-                                v-if="dateRangeError" 
-                                class="text-red-500 text-xs mt-2 flex items-center space-x-2 animate-bounce"
+
+                            <!-- Error Message -->
+                            <div
+                                v-if="dateRangeError"
+                                class="text-red-500 text-xs mt-2 flex items-center gap-1"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                                 </svg>
                                 <span>{{ dateRangeError }}</span>
                             </div>
                         </div>
 
-                        <!-- Store Multi-Select with Enhanced Design -->
-                        <div class="w-full md:w-auto">
-                            <label class="block text-sm font-medium text-gray-600 mb-1">Stores</label>
+                        <!-- Store Multi-Select - Cleaner design -->
+                        <div class="w-full lg:w-auto">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Filter by Stores</label>
                             <MultiSelectDropdown
                                 :modelValue="selectedStores"
                                 @update:modelValue="selectedStores = $event"
                                 :options="stores"
                                 :multiple="true"
-                                class="w-full md:w-64"
+                                class="w-full lg:w-64"
                             />
                         </div>
                     </div>
                 </div>
 
-                <!-- Metrics Grid with Enhanced Hover and Transition Effects -->
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <TransitionGroup enter-active-class="transition-all duration-700 ease-out" enter-from-class="opacity-0 translate-y-10" enter-to-class="opacity-100 translate-y-0">
-                        <div v-for="(card, index) in metricsCards" :key="card.title" class="transform transition-all duration-300 hover:-translate-y-2 hover:scale-105 metric-card">
-                            <div class="bg-white/90 rounded-3xl shadow-xl border border-blue-100/50 p-6 space-y-4 relative overflow-hidden group">
-                                <!-- Gradient Background Overlay -->
-                                <div class="absolute inset-0 opacity-20 group-hover:opacity-30 transition-all duration-300" :style="{background: `linear-gradient(135deg, ${card.color}, transparent)`}"></div>
-                                
-                                <div class="flex justify-between items-center relative z-10">
-                                    <div :class="[card.bgColor, 'p-3 rounded-xl shadow-md transform transition-all group-hover:rotate-12']">
-                                        <component :is="card.icon" :class="[card.color, 'w-7 h-7']" />
-                                    </div>
-                                </div>
-                                <div class="relative z-10">
-                                    <p class="text-xs uppercase tracking-wider text-gray-500 mb-2">
-                                        {{ card.title }}
-                                    </p>
-                                    <p :class="[card.color, 'text-3xl font-bold']">
-                                        {{ card.value }}
-                                    </p>
-                                    <p class="text-sm text-gray-400 mt-2">
-                                        {{ card.description }}
-                                    </p>
-                                </div>
-                                <!-- Bubble Hover Effect -->
-                                <div class="absolute top-0 left-0 w-24 h-24 bg-opacity-20 rounded-full bg-blue-300 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+                <!-- Metrics Grid - Clean, minimal design like dashboard.png -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                    <div v-for="(card, index) in metricsCards" :key="card.title" class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 hover:shadow-md transition-shadow duration-200 relative">
+                        <!-- Loading Overlay -->
+                        <div v-if="isLoadingMetrics" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-20 flex items-center justify-center rounded-xl">
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="w-8 h-8 border-3 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+                                <span class="text-xs text-gray-500">Loading...</span>
                             </div>
                         </div>
-                    </TransitionGroup>
+
+                        <div class="flex items-start justify-between mb-3">
+                            <div :class="[card.bgColor, 'p-2.5 rounded-lg']">
+                                <component :is="card.icon" :class="[card.color, 'w-5 h-5 md:w-6 md:h-6']" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                                {{ card.title }}
+                            </p>
+                            <p class="text-xl md:text-2xl font-bold text-gray-800 mb-1">
+                                {{ card.value }}
+                            </p>
+                            <p class="text-xs text-gray-400">
+                                {{ card.description }}
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Charts and Announcements Grid -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Payment Methods Chart with Modern Design -->
-                    <div class="bg-white/80  rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.02] transition-all duration-300">
-                        <div class="absolute inset-0 opacity-10 bg-blue-100"></div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center relative z-10">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <!-- Charts and Announcements Grid - Clean design -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                    <!-- Payment Methods Chart -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 hover:shadow-md transition-shadow duration-200 relative">
+                        <!-- Loading Overlay for Chart -->
+                        <div v-if="isLoadingMetrics" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-30 flex items-center justify-center rounded-xl">
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="w-10 h-10 border-3 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+                                <span class="text-sm text-gray-600">Loading chart...</span>
+                            </div>
+                        </div>
+
+                        <h3 class="text-base md:text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm4 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
                             </svg>
-                            Payment Methods Distribution
+                            Payment Methods
                         </h3>
-                        <div class="h-[400px] relative z-10">
+                        <div class="h-[300px] md:h-[400px]">
                             <canvas ref="chartRef" class="w-full h-full"></canvas>
                         </div>
                     </div>
 
-                    <!-- Announcements Section with Enhanced Design -->
-                    <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.02] transition-all duration-300">
-                        <div class="absolute inset-0 opacity-10 bg-green-100"></div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center relative z-10">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <!-- Announcements Section -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 hover:shadow-md transition-shadow duration-200">
+                        <h3 class="text-base md:text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                             </svg>
-                            Recent Announcements
+                            Announcements
                         </h3>
-                        <div class="max-h-[400px] overflow-y-auto custom-scrollbar relative z-10">
+                        <div class="max-h-[300px] md:max-h-[400px] overflow-y-auto space-y-3">
                             <template v-if="announcements.length">
                                 <div
                                     v-for="(announcement, index) in announcements"
                                     :key="index"
-                                    class="bg-white/60 p-4 rounded-xl border border-blue-100 mb-4 hover:border-blue-300 transition-all duration-300 hover:shadow-lg"
+                                    class="p-3 md:p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200"
                                 >
-                                    <h4 class="font-semibold text-gray-800 mb-2">
+                                    <h4 class="font-semibold text-gray-800 text-sm mb-1">
                                         {{ announcement.title }}
                                     </h4>
-                                    <p class="text-gray-600 text-sm">
+                                    <p class="text-gray-600 text-xs md:text-sm">
                                         {{ announcement.description }}
                                     </p>
                                 </div>
                             </template>
-                            <p v-else class="text-gray-500 text-center py-4 italic">
+                            <p v-else class="text-gray-400 text-center py-8 text-sm">
                                 No announcements available
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Remaining sections would follow the same design pattern -->
-                <!-- Top/Bottom Products Section -->
-                <div class="bg-white/80 rounded-3xl shadow-xl border border-blue-100/50 p-6 relative overflow-hidden hover:scale-[1.01] transition-all duration-300">
-                    <div class="absolute inset-0 opacity-10 bg-purple-100"></div>
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 relative z-10">
-                        <h3 class="text-xl font-bold text-gray-800 flex items-center mb-3 sm:mb-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <!-- Top/Bottom Products Section - Clean design -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 hover:shadow-md transition-shadow duration-200">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+                        <h3 class="text-base md:text-lg font-semibold text-gray-800 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                             </svg>
                             Popular Products & Products Under Monitoring

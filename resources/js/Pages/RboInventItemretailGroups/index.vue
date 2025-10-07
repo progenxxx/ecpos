@@ -50,6 +50,7 @@ const options = {
     scrollX: true,
     scrollY: "70vh",
     scrollCollapse: true,
+    responsive: true,
 };
 
 
@@ -90,40 +91,66 @@ const deleteModalHandler = () => {
         </template>
 
         <template v-slot:main>
-            <!-- <PrimaryButton type="button" @click="toggleCreateModal" >CREATE</PrimaryButton> -->
-
             <TableContainer>
-                <div class="absolute adjust">
-                    <div class="flex justify-start items-center">
-
+                <!-- Header with Add Button -->
+                <div class="px-3 sm:px-4 md:px-6 pb-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg sm:text-xl font-semibold text-gray-800">Retail Groups</h2>
                         <PrimaryButton
-                        type="button"
-                        @click="toggleCreateModal"
-                        class="m-6 bg-navy"
+                            type="button"
+                            @click="toggleCreateModal"
+                            class="bg-navy hover:bg-navy-dark"
                         >
-                        <Add class="h-4" />
+                            <Add class="h-3 sm:h-4" />
+                            <span class="hidden sm:inline ml-2">Add Group</span>
                         </PrimaryButton>
-
-                        <!-- <Excel
-                            :data="customers"
-                            :headers="['ACCOUNTNUM', 'NAME', 'ADDRESS', 'PHONE', 'EMAIL', 'GENDER']"
-                            :row-name-props="['accountnum', 'name', 'address', 'phone', 'email', 'gender']"
-                            class="ml-4 relative display"
-                        /> -->
-
                     </div>
                 </div>
 
-                <DataTable :data="rboinventitemretailgroups" :columns="columns" class="w-full relative display" :options="options" >
-                    <template #action="data">
-                        <PrimaryButton type="button" @click="toggleUpdateModal(data.cellData.GROUPID, data.cellData.NAME)" class="me-1">
-                            Update
-                        </PrimaryButton>
-                        <DangerButton type="button" @click="toggleDeleteModal(data.cellData.GROUPID)">
-                            Delete
-                        </DangerButton>
-                    </template>
-                </DataTable>
+                <!-- Mobile Card View -->
+                <div class="lg:hidden px-3 sm:px-4 space-y-3 pb-4">
+                    <div
+                        v-for="group in rboinventitemretailgroups"
+                        :key="group.GROUPID"
+                        class="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900 text-sm sm:text-base mb-1">{{ group.NAME }}</h3>
+                                <p class="text-xs sm:text-sm text-gray-500">ID: {{ group.GROUPID }}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 mt-3">
+                            <button
+                                @click="toggleUpdateModal(group.GROUPID, group.NAME)"
+                                class="flex-1 px-3 py-1.5 bg-blue-600 text-white text-xs sm:text-sm rounded hover:bg-blue-700 transition"
+                            >
+                                Update
+                            </button>
+                            <button
+                                @click="toggleDeleteModal(group.GROUPID)"
+                                class="flex-1 px-3 py-1.5 bg-red-600 text-white text-xs sm:text-sm rounded hover:bg-red-700 transition"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desktop Table View -->
+                <div class="hidden lg:block overflow-x-auto">
+                    <DataTable :data="rboinventitemretailgroups" :columns="columns" class="w-full relative display" :options="options">
+                        <template #action="data">
+                            <PrimaryButton type="button" @click="toggleUpdateModal(data.cellData.GROUPID, data.cellData.NAME)" class="me-1">
+                                Update
+                            </PrimaryButton>
+                            <DangerButton type="button" @click="toggleDeleteModal(data.cellData.GROUPID)">
+                                Delete
+                            </DangerButton>
+                        </template>
+                    </DataTable>
+                </div>
             </TableContainer>
         </template>
     </Main>

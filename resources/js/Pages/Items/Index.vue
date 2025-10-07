@@ -61,6 +61,13 @@ const clickCount = ref(0);
 const longPressTimeout = ref(null);
 const isLongPress = ref(false);
 
+// Screen size detection
+const isMobileSize = ref(false);
+
+const checkScreenSize = () => {
+    isMobileSize.value = window.innerWidth < 768; // md breakpoint
+};
+
 // Pagination and filtering state
 const currentPage = ref(1);
 const itemsPerPage = ref(50);
@@ -210,8 +217,11 @@ const handleRightClick = (item, event) => {
     showContextMenu.value = true;
 };
 
-// FIXED: Touch events for mobile - swipe right for links
+// FIXED: Touch events for mobile - disabled for small screens
 const handleTouchStart = (item, event) => {
+    // Disable long press on mobile size screens
+    if (isMobileSize.value) return;
+
     isLongPress.value = false;
     longPressTimeout.value = setTimeout(() => {
         isLongPress.value = true;
@@ -220,30 +230,42 @@ const handleTouchStart = (item, event) => {
 };
 
 const handleTouchEnd = (item, event) => {
+    // Disable long press on mobile size screens
+    if (isMobileSize.value) {
+        clearTimeout(longPressTimeout.value);
+        return;
+    }
+
     clearTimeout(longPressTimeout.value);
     if (!isLongPress.value) {
         handleItemClick(item);
     }
 };
 
-// FIXED: Swipe detection for mobile
+// FIXED: Swipe detection for mobile - disabled for small screens
 let touchStartX = 0;
 let touchStartY = 0;
 
 const handleTouchStartSwipe = (item, event) => {
+    // Disable swipe on mobile size screens
+    if (isMobileSize.value) return;
+
     touchStartX = event.touches[0].clientX;
     touchStartY = event.touches[0].clientY;
     handleTouchStart(item, event);
 };
 
 const handleTouchEndSwipe = (item, event) => {
+    // Disable swipe on mobile size screens
+    if (isMobileSize.value) return;
+
     if (!event.changedTouches || event.changedTouches.length === 0) return;
-    
+
     const touchEndX = event.changedTouches[0].clientX;
     const touchEndY = event.changedTouches[0].clientY;
     const deltaX = touchEndX - touchStartX;
     const deltaY = touchEndY - touchStartY;
-    
+
     // Check if it's a horizontal swipe (more horizontal than vertical)
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
         if (deltaX > 0) {
@@ -252,11 +274,14 @@ const handleTouchEndSwipe = (item, event) => {
             return;
         }
     }
-    
+
     handleTouchEnd(item, event);
 };
 
 const handleMouseDown = (item, event) => {
+    // Disable long press on mobile size screens
+    if (isMobileSize.value) return;
+
     isLongPress.value = false;
     longPressTimeout.value = setTimeout(() => {
         isLongPress.value = true;
@@ -265,6 +290,12 @@ const handleMouseDown = (item, event) => {
 };
 
 const handleMouseUp = (item, event) => {
+    // Disable long press on mobile size screens
+    if (isMobileSize.value) {
+        clearTimeout(longPressTimeout.value);
+        return;
+    }
+
     clearTimeout(longPressTimeout.value);
     if (!isLongPress.value) {
         handleItemClick(item);
@@ -767,10 +798,15 @@ onUnmounted(() => {
     clearTimeout(clickTimeout.value);
     clearTimeout(longPressTimeout.value);
     document.removeEventListener('click', handleClickOutside);
+    window.removeEventListener('resize', checkScreenSize);
 });
 
 onMounted(() => {
     document.addEventListener('click', handleClickOutside);
+
+    // Initialize screen size detection
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
 });
 
 // FIXED: Reload from backend when filters change (debounced for search)
@@ -1128,13 +1164,20 @@ watch([selectedCategory, selectedStatus], () => {
               </div>
 
               <!-- Instructions for mobile - UPDATED -->
-              <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md lg:hidden">
+              <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md md:hidden">
                 <p class="text-sm text-blue-800">
-                  <strong>Instructions:</strong><br>
+                  <strong>Mobile Instructions:</strong><br>
+                  • Use the action buttons (Edit, Links, More) at the bottom of each item<br>
+                  • Hold press, swipe, and tap gestures are disabled for better usability
+                </p>
+              </div>
+              <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md hidden md:block lg:hidden">
+                <p class="text-sm text-blue-800">
+                  <strong>Tablet Instructions:</strong><br>
                   • Hold press: View item info<br>
                   • Double tap: Edit item<br>
                   • Swipe right: View links<br>
-                  • Right-click (desktop): Context menu
+                  • Right-click: Context menu
                 </p>
               </div>
             </div>

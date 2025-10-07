@@ -57,18 +57,18 @@ onMounted(() => {
 
         <!-- Main Content -->
         <main class="pt-16 sm:pt-20 md:pt-24">
-            <section class="bg-gradient-to-b from-blue-600 to-blue-700 text-white text-center py-12 sm:py-16 md:py-20 px-4">
-                <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 animate-fade-in" :class="{ 'animate-fade-in': showContent }">
+            <section class="bg-gradient-to-b from-blue-600 to-blue-700 text-white text-center py-12 sm:py-16 md:py-20 px-4 sm:px-6">
+                <h1 class="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 animate-fade-in leading-tight px-2" :class="{ 'animate-fade-in': showContent }">
                     Elevate Your Business with Our New POS System
                 </h1>
-                <p class="text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto" :class="{ 'animate-slide-up': showContent }">
+                <p class="text-sm sm:text-base md:text-lg lg:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto px-2" :class="{ 'animate-slide-up': showContent }">
                     Experience seamless transactions, advanced analytics, and user-friendly design.
                 </p>
-                <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto">
-                    <a href="#features" class="px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg bg-white text-blue-700 hover:bg-gray-200 transition shadow-lg text-sm sm:text-base">
+                <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto px-2">
+                    <a href="#features" class="px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg bg-white text-blue-700 hover:bg-gray-200 transition shadow-lg text-sm sm:text-base whitespace-nowrap">
                         Explore Features
                     </a>
-                    <a href="#demo" class="px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg border border-white text-white hover:bg-blue-700 transition text-sm sm:text-base">
+                    <a href="#demo" class="px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg border border-white text-white hover:bg-blue-700 transition text-sm sm:text-base whitespace-nowrap">
                         Watch Demo
                     </a>
                 </div>
